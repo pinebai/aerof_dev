@@ -1,0 +1,24 @@
+F77 = gfortran
+
+ARPACKDIR     = /usr/local
+ARPACKLIB     = $(ARPACKDIR)/lib/libarpack.a
+SCALAPACKDIR  = /usr/local
+SCALAPACKLIB  = $(SCALAPACKDIR)/lib/libscalapack.a $(SCALAPACKDIR)/lib/blacsF77.a $(SCALAPACKDIR)/lib/blacsC.a $(SCALAPACKDIR)/lib/blacs.a
+OFLAGS        = -O2 -DTEMPLATE_FIX -D_FILE_OFFSET_BITS=64
+SOFLAGS       = -shared
+LIBS          = $(ARPACKLIB) $(SCALAPACKLIB) -llapack -lblas -lm #-latlas -lcblas -lf77blas 
+
+# MPI LIBRARY
+MPIHOME       = /opt/mpich2
+MPIDIR        = $(MPIHOME)
+MPIBINDIR     = $(MPIHOME)/bin
+MPILIBDIR     = $(MPIHOME)/lib
+MPIINCDIR     = $(MPIHOME)/include
+
+MPLIBS        = -L$(MPILIBDIR) -lpthread -lmpichcxx -lmpich -lrt
+DLLIBS        = -ldl
+SAR           = ar cr
+LD            = g++
+
+LOCALMPIFLAG  = $(MPIFLAG) -I$(MPIINCDIR) -DMPICH_IGNORE_CXX_SEEK #-I$(MPIINCDIR)/mpi2c++
+CXXFLAGS      = -Wno-deprecated -I. -I/usr/local $(OFLAGS) $(OMPFLAG) $(LOCALMPIFLAG) $(DFLAGS) $(SFLAGS) #-DDO_SCALAPACK

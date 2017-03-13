@@ -1,0 +1,27 @@
+ARPACKDIR     = .
+ARPACKLIB     = $(ARPACKDIR)/libarpack_Linux64.a
+OFLAGS        = -O2 -fPIC -DTEMPLATE_FIX -D_FILE_OFFSET_BITS=64 #-mfpmath=sse -msse -msse2 #-ffloat-store #-DEDGE_LENGTH
+#OFLAGS       = -g -DTEMPLATE_FIX -D_FILE_OFFSET_BITS=64 #-DHB_MESHMOTION_DEBUG #-DEDGE_LENGTH
+SOFLAGS       = -shared
+#LIBS          = $(ARPACKLIB) /home/lieut/lib/LAPACK/lapackLinux64.a -lcblas -lf77blas -lm -lg2c -latlas $(ARPACKLIB)
+LIBS          = $(ARPACKLIB) /home/lieut/lib/LAPACK/lapackLinux64.a -lcblas /home/lieut/lib/LAPACK/f77blasLinux64.a -lm -lg2c -latlas $(ARPACKLIB)
+#LIBS          = $(ARPACKLIB) -llapack -lcblas -lf77blas -lm -lg2c -latlas $(ARPACKLIB)
+MPLIBS        = -L/opt/mpich/myrinet/gnu/lib -lpmpich++ -lmpich -L/opt/gm/lib64/ -lgm -lpthread
+DLLIBS        = -ldl
+SAR           = ar cr
+LD            = g++
+
+# Intel C/C++ & Fortran compilers
+#CXXDIR      = # directory of Intel C/C++ compiler ($(CXXDIR)/bin/icpc)   
+#FXXDIR      = # directory of Intel Fortran compiler ($(FXXDIR)/bin/ifort) 
+#CXX         = $(CXXDIR)/bin/icpc
+#F77         = $(FXXDIR)/bin/ifort
+#FCC         = $(FXXDIR)/bin/ifort
+#OMPFLAGS    = -openmp -openmp_report2 # to enable OpenMP
+#FORTLIBS    = -L$(FXXDIR)/lib -lifcore -lg2c
+
+#LOCALMPIFLAG= $(MPIFLAG) -I/opt/mpich/myrinet/gnu/include/mpi2c++ -I/opt/mpich/myrinet/gnu/include
+LOCALMPIFLAG= $(MPIFLAG) -I/share/apps/mpich/gnu/include/mpi2c++ -I/share/apps/mpich/gnu/include
+CXXFLAGS    = -fPIC -Wno-deprecated -I. $(OFLAGS) $(OMPFLAG) $(LOCALMPIFLAG) $(DFLAGS) 
+EXE        = bin/$(PREFIX).opt.$(THESYS)64
+DSOEXE     = bin/$(PREFIX).so.$(THESYS)64

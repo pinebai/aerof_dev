@@ -1,0 +1,26 @@
+syntax: glob
+*.orig
+*.dep
+*.dep.*
+*~
+*.o
+*.a
+.git
+.gitignore
+Project/*
+parser/Lexer.C
+parser/Parser.output
+parser/Parser.tab.c
+parser/Parser.tab.h
+bin/*
+.*.swp
+.*.swo
+
+syntax: regexp
+.*\#.*\#$
+Project/*
+Release/*
+Debug/*
+CMakeFiles/*
+CMake/*
+

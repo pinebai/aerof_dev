@@ -1,0 +1,21 @@
+#!/bin/bash
+module load intel/2015 openmpi/1.8.2/intel
+export CMAKE_INCLUDE_PATH=$CMAKE_INCLUDE_PATH:/home/pavery/Codes/eigen:/home/pavery/Codes/boost_1_55_0
+export CMAKE_LIBRARY_PATH=$CMAKE_LIBRARY_PATH:/home/pavery/intel/2015/openmpi-1.8.2/ARPACK
+/home/pavery/cmake-3.1.0-Linux-x86_64/bin/cmake \
+-DCMAKE_C_COMPILER:FILEPATH=/share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/bin/intel64/icc \
+-DCMAKE_CXX_COMPILER:FILEPATH=/share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/bin/intel64/icpc \
+-DCMAKE_Fortran_COMPILER:FILEPATH=/share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/bin/intel64/ifort \
+-DCMAKE_CXX_FLAGS:STRING=-wd654,1125,2536,2196,858,161,175,187,3180 \
+-DMPI_C_COMPILER:FILEPATH=/share/sw/free/openmpi/1.8.2/intel/2015/bin/mpicc \
+-DMPI_CXX_COMPILER:FILEPATH=/share/sw/free/openmpi/1.8.2/intel/2015/bin/mpiCC \
+-DMPI_Fortran_COMPILER:FILEPATH=/share/sw/free/openmpi/1.8.2/intel/2015/bin/mpifort \
+-DEXTRALIB="-lifcore -lifport" \
+-DLAPACK_LIBRARIES:FILEPATH="-Wl,--start-group /share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/mkl/lib/intel64/libmkl_scalapack_lp64.a /share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/mkl/lib/intel64/libmkl_blacs_openmpi_lp64.a /share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/mkl/lib/intel64/libmkl_intel_lp64.a /share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/mkl/lib/intel64/libmkl_sequential.a /share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/mkl/lib/intel64/libmkl_core.a -Wl,--end-group" \
+-DLAPACK_FOUND:BOOL=true \
+-DBLACSLIB:FILEPATH="" \
+-DBLACS_FOUND:BOOL=TRUE \
+-DSCALAPACKLIB:FILEPATH="" \
+-DSCALAPACK_FOUND:BOOL=TRUE \
+-DCMAKE_LINKER:FILEPATH=/share/sw/licensed/intel/pstudio_xe_cluster-2015/composer_xe_2015.0.090/bin/intel64/icpc \
+-DCMAKE_BUILD_TYPE=Release ${1:-.}

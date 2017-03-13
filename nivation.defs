@@ -1,0 +1,62 @@
+ARPACKDIR     = .
+ARPACKLIB     = $(ARPACKDIR)/libarpack_SUN4.a
+SCALAPACKDIR     = /share/apps/icme/lib/scalapack
+SCALAPACKLIB     = $(SCALAPACKDIR)/libscalapack_LINUX.a $(SCALAPACKDIR)/blacsF77init_MPI-LINUX-0.a $(SCALAPACKDIR)/blacs_MPI-LINUX-0.a $(SCALAPACKDIR)/blacsF77init_MPI-LINUX-0.a
+OFLAGS        = -O2 -DTEMPLATE_FIX -D_FILE_OFFSET_BITS=64 #-DSYNCHRO_WRITE #-mfpmath=sse -msse -msse2 #-ffloat-store #-DEDGE_LENGTH
+#OFLAGS       = -g -DTEMPLATE_FIX -D_FILE_OFFSET_BITS=64 #-DHB_MESHMOTION_DEBUG #-DEDGE_LENGTH
+SOFLAGS       = -shared
+LIBS          = $(ARPACKLIB) -llapack -lcblas -lf77blas -lm -lg2c -latlas $(ARPACKLIB) $(BOOSTLIB) $(PHYSBAMLIB)
+#LIBS          = $(ARPACKLIB) -llapack -lcblas -lf77blas -lm -lg2c -latlas $(ARPACKLIB) $(SCALAPACKLIB) $(BOOSTLIB) $(PHYSBAMLIB)
+##MPLIBS        = -L/opt/mpich/myrinet/gnu/lib -lpmpich++ -lmpich -L/opt/gm/lib/ -lgm -lpthread
+DLLIBS        = -ldl
+SAR           = ar cr
+LD            = g++
+
+#BOOSTINC      = -I/home/icmewang/PhysBAM/External_Libraries/boost -I/home/icmewang/PhysBAM/External_Libraries/boost/boost/mpl
+BOOSTINC      = -I/home/pavery/boost/boost_install/include/boost-1_34_1 -I/home/icmewang/PhysBAM/Public_Library -fPIC -DNDEBUG
+BOOSTDIR      = /home/pavery/boost/boost_install
+#BOOSTDIR      = /home/icmewang/boost/boost_1_34_1
+BOOSTLIB      = -L$(BOOSTDIR)/lib
+PHYSBAMDIR    = /home/icmewang/PhysBAM/build/pentium4/release
+PHYSBAMPL     = $(PHYSBAMDIR)/Public_Library
+PHYSBAMLIB    = $(PHYSBAMPL)/libPhysBAM_Advection_Equations.so $(PHYSBAMPL)/libPhysBAM_Arrays.so $(PHYSBAMPL)/libPhysBAM_Articulated_Rigid_Bodies.so $(PHYSBAMPL)/libPhysBAM_Boundaries.so $(PHYSBAMPL)/libPhysBAM_Collisions_And_Interactions.so $(PHYSBAMPL)/libPhysBAM_Conservation_Law_Solvers.so $(PHYSBAMPL)/libPhysBAM_Conservation_Laws.so $(PHYSBAMPL)/libPhysBAM_Constitutive_Models.so $(PHYSBAMPL)/libPhysBAM_Data_Structures.so $(PHYSBAMPL)/libPhysBAM_Deformable_Objects.so $(PHYSBAMPL)/libPhysBAM_Euler_Equations.so $(PHYSBAMPL)/libPhysBAM_Forces_And_Torques.so $(PHYSBAMPL)/libPhysBAM_Fourier_Transforms.so $(PHYSBAMPL)/libPhysBAM_Fracture.so $(PHYSBAMPL)/libPhysBAM_Geometry.so $(PHYSBAMPL)/libPhysBAM_Grid_Based_Fields.so $(PHYSBAMPL)/libPhysBAM_Grids.so $(PHYSBAMPL)/libPhysBAM_Heat_Flows.so $(PHYSBAMPL)/libPhysBAM_Incompressible_Flows.so $(PHYSBAMPL)/libPhysBAM_Interpolation.so $(PHYSBAMPL)/libPhysBAM_Lagrange_Equations.so $(PHYSBAMPL)/libPhysBAM_Level_Sets.so $(PHYSBAMPL)/libPhysBAM_Matrices_And_Vectors.so $(PHYSBAMPL)/libPhysBAM_Meshing.so $(PHYSBAMPL)/libPhysBAM_Motion.so $(PHYSBAMPL)/libPhysBAM_Optimization.so $(PHYSBAMPL)/libPhysBAM_Ordinary_Differential_Equations.so $(PHYSBAMPL)/libPhysBAM_Parallel_Computation.so $(PHYSBAMPL)/libPhysBAM_Particles.so $(PHYSBAMPL)/libPhysBAM_Poisson_Equations.so $(PHYSBAMPL)/libPhysBAM_Random_Numbers.so $(PHYSBAMPL)/libPhysBAM_Read_Write.so $(PHYSBAMPL)/libPhysBAM_Rigid_Bodies.so $(PHYSBAMPL)/libPhysBAM_Solids_And_Fluids.so $(PHYSBAMPL)/libPhysBAM_Solids_Evolution.so $(PHYSBAMPL)/libPhysBAM_Standard_Tests.so $(PHYSBAMPL)/libPhysBAM_Turbulence.so $(PHYSBAMPL)/libPhysBAM_Utilities.so $(PHYSBAMDIR)/Projects/Charbel/AERO_INTERFACE_1.os -lboost_iostreams-gcc34 -lboost_filesystem-gcc34 -lboost_regex-gcc34 -lpng
+
+# Intel C/C++ & Fortran compiler
+compiler = intel
+#useomp = true
+ifeq ($(compiler), intel)
+  #CXXDIR = $(ICCHOME)
+  CXXDIR = /opt/intel/cc/9.0
+  CXX    = $(CXXDIR)/bin/icpc
+  CC     = $(CXXDIR)/bin/icc
+  FXX    = ifort
+  FXXLIB = /opt/intel/fc/9.0/lib
+  LINKLIBS = -L/usr/lib/gcc-lib/i386-pc-linux/3.2.3/ -L$(FXXLIB) -lifcore
+  LIBS = $(ARPACKLIB) -llapack -lcblas -lf77blas -lm -lg2c -latlas $(ARPACKLIB) -L$(FXXLIB) -lifcore -lboost_iostreams-gcc34
+  LD = $(CXXDIR)/bin/icpc -L$(FXXLIB) -lifcore
+endif
+
+
+# Intel C/C++ & Fortran compilers
+#CXXDIR      = /opt/intel/fc/9.0/ # directory of Intel C/C++ compiler ($(CXXDIR)/bin/icpc)   
+#FXXDIR      = /opt/intel/fc/9.0/
+#CXX         = $(CXXDIR)/bin/icpc
+#F77         = $(FXXDIR)/bin/ifort
+#FCC         = $(FXXDIR)/bin/ifort
+#OMPFLAGS    = -openmp -openmp_report2 # to enable OpenMP
+#FORTLIBS    = -L$(FXXDIR)/lib -lifcore -lg2c
+
+ifeq ($(compiler),intel)
+# Using libraries in /share/apps/mpich/intel
+        MPLIBS      = -L/share/apps/mpich/intel/lib -lpmpich++ -lmpich -L/opt/gm/lib/ -lgm -lpthread
+	LOCALMPIFLAG= $(MPIFLAG) -I/share/apps/mpich/intel/include/mpi2c++ -I/share/apps/mpich/intel/include
+	CXXFLAGS    = -Wno-deprecated -I. $(OFLAGS) $(OMPFLAG) $(LOCALMPIFLAG) $(DFLAGS) $(SFLAGS)
+else
+# Using libraries in /opt/mpich/myrinet/gnu
+# Why not /share/apps/mpich/gnu ??
+        MPLIBS      = -L/home/jontg/lam_7.1.4_new/lib -llammpio -llammpi++ -lmpi -llam -lutil -ldl -L/opt/gm/lib/ -lgm -lpthread
+        LOCALMPIFLAG= $(MPIFLAG) -I/home/jontg/lam_7.1.4_new/include/mpi2cxx -I/home/jontg/lam_7.1.4_new/include/
+//        MPLIBS      = -L/opt/mpich/myrinet/gnu/lib -lpmpich++ -lmpich -L/opt/gm/lib/ -lgm -lpthread
+//	LOCALMPIFLAG= $(MPIFLAG) -I/opt/mpich/myrinet/gnu/include/mpi2c++ -I/opt/mpich/myrinet/gnu/include
+        CXXFLAGS    = -Wno-deprecated -I. -I/usr/lib/gcc/i386-redhat-linux/3.4.4/include/ $(OFLAGS) $(OMPFLAG) $(LOCALMPIFLAG) $(DFLAGS) $(SFLAGS) $(BOOSTINC)
+endif

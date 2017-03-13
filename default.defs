@@ -1,0 +1,42 @@
+ARPACKDIR =  .
+ARPACKLIB =   $(ARPACKDIR)/libarpack_SUN4.a 
+OFLAGS        = -g -DTEMPLATE_FIX -D_FILE_OFFSET_BITS=64
+SOFLAGS       = -shared
+LIBS          = $(ARPACKLIB) -llapack -lg2c -lblas -lm #-latlas -lcblas -lf77blas 
+#LIBS          = $(ARPACKLIB) -llapack -lblas -lm -lg2c #-latlas
+MPLIBS        = -L/usr/local/mpich-1.2.6/lib -lpthread -lpmpich++ -lmpich
+DLLIBS        = -ldl
+SAR           = ar cr
+LD            = g++
+
+LOCALMPIFLAG  = $(MPIFLAG) -I/usr/local/mpich-1.2.6/include -I/usr/local/mpich-1.2.6/include/mpi2c++
+CXXFLAGS      = -Wno-deprecated -I. -I/usr/local $(OFLAGS) $(OMPFLAG) $(LOCALMPIFLAG) $(DFLAGS)
+
+# Intel C/C++ & Fortran compiler
+compiler = intel
+#useomp = true
+ifeq ($(compiler), intel)
+  #CXXDIR = $(ICCHOME)
+  CXXDIR = /opt/intel/cc/9.0 # install directory for intel C compiler
+  CXX    = $(CXXDIR)/bin/icpc
+  CC     = $(CXXDIR)/bin/icc
+  FXX    = ifort
+  FXXLIB = /opt/intel/fc/9.0/lib #intel fortran library directory
+  LINKLIBS = -L/usr/lib/gcc-lib/i386-pc-linux/3.2.3/ 
+  LIBS = $(ARPACKLIB) -llapack -lcblas -lf77blas -lm -lg2c -latlas $(ARPACKLIB) -L$(FXXLIB) -lifcore
+  LD = $(CXXDIR)/bin/icpc
+endif
+
+
+ifeq ($(compiler),intel)
+        #LOCALMPIFLAG= $(MPIFLAG) -I/share/apps/mpich/gnu/include/mpi2c++ -I/share/apps/mpich/gnu/include
+	LOCALMPIFLAG  = $(MPIFLAG) -I/usr/local/mpich-1.2.6/include -I/usr/local/mpich-1.2.6/include/mpi2c++
+        CXXFLAGS    = -Wno-deprecated -I. $(OFLAGS) $(OMPFLAG) $(LOCALMPIFLAG) $(DFLAGS)
+else
+        #LOCALMPIFLAG= $(MPIFLAG) -I/opt/mpich/myrinet/gnu/include/mpi2c++ -I/opt/mpich/myrinet/gnu/include
+        #CXXFLAGS    = -Wno-deprecated -I. -I/usr/lib/gcc/i386-redhat-linux/3.4.4/include/ $(OFLAGS) $(OMPFLAG) $(LOCALMPIFLAG) $(DFLAGS)
+	LOCALMPIFLAG  = $(MPIFLAG) -I/usr/local/mpich-1.2.6/include -I/usr/local/mpich-1.2.6/include/mpi2c++
+	CXXFLAGS      = -Wno-deprecated -I. -I/usr/local $(OFLAGS) $(OMPFLAG) $(LOCALMPIFLAG) $(DFLAGS)
+endif
+
+

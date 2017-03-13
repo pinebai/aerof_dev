@@ -1,0 +1,10 @@
+ARPACKDIR = arpack++
+ARPACKLIB = $(ARPACKDIR)/libarpack_SGI.a
+OFLAGS        = -O3 -OPT:Olimit=0 -64 -ptused -prelink -DTEMPLATE_FIX
+SOFLAGS       = -shared -no_unresolved -rdata_shared -all -soname $(DSOEXE)
+LIBS          = $(ARPACKLIB) -lcomplib.sgimath -lm -lftn -lscs
+MPLIBS        = -lmpi -lmpi++
+DLLIBS        = 
+SAR           = $(CXX) -ar -o
+LD            = $(CXX)
+CXXFLAGS      = -I. $(OFLAGS) $(OMPFLAG) $(MPIFLAG) $(DFLAGS)
