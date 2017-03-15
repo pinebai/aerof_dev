@@ -746,7 +746,7 @@ void EmbeddedTsDesc<dim>::setupOutputToDisk(IoData &ioData, bool *lastIt, int it
     this->output->writeStateMaskVectorsToDiskRom(it, U, temp);
     //
     this->output->writeMaterialVolumesToDisk(it, 0.0, *this->A, &nodeTag);
-    this->output->writeMaterialMassEnergyToDisk(it, 0.0, U, *this->A, &nodeTag);
+    this->output->writeMaterialConservationScalarsToDisk(it, 0.0, U, *this->A, &nodeTag);
     this->output->writeCPUTimingToDisk(*lastIt, it, t, this->timer);
     this->output->writeEmbeddedSurfaceToDisk(*lastIt, it, t, distLSS->getStructPosition_n(), distLSS->getStructPosition_0());
     this->output->writeBinaryVectorsToDisk(*lastIt, it, t, *this->X, *this->A, U, this->timeState, nodeTag, this->Wextij, this->distLSS, ghostPoints);
@@ -784,7 +784,7 @@ void EmbeddedTsDesc<dim>::outputToDisk(IoData &ioData, bool* lastIt, int it, int
    */
   //
   this->output->writeMaterialVolumesToDisk(it, t, *this->A, &nodeTag);
-  this->output->writeMaterialMassEnergyToDisk(it, t, U, *this->A, &nodeTag);
+  this->output->writeMaterialConservationScalarsToDisk(it, t, U, *this->A, &nodeTag);
   this->output->writeCPUTimingToDisk(*lastIt, it, t, this->timer);
   if (*lastIt)
     this->output->writeEmbeddedSurfaceToDisk(*lastIt, it, t, distLSS->getStructPosition(), distLSS->getStructPosition_0());

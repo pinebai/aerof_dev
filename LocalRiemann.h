@@ -61,10 +61,14 @@ public:
 					double *nphi, VarFcn *vf, double *Wstar, 
 					double* dWstardn, int Id = 0) {}
 
-  virtual void computeRiemannSolution(int tag, double *Vi, double *Vstar,
-                              double *nphi, VarFcn *vf,
-                              double *Wstar, double *rupdatei,
-                              double &weighti, int it) {} //KW:never called. Should be removed...
+  // Actuator disk problem
+  virtual int computeRiemannSolution(double *Vi, double *Vj,double *Vstar,double dp,
+				     double *n_s, double *n_f, VarFcn *vf,
+				     int it, double *Wi, double *Wj,int Id = 0){return 0;}
+
+  virtual  void computeSourceTerm(double *Vi, double *Vj,double dp,
+                          double *n_s, double *n_f, VarFcn *vf,
+                          double *flux, bool method = true, int Id = 0){};
 };
 
 //----------------------------------------------------------------------------

@@ -373,7 +373,9 @@ public:
   void avoidNewPhaseCreation(SVec<double,dimLS> &Phi, SVec<double,dimLS> &Phin, Vec<double> &weight, LevelSetStructure *LSS = 0, 
           Vec<int>* fluidIdToSet = 0);
   template<int dim>
-  void setupUVolumesInitialConditions(const int volid, double UU[dim], SVec<double,dim> &U);
+  void setupUVolumesInitialConditions_Step1(const int, double[dim], SVec<double, dim>&, CommPattern<double>&);
+  template<int dim>
+  void setupUVolumesInitialConditions_Step2(CommPattern<double>&, SVec<double, dim>&);
 
   void setupFluidIdVolumesInitialConditions(const int volid, const int myId, Vec<int> &fluidId);
   //template<int dim>

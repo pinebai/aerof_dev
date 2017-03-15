@@ -93,7 +93,6 @@ fpMatchPressure(NULL),
 fpMatchState(NULL),
 fpFluxNorm(NULL),
 fpMatVolumes(NULL),
-fpMaterialMassEnergy(NULL),
 fpConservationErr(NULL),
 fpGnForces(NULL),
 fpStateRom(NULL),
@@ -607,12 +606,12 @@ fpHeatFluxes(NULL)
   else
     material_volumes = 0;
 
-  if (iod.output.transient.materialMassEnergy[0] != 0) {
-    material_mass_energy = new char[sp + strlen(iod.output.transient.materialMassEnergy)];
-    sprintf(material_mass_energy, "%s%s", iod.output.transient.prefix, iod.output.transient.materialMassEnergy);
+  if (iod.output.transient.materialConservationScalars[0] != 0) {
+    material_conservation_scalars = new char[sp + strlen(iod.output.transient.materialConservationScalars)];
+    sprintf(material_conservation_scalars, "%s%s", iod.output.transient.prefix, iod.output.transient.materialConservationScalars);
   }
   else
-    material_mass_energy = 0;
+    material_conservation_scalars = 0;
 
   if (iod.output.transient.embeddedsurface[0] != 0) {
     embeddedsurface = new char[sp + strlen(iod.output.transient.embeddedsurface)];
@@ -1873,21 +1872,22 @@ void TsOutput<dim>::openAsciiFiles()
     fflush(fpMatVolumes);
   }
 
-  if (material_mass_energy) {
+  if (material_conservation_scalars) {
     if (it0 != 0)
-      fpMaterialMassEnergy = backupAsciiFile(material_mass_energy);
-    if (it0 == 0 || fpMaterialMassEnergy == 0) {
-      fpMaterialMassEnergy = fopen(material_mass_energy, "w");
-      if (!fpMaterialMassEnergy) {
-        fprintf(stderr, "*** Error: could not open \'%s\'\n", material_mass_energy);
+      fpMaterialConservationScalars = backupAsciiFile(material_conservation_scalars);
+    if (it0 == 0 || fpMaterialConservationScalars == 0) {
+      fpMaterialConservationScalars = fopen(material_conservation_scalars, "w");
+      if (!fpMaterialConservationScalars) {
+        fprintf(stderr, "*** Error: could not open \'%s\'\n", material_conservation_scalars);
         exit(1);
       }
-      fprintf(fpMaterialMassEnergy, "#TimeIteration ElapsedTime ");
+      fprintf(fpMaterialConservationScalars, "# TimeIteration ElapsedTime ");
       for(int i=0; i<numFluidPhases; i++)
-        fprintf(fpMaterialMassEnergy, "Mass[FluidID==%d] Energy[FluidId==%d]", i,i);
-      fprintf(fpMaterialMassEnergy, "Mass[FluidID==%d(GhostSolid)] Energy[FluidID==%d(GhostSolid)] TotalVolume\n", numFluidPhases, numFluidPhases);
+        fprintf(fpMaterialConservationScalars, "Mass[FID==%d] MomentumX[FID==%d] MomentumY[FID==%d] MomentumZ[FID==%d] Energy[FId==%d]", i,i,i,i,i);
+      fprintf(fpMaterialConservationScalars, "Mass[FID==%d(Ghost)] MomentumX[FID==%d(Ghost)] MomentumY[FID==%d(Ghost)] MomentumZ[FID==%d(Ghost)] "
+              "Energy[FID==%d(Ghost)] TotalMass TotalMomentumX TotalMomentumY TotalMomentumZ TotalEnergy\n", numFluidPhases, numFluidPhases,numFluidPhases, numFluidPhases,numFluidPhases);
     }
-    fflush(fpMaterialMassEnergy);
+    fflush(fpMaterialConservationScalars);
   }
 
 
@@ -2857,7 +2857,7 @@ void TsOutput<dim>::writeMaterialVolumesToDisk(int it, double t, DistVec<double>
 
   if (com->cpuNum() !=0 ) return;
 
-  double length3 = length*length*length;
+  double length3 = refVal->length*refVal->length*refVal->length;
   for(int i=0; i<myLength; i++)
     Vol[i] *= length3; //dimensionalize
 
@@ -2878,58 +2878,76 @@ void TsOutput<dim>::writeMaterialVolumesToDisk(int it, double t, DistVec<double>
 
 
 //------------------------------------------------------------------------------
-/** Function writeMaterialMassEnergyToDisk
+/** Function writeMaterialConservationScalarsToDisk
    *  U is the conservative state variables
    *  A is the volume of fluid control volume
    *  fluidId is the fluid Id vector for mutiphase problem, and NULL for single phase problem
    */
 template<int dim>
-void TsOutput<dim>::writeMaterialMassEnergyToDisk(int it, double t,DistSVec<double,dim> & U,  DistVec<double> &A, DistVec<int> *fluidId)
+void TsOutput<dim>::writeMaterialConservationScalarsToDisk(int it, double t,DistSVec<double,dim> & U,  DistVec<double> &A, DistVec<int> *fluidId)
 {
-  if(!material_mass_energy)
-    return;
+    if(!material_conservation_scalars)
+        return;
 
-  int myLength = numFluidPhases + 1/*ghost*/;
-  double Mass[myLength];
-  double Energy[myLength];
+    int myLength = numFluidPhases + 1/*ghost*/;
+    double Mass[myLength];
+    double MomentumX[myLength];
+    double MomentumY[myLength];
+    double MomentumZ[myLength];
+    double Energy[myLength];
 
-  for(int i=0; i<myLength; i++) {
-    Mass[i] = 0.0;
-    Energy[i] = 0.0;
-  }
+    for(int i=0; i<myLength; i++) {
+        Mass[i] = 0.0;
+        Energy[i] = 0.0;
+        MomentumX[i] = 0.0;
+        MomentumY[i] = 0.0;
+        MomentumZ[i] = 0.0;
+    }
 
-  domain->computeMaterialMassEnergy(Mass,Energy, myLength,U, A,fluidId); //computes Mass
+    domain->computeMaterialConservationScalars(Mass,MomentumX, MomentumY, MomentumZ, Energy, myLength,U, A,fluidId); //computes Mass
 
-  if (com->cpuNum() !=0 ) return;
+    if (com->cpuNum() !=0 ) return;
+    double lenRef = refVal->length;
 
+//todo dimensional non- dimensional
+    double massScale   = (refVal->mode == RefVal::DIMENSIONAL)? lenRef*lenRef*lenRef*refVal->density: lenRef*lenRef*lenRef;
+    double energyScale =  (refVal->mode == RefVal::DIMENSIONAL)? refVal->energy:lenRef*lenRef*lenRef;
+    double momentumScale = (refVal->mode == RefVal::DIMENSIONAL)? lenRef*lenRef*lenRef*refVal->density*refVal->velocity:lenRef*lenRef*lenRef;
 
-  double massScale   = length*length*length*refVal->density;
-  double energyScale = length*length*length*refVal->energy;
-
-  for(int i=0; i<myLength; i++) {
-    Mass[i] *= massScale; //dimensionalize
-    Energy[i] *= energyScale;
-  }
-
-
-
-  fprintf(fpMaterialMassEnergy, "%d %e ", it, (refVal->time)*t);
-
-  for(int i=0; i<numFluidPhases+1; i++) {
-    fprintf(fpMaterialMassEnergy, "%15.10E %15.10E ", Mass[i], Energy[i]);
-  }
+    for(int i=0; i<myLength; i++) {
+        Mass[i] *= massScale; //dimensionalize
+        MomentumX[i] *= momentumScale;
+        MomentumY[i] *= momentumScale;
+        MomentumZ[i] *= momentumScale;
+        Energy[i] *= energyScale;
+    }
 
 
 
-  double totMass = 0.0;
-  double totEnergy = 0.0;
-  for(int i=0; i<myLength; i++) {
-    totMass += Mass[i];
-    totEnergy += Energy[i];
-  }
-  fprintf(fpMaterialMassEnergy, "%15.10E %15.10E\n", totMass,totEnergy);
+    fprintf(fpMaterialConservationScalars, "%d %e ", it, (refVal->time)*t);
 
-  fflush(fpMaterialMassEnergy);
+    for(int i=0; i<numFluidPhases+1; i++) {
+        fprintf(fpMaterialConservationScalars, "%15.10E %15.10E %15.10E %15.10E %15.10E ", Mass[i], MomentumX[i], MomentumY[i], MomentumZ[i], Energy[i]);
+    }
+
+
+
+    double totMass = 0.0;
+    double totEnergy = 0.0;
+  double totMomentumX = 0.0;
+  double totMomentumY = 0.0;
+  double totMomentumZ = 0.0;
+    for(int i=0; i<myLength; i++) {
+        totMass += Mass[i];
+        totEnergy += Energy[i];
+      totMomentumX += MomentumX[i];
+      totMomentumY += MomentumY[i];
+      totMomentumZ += MomentumZ[i];
+
+    }
+    fprintf(fpMaterialConservationScalars, "%15.10E %15.10E %15.10E %15.10E %15.10E\n", totMass, totMomentumX, totMomentumY, totMomentumZ, totEnergy);
+
+    fflush(fpMaterialConservationScalars);
 
 }
 

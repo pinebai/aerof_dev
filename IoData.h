@@ -265,7 +265,7 @@ struct TransientData {
   const char *hydrodynamiclift;
   const char *residuals;
   const char *materialVolumes;
-  const char *materialMassEnergy;
+  const char *materialConservationScalars;
   const char *conservation;
   const char *podFile;
   const char *robProductFile;
@@ -622,7 +622,7 @@ struct BcsHydroData {
 struct BoundaryData  {
 
   static const int UNSPECIFIED = -1;
-  enum Type {DIRECTSTATE = 1, MASSFLOW = 2, POROUSWALL = 3} type;
+  enum Type {DIRECTSTATE = 1, MASSFLOW = 2, POROUSWALL = 3, SYMMETRYPLANE = 4,ACTUATORDISK = 5,MASSINFLOW = 6} type;
 
    enum vars {DENSITY = 0, VX = 1, VY = 2, VZ = 3, PRESSURE = 4, TEMPERATURE = 5, TOTALPRESSURE = 6, TOTALTEMPERATURE = 7, MDOT = 8, NUTILDE = 9, KENERGY = 10, EPSILON = 11, SIZE = 12};
   bool inVar[SIZE], outVar[SIZE];
@@ -637,6 +637,11 @@ struct BoundaryData  {
   double kenergy;
   double epsilon;
   double porosity;
+  enum VelocityReconstructionMethod {AVERAGE = 1, FIRSTORDER = 2, SECONDORDER = 3} velocityReconstructionMethod;
+  enum ActuatorDiskMethod { SOURCETERM = 1, RIEMANNSOLVER= 2} actuatorDiskMethod;
+  double pressureJump;
+  double massFlow;
+  enum SourceTermExpression {OLD = 1,CORRECTED = 2} sourceTermExpression;
 
   BoundaryData();
   Assigner *getAssigner();

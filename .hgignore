@@ -15,6 +15,10 @@ parser/Parser.tab.h
 bin/*
 .*.swp
 .*.swo
+tags
+.ycm*
+.settings
+.hgdiff.diff
 
 syntax: regexp
 .*\#.*\#$

@@ -26,7 +26,9 @@ private:
     KspSolver<DistEmbeddedVec<double,dim>, MatVecProd<dim,dim>, KspPrec<dim>, Communicator> *rom_ksp;
 
     VecSet<DistSVec<double, dim> > reducedJacobian;
+    VecSet<DistSVec<double, dim> > temp_reducedJacobian;
     Vec<double> reducedNewtonDirection;
+    DistSVec<double, dim> U_secret;
     //TODO: two methods: project U into Qy and lift y to U
 
     int reducedDimension;
@@ -39,11 +41,18 @@ private:
     void projectStateOntoROB(DistSVec<double, dim> &U);
     void expandVector(Vec<double>& p, DistSVec<double, dim>& dQ);
     void projectVector(VecSet<DistSVec<double, dim> > &mat, DistSVec<double,dim> &vec, Vec<double> &buffer);
+    void maskVector(DistSVec<double, dim> &vec, DistVec<bool> &mask, DistSVec<double, dim> &buffer);
 
     // misc variables to pass c++ compiler hoops.
     EmbeddedAlternatingLeastSquare<dim> embeddedALS;
 
 public:
+    //int solveLinearSystem(int it, DistSVec<double, dim> &rhs, DistSVec<double, dim> &dQ);
+    //void solveNewtonSystem();
+    int solveNonLinearSystem(DistSVec<double,dim> &, int);
+    double lineSearch(int it, DistSVec<double, dim> &U, DistSVec<double, dim> &dU, double alpha_init = 1.0, double rho = 0.8, double c = 2.0, double absIncMax = 1e-8);
+    double lineSearch(int it, DistSVec<double, dim> &U, Vec<double> &dU, double alpha_init = 1.0, double rho = 0.8, double c = 2.0, double absIncMax = 1e-8);
+    int solveReducedLinearSystem(int it, DistSVec<double, dim> &rhs, Vec<double> &reduced_dQ);
     /** @name interface to NewtonSolver
      * REQUIRED functions to call NewtonSolver (backtracking linear search)
      * listed here explicitly for clarity
@@ -61,10 +70,10 @@ public:
     double getNewtonIt(){return super::getNewtonIt(); };
     double getNumResidualOutputCurrentNewtonIt() {return super::getNumResidualOutputCurrentNewtonIt(); };
     // equivalent to computeFullResidual(), result in F ?
-    void computeFunction(int it, DistSVec<double, dim> &Q, DistSVec<double, dim> &F) { super::computeFunction(it, Q, F); };
+    void computeFunction(int it, DistSVec<double, dim> &Q, DistSVec<double, dim> &F);
     void recomputeResidual(DistSVec<double, dim> &F, DistSVec<double, dim> &Finlet) { super::recomputeResidual(F, Finlet); };
     // add inlet contribution, result in rhs ?
-    void recomputeFunction(DistSVec<double, dim> &Q, DistSVec<double, dim> &rhs){ super::recomputeFunction(Q, rhs); };
+    //void recomputeFunction(DistSVec<double, dim> &Q, DistSVec<double, dim> &rhs){ super::recomputeFunction(Q, rhs); };
     void setOperators(DistSVec<double, dim> &) {};
     // TODO: emulate coupledTsDesc (compute Hessian of function)
     void computeJacobian(int it, DistSVec<double, dim> &Q, DistSVec<double, dim> &F);
@@ -72,6 +81,7 @@ public:
     int solveLinearSystem(int it, DistSVec<double, dim> &rhs, DistSVec<double, dim> &dQ);
     ///@}
     int _solveLinearSystem(int it , DistSVec<double, dim> &rhs, Vec<double> &sol);
+    void _computeFunction(int it, Vec<double> &U, DistSVec<double, dim> &F);
 
     /** @name interface to NewtonSolver
      * OPTIONAL functions to call NewtonSolver (backtracking linear search)
@@ -92,13 +102,14 @@ public:
      */
     ///@{
     //TODO: overwrite this to use reduced coordinate ?
-    int solveNonlinearSystem(DistSVec<double, dim> &Q, const int totalTimeSteps) { return super::solveNonLinearSystem(Q, totalTimeSteps); };
+    //int solveNonlinearSystem(DistSVec<double, dim> &Q, const int totalTimeSteps) { return super::solveNonLinearSystem(Q, totalTimeSteps); };
     ///@}
     // diagnostic/test function
     void test();
     void checkMVP(int it, DistSVec<double, dim> &Q, DistSVec<double, dim> &dx, DistSVec<double, dim> &orig);
     void outputMatrix(char *fn, VecSet<DistSVec<double, dim> > &A);
     void outputVector(char *fn, DistSVec<double, dim> &b);
+    void embedded_apply(MatVecProd<dim, dim> *A, DistSVec<double, dim> &x, DistSVec<double, dim> &result); //different results from parent class
     /*
      * rom krylov subspace solver
      * todo: make ksprec for vec

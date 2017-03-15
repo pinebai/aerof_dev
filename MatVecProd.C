@@ -1099,8 +1099,7 @@ void MatVecProdH1<dim,Scalar,neq>::evaluate(int it, DistSVec<double,3> &X, DistV
       this->subDomain[iSub]->computeJacobianFiniteVolumeTermHH(spaceOp->getFluxFcn(),
 							       (*spaceOp->getDistBcData())(iSub) ,
 							       (*spaceOp->getGeoState())(iSub),
-							       ctrlVol, Q, *A[iSub],spaceOp->getVarFcn());
-							      
+							       ctrlVol(iSub), Q(iSub), *A[iSub], spaceOp->getVarFcn());
     }
     
     this->timeState->addToHHJacobian(ctrlVol, *this, *hhVal);
@@ -1144,8 +1143,7 @@ void MatVecProdH1<dim,Scalar,neq>::evaluate(DistExactRiemannSolver<dim> &riemann
       this->subDomain[iSub]->computeJacobianFiniteVolumeTermHH(spaceOp->getFluxFcn(),
 							       (*spaceOp->getDistBcData())(iSub),
 							       (*spaceOp->getGeoState())(iSub),
-							       ctrlVol, Q, *A[iSub],spaceOp->getVarFcn());
-							      
+							       ctrlVol(iSub), Q(iSub), *A[iSub], spaceOp->getVarFcn());
     }
     this->timeState->addToHHJacobian(ctrlVol, *this, *hhVal);
     
@@ -3010,4 +3008,5 @@ void MatVecProd_dRdX<dim,Scalar,neq>::constructOperators(Vec3D &x0,
   initializeOperators(0.0);
   spaceOp->computeDerivativeOperators(x0, X, ctrlVol, U, dMach, R, Pin, timeState, postOp, dRdXop);
 }
+
 

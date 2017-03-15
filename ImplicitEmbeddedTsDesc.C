@@ -345,7 +345,7 @@ void ImplicitEmbeddedTsDesc<dim>::computeFunction(int it, DistSVec<double,dim> &
 											 *this->Wstarij, *this->Wstarji, *this->Wextij, this->distLSS,
 											 this->linRecAtInterface, this->viscSecOrder, 
 											 this->nodeTag, F, this->riemann, 
-                                 this->riemannNormal, 1, this->ghostPoints);
+                                 this->riemannNormal, 1, this->ghostPoints); //SpaceOperator.C:1490
 
 	this->timeState->add_dAW_dt(it, *this->geoState, *this->A, Q, F,this->distLSS);
 

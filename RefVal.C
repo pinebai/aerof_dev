@@ -24,6 +24,7 @@ RefVal::RefVal()
   time = 1.0;
   force = 1.0;
   energy = 1.0;
+  moment = 1.0;
   power = 1.0;
   entropy = 1.0;
 
@@ -160,6 +161,7 @@ void RefVal::rstVar(IoData &ioData)
     time = 1.0;
     force = 1.0;
     energy = 1.0;
+    moment = 1.0;
     power = 1.0;
     entropy = 1.0;
 

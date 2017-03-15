@@ -91,6 +91,7 @@ private:
   char *residuals;
   char *material_volumes;
   char *material_mass_energy;
+  char *material_conservation_scalars;
   char *conservation;
   char *modeFile;
   char *embeddedsurface;
@@ -123,7 +124,7 @@ private:
   FILE *fpMatchState;
   FILE *fpFluxNorm;
   FILE *fpMatVolumes;
-  FILE *fpMaterialMassEnergy;
+  FILE *fpMaterialConservationScalars;
   FILE *fpConservationErr;
   FILE *fpGnForces;
   FILE *fpStateRom;
@@ -248,7 +249,7 @@ public:
                              DistVec<int> * = 0);
   void writeResidualsToDisk(int, double, double, double);
   void writeMaterialVolumesToDisk(int, double, DistVec<double>&, DistVec<int>* = 0);
-  void writeMaterialMassEnergyToDisk(int, double, DistSVec<double, dim>& ,DistVec<double> & ,  DistVec<int>* = 0);
+  void writeMaterialConservationScalarsToDisk(int, double, DistSVec<double, dim>& ,DistVec<double> & ,  DistVec<int>* = 0);
 
   void writeEmbeddedSurfaceToDisk(bool, int, double, Vec<Vec3D>&, Vec<Vec3D>&);
   void writeCPUTimingToDisk(bool, int, double, Timer*);

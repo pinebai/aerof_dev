@@ -46,7 +46,14 @@ ExactRiemannSolver<dim>::ExactRiemannSolver(IoData &iod, SVec<double,dim> &_rupd
 	 }
   }
 
-  for (int i = 0; i < 10; ++i) {
+    // Riemann solver for embedded constrains todo: Daniel, I allocate these riemann solvers in all cases, but they are only needed when special constrains are there
+    actuatorDiskRiemann = new LocalRiemannActuatorDisk<dim>();
+    //dynamic_cast<LocalRiemannActuatorDisk<dim> *>(actuatorDiskRiemann);
+    symmetryplaneRiemann = new LocalRiemannFluidStructure<dim>();
+    //dynamic_cast<LocalRiemannFluidStructure<dim> *>(symmetryplaneRiemann)->setStabilAlpha(0.0);
+
+
+    for (int i = 0; i < 10; ++i) {
     for (int j = 0; j < 10; ++j) {
       levelSetMap[i][j] = -1; //KW: for debugging
       levelSetSign[i][j]=1.0;
@@ -348,4 +355,32 @@ int ExactRiemannSolver<dim>::getRiemannSolverId(int i, int j) const {
   }
 
   return levelSetMap[i][j];
+}
+//------------------------------------------------------------------------------
+template<int dim>
+int ExactRiemannSolver<dim>::computeActuatorDiskRiemannSolution(double *Vi, double *Vj, double *Vstar, double dp,double *n_s,
+                                                                double *n_f, VarFcn *vf,
+                                                                double *Wi, double *Wj,int Id)
+
+{   return actuatorDiskRiemann->computeRiemannSolution(Vi, Vj, Vstar,dp, n_s, n_f, vf, iteration, Wi, Wj,Id);
+
+}
+
+template<int dim>
+void ExactRiemannSolver<dim>::computeActuatorDiskSourceTerm(double *Vi, double *Vj,double dp,double *n_s,
+                                                                double *n_f, VarFcn *vf,
+                                                                double *flux,bool method, int Id)
+
+{    actuatorDiskRiemann->computeSourceTerm(Vi, Vj,dp, n_s, n_f, vf, flux,method, Id);
+
+}
+
+//------------------------------------------------------------------------------
+template<int dim>
+int ExactRiemannSolver<dim>::computeSymmetryPlaneRiemannSolution(double *Vi, double *Vstar,
+                                                                 double *nphi, VarFcn *vf, double *Wstar, int nodej, int Id)
+
+{
+    return symmetryplaneRiemann->computeRiemannSolution(Vi,Vstar,nphi,vf,
+                                                        Wstar,rupdate[nodej],weight[nodej],iteration, Id);
 }

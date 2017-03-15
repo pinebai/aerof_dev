@@ -220,7 +220,7 @@ public:
 
   void set(const Scalar *);
   
-  void restrict();
+  void killSlave();
 
   void average();
 

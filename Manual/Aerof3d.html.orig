@@ -11182,7 +11182,9 @@ fluid is modeled as a perfect gas;
       to <code>Strong</code> and <code><a href="#Implicit">Implicit</a>.MatrixVectorProduct</code> to <code>FiniteDifference</code> for the purpose of sensitivity analysis;
 </li><li>when <code><a href="#Implicit">Implicit</a>.MatrixVectorProduct</code> is set to <code>Approximate</code>, <b>AERO-F</b> automatically changes
       this setting to <code>FiniteDifference</code> for the purpose of sensitivity analysis.
-     </li></ol>
+</li><li style="color:red;"> For viscous simulations, the Parameter <code>BoundaryConditions.Wall.Integration</code> must be set to "Full". If it is set to "<code>WallFunction</code>", the code will segfault.
+</li><li style="color:red;"> <code>SensitivityAnalysis.MatrixVectorProduct</code> can only be set to "Approximate. Otherwise the code will segfault.".
+      </li></ol>
 
 <pre class="sp">
 </pre>
@@ -11200,10 +11202,35 @@ The syntax of the object <code>SensitivityAnalysis</code> is:
        SensitivityFSI = <var>sensitivityfsi-flag</var>;
        AdaptiveEpsFSI = <var>adaptiveepsfsi-flag</var>;
        EpsFD = <var>epsfd-real</var>;
+       <var style="color:red;">MatrixVectorProduct </var>= <var style="color:red;">mvp-flag</var>;
+       <var style="color:red;">SparseComputation </var>= <var style="color:red;">sparse-flag</var>;
+       MatrixVectorProduct = <var>mvp-flag</var>;
        under LinearSolver{ ... }
      }
 </pre>
 <p>with
+
+
+<p class="noindent" style="color:red;"><var>mvp-flag</var> [<code>Off</code>]
+     </p><dl>
+<dt><code style="color:red;">FiniteDifference(FD)</code></dt><dd style="color:red;">requests the computation of the Matrix-Vecotr products by using a Finite Differrence method. Currenty the transpose matrix vector product is not implemented for FD. Therefore this option is not supported.
+<dt><code style="color:red;">Approximate(H1)</code></dt><dd style="color:red;">This will be completly ignored and FD will be performed.
+<dt><code style="color:red;">Exact(H2)</code></dt><dd style="color:red;">requests the computation of the Matrix-Vecotr products by using the exact Jacobian.
+<dt><code style="color:red;">ApproximateFiniteDifference(H1FD)</code></dt><dd style="color:red;">This will be completly ignored and FD will be performed.
+ 
+<!--<br></dd><dt><code>On</code></dt><dd>blub. -->
+</dd></dl>
+
+
+
+<p class="noindent" style="color:red;"><var>sparse-flag</var> [<code>Off</code>]
+     </p><dl>
+<dt><code style="color:red;">Off(</code></dt><dd style="color:red;">Sparse Computation off
+<dt><code style="color:red;">On</code></dt><dd style="color:red;">Spare computation on
+ 
+<!--<br></dd><dt><code>On</code></dt><dd>blub. -->
+</dd></dl>
+
 
 </p><p class="noindent"><var>method-id</var> [<code>Direct</code>]
      </p><dl>

@@ -412,7 +412,7 @@ TransientData::TransientData()
   matchstate = "";
   fluxnorm = "";
   materialVolumes = "";
-  materialMassEnergy = "";
+  materialConservationScalars = "";
   conservation = "";
   podFile = "";
   romFile = "";
@@ -538,7 +538,7 @@ void TransientData::setup(const char *name, ClassAssigner *father)
   new ClassStr<TransientData>(ca, "TavLiftandDrag", this, &TransientData::tavlift);
   new ClassStr<TransientData>(ca, "Residual", this, &TransientData::residuals);
   new ClassStr<TransientData>(ca, "MaterialVolumes", this, &TransientData::materialVolumes);
-  new ClassStr<TransientData>(ca, "MaterialMassEnergy", this, &TransientData::materialMassEnergy);
+  new ClassStr<TransientData>(ca, "MaterialConservationScalars", this, &TransientData::materialConservationScalars);
   new ClassInt<TransientData>(ca, "Frequency", this, &TransientData::frequency);
   new ClassDouble<TransientData>(ca, "TimeInterval", this, &TransientData::frequency_dt);
   new ClassDouble<TransientData>(ca, "Length", this, &TransientData::length);
@@ -1041,6 +1041,11 @@ BoundaryData::BoundaryData()
   kenergy = -1.0;
   epsilon = -1.0;
   porosity = 0.0;
+  velocityReconstructionMethod = (VelocityReconstructionMethod) AVERAGE;
+  actuatorDiskMethod = (ActuatorDiskMethod)SOURCETERM;
+  sourceTermExpression = (SourceTermExpression)OLD;
+  pressureJump = 0.0;
+  massFlow = 0.0;
 
   for (int i=0; i<SIZE; ++i) {
     inVar[i] = false;
@@ -1053,11 +1058,11 @@ BoundaryData::BoundaryData()
 
 Assigner *BoundaryData::getAssigner()  {
 
-  ClassAssigner *ca = new ClassAssigner("normal", 16, nullAssigner);
+  ClassAssigner *ca = new ClassAssigner("normal", 20, nullAssigner);
 
   new ClassToken<BoundaryData>(ca, "Type", this,
-                              (int BoundaryData::*)(&BoundaryData::type), 3,
-                               "DirectState", DIRECTSTATE, "MassFlow", MASSFLOW, "PorousWall", POROUSWALL);
+                              (int BoundaryData::*)(&BoundaryData::type), 6,
+                               "DirectState", DIRECTSTATE, "MassFlow", MASSFLOW, "PorousWall", POROUSWALL, "SymmetryPlane", SYMMETRYPLANE,"ActuatorDisk", ACTUATORDISK, "MassInflow", MASSINFLOW);
   new ClassDouble<BoundaryData>(ca, "Density", this, &BoundaryData::density);
   new ClassDouble<BoundaryData>(ca, "VelocityX", this, &BoundaryData::velocityX);
   new ClassDouble<BoundaryData>(ca, "VelocityY", this, &BoundaryData::velocityY);
@@ -1072,6 +1077,18 @@ Assigner *BoundaryData::getAssigner()  {
   new ClassDouble<BoundaryData>(ca, "Eps", this, &BoundaryData::epsilon);
 
   new ClassDouble<BoundaryData>(ca, "Porosity", this, &BoundaryData::porosity);
+  new ClassDouble<BoundaryData>(ca, "PressureJump", this, &BoundaryData::pressureJump);
+  new ClassToken<BoundaryData>(ca, "VelocityReconstructionMethod", this,
+                                (int BoundaryData::*)(&BoundaryData::velocityReconstructionMethod), 3,
+                                 "Average", AVERAGE, "FirstOrder", FIRSTORDER, "SecondOrder", SECONDORDER);
+  new ClassToken<BoundaryData>(ca, "ActuatorDiskMethod", this,
+                               (int BoundaryData::*)(&BoundaryData::actuatorDiskMethod), 2,
+                               "SourceTerm", SOURCETERM, "RiemannSolver", RIEMANNSOLVER);
+  new ClassToken<BoundaryData>(ca, "SourceTermExpression", this,
+                                  (int BoundaryData::*)(&BoundaryData::sourceTermExpression), 2,
+                                   "Old", OLD, "Corrected", CORRECTED);
+
+  new ClassDouble<BoundaryData>(ca, "MassFlow", this, &BoundaryData::massFlow);
 
   new ClassArray<BoundaryData>(ca, "InletVariableSet", this, &BoundaryData::inVar, 12, "Rho", DENSITY, "Vx", VX, "Vy", VY, "Vz", VZ, "P", PRESSURE, "T", TEMPERATURE, "P_T", TOTALPRESSURE, "T_T", TOTALTEMPERATURE, "MDot", MDOT, "NuTilde", NUTILDE, "K", KENERGY, "Eps", EPSILON);
   new ClassArray<BoundaryData>(ca, "OutletVariableSet", this, &BoundaryData::outVar, 12, "Rho", DENSITY, "Vx", VX, "Vy", VY, "Vz", VZ, "P", PRESSURE, "T", TEMPERATURE, "P_T", TOTALPRESSURE, "T_T", TOTALTEMPERATURE, "MDot", MDOT, "NuTilde", NUTILDE, "K", KENERGY, "Eps", EPSILON);
@@ -3106,7 +3123,7 @@ TsData::TsData()
 
   type = IMPLICIT;
   typeTimeStep = AUTO;
-  typeClipping = FREESTREAM;
+  typeClipping = NONE;
   timeStepCalculation = CFL;
   dualtimestepping = OFF;
 

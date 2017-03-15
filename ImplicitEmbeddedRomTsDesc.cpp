@@ -2,7 +2,7 @@
 // Created by lei on 5/16/16.
 //
 
-#ifdef TEMPLATE_FIX
+#ifndef TEMPLATE_FIX
 #include <ImplicitEmbeddedRomTsDesc.h>
 #endif
 
@@ -22,7 +22,9 @@ ImplicitEmbeddedRomTsDesc<dim>::ImplicitEmbeddedRomTsDesc(IoData &_ioData,
         reducedBasis(0, dom->getNodeDistInfo()),
         reducedNewtonDirection(0),
         embeddedALS(dom->getCommunicator(), _ioData, *dom),
-        referenceState(dom->getNodeDistInfo())/*,
+        referenceState(dom->getNodeDistInfo()),
+        temp_reducedJacobian(0, dom->getNodeDistInfo()),
+        U_secret(dom->getNodeDistInfo())/*,
         residualRef(this->F) */{
     // load reducedBasis from file; this needs to be done before MatrixVectorProduct class is set
     embeddedALS.readBasisFiles(this->reducedBasis);
@@ -107,6 +109,7 @@ ImplicitEmbeddedRomTsDesc<dim>::ImplicitEmbeddedRomTsDesc(IoData &_ioData,
     // initialize reducedJacobian, = copy assignment not defined
     //reducedJacobian = VecSet<DistSVec<double, dim> >(0, dom->getNodeDistInfo());
     reducedJacobian.resize(reducedDimension);
+    temp_reducedJacobian.resize(reducedDimension);
 
     // initialize reducedNewtonDirection
     reducedNewtonDirection.resize(this->reducedDimension);
@@ -129,16 +132,141 @@ ImplicitEmbeddedRomTsDesc<dim>::~ImplicitEmbeddedRomTsDesc() {
     // TODO: clear up points to various data structure
 }
 
+
+/**
+ * override base class solveNonlinearSystem() call.
+ * returns the number of calls to NewtonSolver().
+ * a major iteration step
+ */
+template<int dim>
+int ImplicitEmbeddedRomTsDesc<dim>::solveNonLinearSystem(DistSVec<double, dim> &U, const int totalTimeSteps){
+    //todo: replace this
+    int maxItsNewton = 20;
+    int it;
+    // initialization
+    DistSVec<double, dim> R(this->domain->getNodeDistInfo());
+    DistSVec<double, dim> dU(this->domain->getNodeDistInfo());
+    Vec<double> reduced_dU(this->reducedDimension);
+    Vec<double> reduced_U(this->reducedDimension);
+    reduced_U = 0.0;
+    // newton loop
+    for(it = 0; it < maxItsNewton; it++){
+        R = 0.0;
+        reduced_dU = 0.0;
+        computeFunction(it, U, R);
+        // results in reduced_R and R
+        computeJacobian(it, U, R);
+        // results in this->reducedJacobian
+        // solveLinearSystem(it, R, dU);
+        // todo: change t solveReducedLinearSystem()
+        solveReducedLinearSystem(it, R, reduced_dU);
+        // results in this->reducedNewtonDirection
+        // todo: change to lineSearch(it, Vec<double> &U, Vec<double> &dU)
+        double alpha = lineSearch(it, U, reduced_dU);
+        reduced_U += alpha * reduced_dU;
+        // return full coordinate in U
+        expandVector(reduced_U, dU);
+        DistSVec<double, dim> masked_dU(this->domain->getNodeDistInfo());
+        maskVector(dU, this->distLSS->getIsActive(), masked_dU);
+        U += masked_dU;
+    }
+    // finishing up
+
+    return (maxItsNewton == 0 || it == 0) ? 1 : it;
+}
+
+/*
+template<int dim, class VecType>
+double ImplicitRomTsDesc<dim>::meritFunction(VecType vec){
+    VecType x(this->domain->getNodeDistInfo());
+    VecType res(this->domain->getNodeDistInfo());
+    int it = 0;
+    computeFunction(it, x, res);
+    return res.norm();
+}
+*/
+
+template<int dim>
+double ImplicitEmbeddedRomTsDesc<dim>::lineSearch(int it, DistSVec<double, dim> &U, Vec<double> &reduced_dU, double alpha_init, double rho, double c, double absIncMax) {
+    DistSVec<double, dim> residual(this->domain->getNodeDistInfo());
+    DistSVec<double, dim> U_temp(this->domain->getNodeDistInfo());
+    DistSVec<double, dim> dU(this->domain->getNodeDistInfo());
+    DistSVec<double, dim> masked_dU(this->domain->getNodeDistInfo());
+    masked_dU = 0.0;
+    U_temp = 0.0;
+    dU = 0.0;
+    expandVector(reduced_dU, dU);
+    maskVector(dU, this->distLSS->getIsActive(), masked_dU);
+    // initialization
+    computeFunction(it, U, residual);
+    double residual_init = residual.norm();
+    double alpha = alpha_init;
+    // iteration
+    while (true) {
+        U_temp = U + alpha * masked_dU;
+        fixSolution(U, dU); // necessary to make sure the U is on the manifold.
+        computeFunction(it, U_temp, residual);
+        if(residual.norm() < (1.0 - 2 * alpha * c) * residual_init || alpha < absIncMax) //todo: check this against hfm run
+            break;
+        alpha *= rho;
+    }
+    return alpha;
+}
+
+template<int dim>
+void ImplicitEmbeddedRomTsDesc<dim>::_computeFunction(int it, Vec<double> &U, DistSVec<double, dim> &F){
+    DistSVec<double, dim> temp(this->domain->getNodeDistInfo());
+    temp = 0.0;
+    expandVector(U, temp);
+    DistSVec<double, dim> masked_temp(this->domain->getNodeDistInfo());
+    maskVector(temp, this->distLSS->getIsActive(), masked_temp);
+    F = masked_temp;
+}
+
+/**
+ * basic backtracking line search
+ */
+template<int dim>
+double ImplicitEmbeddedRomTsDesc<dim>::lineSearch(int it, DistSVec<double, dim> &U, DistSVec<double, dim> &dU, double alpha_init, double rho, double c, double absIncMax) {
+    DistSVec<double, dim> residual(this->domain->getNodeDistInfo());
+    DistSVec<double, dim> U_temp(this->domain->getNodeDistInfo());
+    it = 0;
+    computeFunction(it, U, residual);
+    double residual_init = residual.norm();
+    double alpha = alpha_init;
+    while (true) {
+        U_temp = U + alpha * dU;
+        fixSolution(U, dU); // necessary to make sure the U is on the manifold.
+        computeFunction(it, U_temp, residual);
+        if(residual.norm() < (1.0 - 2 * alpha * c) * residual_init || alpha < absIncMax) //todo: check this against hfm run
+            break;
+        alpha *= rho;
+    }
+    return alpha;
+}
+
+/**
+ * compute the residual of function
+ * todo: implement move semantics for DistSVec to enable pass by reference.
+ * problem is I need to to call parent function of the same name
+ */
+template<int dim>
+void ImplicitEmbeddedRomTsDesc<dim>::computeFunction(int it, DistSVec<double, dim> &Q, DistSVec<double, dim> &rhs) {
+    DistSVec<double, dim> temp(this->domain->getNodeDistInfo());
+    super::computeFunction(it, Q, temp);
+    maskVector(temp, this->distLSS->getIsActive(), rhs);
+}
+
 /* See ImplicitEmbeddedCoupledTsDesc and ImplicitRomTsDesc
  * super::computeJacobian(it, Q, F), result is this->mvp;
  * this->computeJacobian(it, Q, F), retsult in this->Jacobian;
  * */
 template<int dim>
 void ImplicitEmbeddedRomTsDesc<dim>::computeJacobian(int it, DistSVec<double, dim> &Q, DistSVec<double, dim> &F) {
-    //this->printf(DEBUG, " ... entering parent class probDesc->computeJacobian()\n");
-    //super::computeJacobian(it, Q, F);
-    //this->printf(DEBUG, " ... leaving parent class  probDesc->computeJacobian()\n");
-    this->printf(DEBUG, " ... entering function probDesc->computeJacobian()\n");
+    this->printf(DEBUG, " ... entering parent class probDesc->computeJacobian()\n");
+    super::computeJacobian(it, Q, F);
+    this->printf(DEBUG, " ... leaving parent class probDesc->computeJacobian()\n");
+    this->printf(DEBUG, " ... entering child class probDesc->computeJacobian()\n");
     MatVecProdH1<dim, double, dim> *approximateJacobian = dynamic_cast<MatVecProdH1<dim, double, dim> *>(this->Jacobian);
     if (approximateJacobian)
         approximateJacobian->clearGhost();
@@ -155,14 +283,17 @@ void ImplicitEmbeddedRomTsDesc<dim>::computeJacobian(int it, DistSVec<double, di
     // todo: modify this for embedded case as well? use EmbeddedDistSVec
     for(int i = 0; i < this->reducedDimension; i++){
         Jacobian->apply(reducedBasis[i], reducedJacobian[i]);
+        DistSVec<double, dim> tempVec(this->domain->getNodeDistInfo());
+        tempVec = reducedJacobian[i];
+        maskVector(tempVec, this->distLSS->getIsActive(), reducedJacobian[i]);
+        //embedded_apply(Jacobian, reducedBasis[i], temp_reducedJacobian[i]);
         //this->printf(DEBUG, " check %d-th reduced basis (norm is %e), first 5 entries\n", i, reducedJacobian[i].norm());
         //double *entry = this->reducedJacobian[i](0)[0];
         //for (int j = 0; j < dim; j++)
         //    this->printf(DEBUG, "%e\n", entry[j]);
         //checkMVP(it, Q, reducedBasis[i], reducedJacobian[i]);
     }
-
-    this->printf(DEBUG, " ... leaving function probDesc->computejacobian()\n");
+    this->printf(DEBUG, " ... leaving child class probDesc->computejacobian()\n");
 }
 
 /*
@@ -203,7 +334,7 @@ template<int dim>
 void ImplicitEmbeddedRomTsDesc<dim>::outputMatrix(char *fn, VecSet< DistSVec<double, dim> > &A){
     int N = A.numVectors();
     int M = A[0].size();
-    this->printf(DEBUG, " outputMatrix: (dim, M, N) = (%d, %d, %d)", dim, M, N);
+    this->printf(DEBUG, " outputMatrix: (dim, M, N) = (%d, %d, %d)\n", dim, M, N);
     for(int i = 0; i < N; i++) {
         this->domain->writeVectorToFile(fn, i, 0.0, A[i]);
     }
@@ -218,90 +349,67 @@ void ImplicitEmbeddedRomTsDesc<dim>::outputVector(char *fn, DistSVec<double, dim
     this->domain->writeVectorToFile(fn, 0, 0.0, b);
 }
 
-/*
+
+/**
+ * solve Jx - b = 0 for x, where J is this->reducedJacobian,
+ */
+
 template<int dim>
-int ImplicitEmbeddedRomTsDesc<dim>::solveLinearSystem(int it, DistSVec<double, dim> &b,
-                                                       DistSVec<double, dim> &dQ) {
-    this->printf(DEBUG, " ... entering parent class probDesc->solveLinearSystem()\n");
-    super::computeJacobian(it, b, dQ);
-    this->printf(DEBUG, " ... leaving parent class  probDesc->solveLinearSystem()\n");
-    this->printf(DEBUG, " ... entering child class probDesc->solveLinearSystem()\n");
-
-    double t0 = this->timer->getTime();
-
-    this->embeddeddQ = 0.0;
-    //this->embeddedB.ghost() = 0.0;
-    this->embeddedB = 0.0;
-    this->embeddedB.real() = b;
-
-    if (this->modifiedGhidaglia)
-        this->embeddedB.hh() = -1.0*(*this->hhResidual);
-
-    Vec<double> rom_b(this->reducedDimension, NULL);
-    Vec<double> rom_dQ(this->reducedDimension, NULL);
-    rom_dQ = 0.0;
-    projectVector(this->reducedBasis, b, rom_b);
-    rom_ksp->setup(it, this->maxItsNewton, rom_b);
-    int lits = rom_ksp->solve(rom_b, rom_dQ);
-
-    if(lits == rom_ksp->maxits) this->errorHandler->localErrors[ErrorHandler::SATURATED_LS] += 1;
-
-    DistSVec<double, dim> result(this->domain->getNodeDistInfo());
-    expandVector(rom_dQ, result);
-    DistSVec<double, dim> difference(this->domain->getNodeDistInfo());
-    difference = result - dQ;
-    this->printf(DEBUG, " ... fom result is %e, rom result is %e and difference is %e\n", dQ.norm(), result.norm(), difference.norm());
-    this->embeddedU.ghost() += this->embeddeddQ.ghost();
-    if (this->modifiedGhidaglia) {
-        this->embeddedU.hh() += this->embeddeddQ.hh();
-
-        *this->bcData->getBoundaryStateHH() = this->embeddedU.hh();
-    }
-
-    this->timer->addKspTime(t0);
-    this->printf(DEBUG, " ... leaving child class probDesc->solveLinearSystem()\n");
-
-    return lits;
-
+int ImplicitEmbeddedRomTsDesc<dim>::solveReducedLinearSystem(int it, DistSVec<double, dim> &rhs, Vec<double> &reduced_dQ){
+    rhs *= -1.0;
+    _solveLinearSystem(it, rhs, reduced_dQ);
+    return it;
 }
-*/
+
 
 /**
  * solve Jx = b for x, where J is this->mvp or this->jacobian
  * parent class result in DistSVec dQ_prime;
- * child class result in dQ;
+ * child scalapack result in Vec<double> this->reducedNewtonDirection;
+ * child normal equation result in Vec<double> newDirection;
  */
 
 template<int dim>
 int ImplicitEmbeddedRomTsDesc<dim>::solveLinearSystem(int it, DistSVec<double, dim> &rhs,
                                                        DistSVec<double, dim> &dQ) {
     // step 0: print linear system to file
+    /*
     char filename[256];
     sprintf(filename, "Jacobian%d", it);
     this->outputMatrix(filename, this->reducedJacobian);
     sprintf(filename, "RightHandSide%d", it);
     this->outputVector(filename, rhs);
-    /*
+     */
+    // step 0: check if masked_rhs differs from actual rhs
+    DistSVec<double, dim> masked_rhs(this->domain->getNodeDistInfo());
+    maskVector(rhs, this->distLSS->getIsActive(), masked_rhs);
+    DistSVec<double, dim> rhs_difference(this->domain->getNodeDistInfo());
+    rhs_difference = masked_rhs - rhs;
+    this->printf(DEBUG, " ... difference between masked and unmasked is %f\n", rhs_difference.norm());
+
     // step 1: compute using parent class
-    this->printf(DEBUG, " debugging ImplicitEmbeddedRomTsDesc::solveLinearSystem: calling parent method\n");
+    this->printf(DEBUG, " debugging ImplicitEmbeddedRomTsDesc::solveLinearSystem: entering parent method\n");
     DistSVec<double, dim> dQ_prime(this->domain->getNodeDistInfo());
     super::solveLinearSystem(it, rhs, dQ_prime);
-    this->printf(DEBUG, " debugging ImplicitEmbeddedRomTsDesc::solveLinearSystem: done calling parent method\n");
-    */
+    this->printf(DEBUG, " debugging ImplicitEmbeddedRomTsDesc::solveLinearSystem: leaving parent method\n");
 
     // step 2: compute using scalapack
     int k = this->reducedDimension;
     this->printf(DEBUG, " ... calling parallelLSMultiRHS\n");
-    RefVec<DistSVec<double, dim> > rhs_temp(rhs);
+    RefVec<DistSVec<double, dim> > rhs_temp(masked_rhs);
     LeastSquareSolver->parallelLSMultiRHS(this->reducedJacobian, rhs_temp, this->reducedDimension, 1, this->result);
-    //this->printf(DEBUG, " ... least square solver done, reduced newton direction is %p\n", (void *) &this->reducedNewtonDirection);
+    this->printf(DEBUG, " ... least square solver done, reduced newton direction is %p\n", (void *) &this->reducedNewtonDirection);
     for(int i = 0; i < k; i++)
         this->reducedNewtonDirection[i] = -(this->result)[0][i];
-    /*
+    DistSVec<double, dim> lapack_dQ(this->domain->getNodeDistInfo());
+    expandVector(this->reducedNewtonDirection, lapack_dQ);
+    DistSVec<double, dim> masked_lapack_dQ(this->domain->getNodeDistInfo());
+    maskVector(lapack_dQ, this->distLSS->getIsActive(), masked_lapack_dQ);
+
     // step 3: compute using normal equation
     this->printf(DEBUG, " ... calling GenFullM normal equation solver\n");
     Vec<double> newdirection(k);
-    this->_solveLinearSystem(it, rhs, newdirection);
+    this->_solveLinearSystem(it, masked_rhs, newdirection);
     Vec<double> difference = this->reducedNewtonDirection - newdirection;
     this->printf(DEBUG, " ... normal eqn: %f, parallelLS: %f\n", newdirection.norm(), reducedNewtonDirection.norm());
     //int sampled_coordinate[5] = {0, 3, 13, 23, 37};
@@ -310,8 +418,12 @@ int ImplicitEmbeddedRomTsDesc<dim>::solveLinearSystem(int it, DistSVec<double, d
     }
     this->printf(DEBUG, " ... comparing normal equation and parallelLS difference: answer is %f\n", difference.norm());
     this->printf(DEBUG, " ... reduced newton search direction expanded into dQ\n");
-    expandVector(newdirection, dQ);
+    DistSVec<double, dim> normal_dQ(this->domain->getNodeDistInfo());
+    expandVector(newdirection, normal_dQ);
+    DistSVec<double, dim> masked_normal_dQ(this->domain->getNodeDistInfo());
+    maskVector(normal_dQ, this->distLSS->getIsActive(), masked_normal_dQ);
 
+    /*
     // step 4: compare their values:
     DistSVec<double, dim> error1(this->domain->getNodeDistInfo());
     DistSVec<double, dim> error2(this->domain->getNodeDistInfo());
@@ -322,7 +434,7 @@ int ImplicitEmbeddedRomTsDesc<dim>::solveLinearSystem(int it, DistSVec<double, d
     this->printf(DEBUG, " leaving probDesc->solveLinearSystem(), answer set to HFM\n");
     dQ = dQ_prime;
     */
-    expandVector(this->reducedNewtonDirection, dQ);
+    dQ = masked_normal_dQ;
     return it;
 }
 
@@ -430,6 +542,18 @@ void ImplicitEmbeddedRomTsDesc<dim>::test(){
     }
 }
 
+template<int dim>
+void ImplicitEmbeddedRomTsDesc<dim>::embedded_apply(MatVecProd<dim, dim> *A, DistSVec<double, dim> &x, DistSVec<double, dim> &result) {
+    this->embeddeddQ = 0.0;
+    this->embeddedB = 0.0;
+
+    this->embeddeddQ.real() = x; // todo: set ghost values to zero
+    this->embeddeddQ.ghost() = 0.0;
+    A->apply(this->embeddeddQ, this->embeddedB);
+
+    result = this->embeddeddQ.real();
+}
+
 
 /**
  * internal method of solving linear system
@@ -465,4 +589,25 @@ int ImplicitEmbeddedRomTsDesc<dim>::_solveLinearSystem(int it , DistSVec<double,
 
     return 0;
 
+}
+
+/**
+ * internal method of applying masking
+ */
+template<int dim>
+void ImplicitEmbeddedRomTsDesc<dim>::maskVector(DistSVec<double, dim> &vec, DistVec<bool> &mask, DistSVec<double, dim> &buffer){
+#pragma omp parallel for
+    for(int iSub = 0; iSub < vec.numLocSub(); iSub++){
+        bool *isActive = mask.subData(iSub);
+        double (*temp)[dim] = vec.subData(iSub);
+        double (*buf)[dim] = buffer.subData(iSub);
+        for (int iNode = 0; iNode < vec.subSize(iSub); iNode++){
+            if (isActive[iNode]) {
+                for(int k = 0; k < dim; k++)
+                    buf[iNode][k] = temp[iNode][k];
+            } else
+                for(int k = 0; k < dim; k++)
+                    buf[iNode][k] = 0.0;
+        }
+    }
 }

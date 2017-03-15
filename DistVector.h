@@ -6,6 +6,7 @@
 #include <DistInfo.h>
 #include <complex>
 #include <cmath>
+#include <utility>
 
 typedef std::complex<double> bcomp;
 //------------------------------------------------------------------------------
@@ -799,6 +800,7 @@ public:
 
   DistSVec(const DistInfo &);
   DistSVec(const DistSVec<Scalar,dim> &);
+//    DistSVec(DistSVec<Scalar,dim>&&);    //move constructor, since C++11, not supported by intel 13.0
   DistSVec(const DistInfo &, Scalar (*)[dim]);
   ~DistSVec();
 
@@ -812,6 +814,7 @@ public:
 
 
   DistSVec<Scalar,dim> &operator=(const DistSVec<Scalar,dim> &);
+//    DistSVec<Scalar, dim> &operator=(DistSVec<Scalar,dim>&&);        // move assignment, since C++11, not supported by intel 13.0
   DistSVec<Scalar,dim> &operator+=(const DistSVec<Scalar,dim> &);
   DistSVec<Scalar,dim> &operator-=(const DistSVec<Scalar,dim> &);
   DistSVec<Scalar,dim> &operator*=(const DistSVec<Scalar,dim> &);
@@ -859,7 +862,7 @@ public:
 
   void set(const Scalar *);
   
-  void restrict();
+  void killSlave();
 
   void average();
 
@@ -918,6 +921,20 @@ DistSVec<Scalar,dim>::DistSVec(const DistSVec<Scalar,dim> &y) :
   createSubVec();
 
 }
+
+//------------------------------------------------------------------------------
+/* move constructor for rvalue : destory the source reference to the heap memory. not supported by intel 13.0 compiler
+template<class Scalar, int dim>
+DistSVec<Scalar,dim>::DistSVec(DistSVec<Scalar,dim> &&y) :
+        SVec<Scalar,dim>(y.size()), distInfo(y.distInfo), subVec(y.subVec)
+{
+  for(int i = 0; i < distInfo.numGlobSub; ++i){
+    subVec[i] = y.subVec[i];
+    y.subVec[i] = nullptr;
+  }
+  y.subVec = nullptr;
+}
+*/
 
 //------------------------------------------------------------------------------
 
@@ -1232,6 +1249,19 @@ DistSVec<Scalar,dim>::operator/=(const DistVec<Scalar> &y)
 
 }
 
+//------------------------------------------------------------------------------
+/* move assignment for rvalue, since C++11, not supported by intel 13.0
+template<class Scalar, int dim>
+inline
+DistSVec<Scalar,dim> &
+DistSVec<Scalar,dim>::operator=(DistSVec<Scalar,dim> &&y) {
+  for (int i = 0; i < distInfo.numGlobSub; ++i)
+    std::swap(subVec[i], y.subVec[i]);
+  std::swap(subVec, y.subVec);
+
+  return *this;
+}
+*/
 //------------------------------------------------------------------------------
 
 template<class Scalar, int dim>
@@ -1773,7 +1803,7 @@ DistSVec<Scalar,dim>::nonOverlapSize() const
 template<class Scalar, int dim>
 inline
 void
-DistSVec<Scalar,dim>::restrict()
+DistSVec<Scalar,dim>::killSlave()
 {
 
   if (!distInfo.masterFlag) return;

@@ -84,7 +84,7 @@ public:
   Scalar *v;
 
   Vec();
-  Vec(int, Scalar * = 0);
+  explicit Vec(int, Scalar * = 0);
   Vec(const Vec<Scalar> &);
 
   template<class T>
@@ -828,7 +828,7 @@ public:
   bool locAlloc;
   Scalar (*v)[dim];
 
-  SVec(int, Scalar (*)[dim] = 0);
+  explicit SVec(int, Scalar (*)[dim] = 0);
   SVec(const SVec<Scalar,dim> &);
 
   template<class T>

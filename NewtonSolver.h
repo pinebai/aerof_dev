@@ -143,7 +143,7 @@ NewtonSolver<ProblemDescriptor>::solve(typename ProblemDescriptor::SolVecType &Q
       probDesc->writeBinaryVectorsToDiskRom(false, timeStep, it, &Q, &F);
     }
 
-    probDesc->recomputeFunction(Q, rhs);
+    probDesc->recomputeFunction(Q, rhs); // only for implicit level set methods; ignored in all other cases
 
     probDesc->computeJacobian(it, Q, F);
 
@@ -167,7 +167,7 @@ NewtonSolver<ProblemDescriptor>::solve(typename ProblemDescriptor::SolVecType &Q
        else 
          alpha = 1.0;
        // increment or backtract from previous trial 
-       probDesc->fixSolution(Q, dQ);
+       probDesc->fixSolution(Q, dQ); // dQ[i] = negative_pressure_or_density(Q[i] + dQ[i]) ? 0.0 : dQ[i];
        // compute updated residual
        rhs = Q;
        Q += dQ;

@@ -1016,7 +1016,7 @@ GmresSolver<VecType,MatVecProdOp,PrecOp,IoOp, ScalarT>::solve(VecSet<VecType> &b
       beta = sqrt(r*r);
 
       if (iter == 0) {
-        target = eps * beta;
+        target = eps[iVec] * beta;
         if (this->output) this->ioOp->fprintf(this->output, "Gmres iterations:\n");
         if (this->output) this->ioOp->fprintf(this->output, "  %d %e %e\n", 0, beta, target);
       } 

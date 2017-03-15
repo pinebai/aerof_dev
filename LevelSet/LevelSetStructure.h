@@ -20,7 +20,14 @@ struct LevelSetResult {
   int trNodes[3];
   Vec3D gradPhi;
   Vec3D normVel; //NOTE: this is the velocity, NOT normal velocity.
+  int structureType;
   double porosity;
+  double actuatorDiskPressureJump;
+	int actuatorDiskMethod;
+  double gamma;
+  bool isCorrectedMethod;
+  int actuatorDiskReconstructionMethod;
+
   Vec3D dnds;
   double dads;
 
@@ -28,7 +35,13 @@ struct LevelSetResult {
     alpha = xi[0] = xi[1] = -1.0;
     trNodes[0] = trNodes[1] = trNodes[2] = -1;
     gradPhi = normVel = dnds = 0.0;
+      structureType = 1;
     porosity = 0.0;
+    actuatorDiskPressureJump = 0.0;
+	  actuatorDiskMethod = 1;
+    actuatorDiskReconstructionMethod = -1;
+    gamma = 0.0;//error value
+    isCorrectedMethod = false;
     dads = 0.0;
    }
   
@@ -40,6 +53,12 @@ struct LevelSetResult {
 		    xi[0] = xi[1] = xi[2] = -1.0;
 		    trNodes[0] = trNodes[1] = trNodes[2] = -1;
 		    porosity = 0.0;
+	        structureType = 1;
+	   actuatorDiskMethod = 1;
+                    actuatorDiskPressureJump = 0.0;
+                    actuatorDiskReconstructionMethod = -1;
+                    gamma = 0.0;//error value
+                    isCorrectedMethod = false;
 		    dnds = 0.0;
 		    dads = 0.0;
 		   }

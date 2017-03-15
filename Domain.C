@@ -5619,17 +5619,15 @@ template<int dim>
 void Domain::setupUVolumesInitialConditions(const int volid, double UU[dim],
                                             DistSVec<double,dim> &U)
 {
-
-  // It is assumed that the initialization using volumes is only
-  // called to distinguish nodes that are separated by a material
-  // interface (structure). Thus one node cannot be at
-  // the boundary of two fluids. A fluid node then gets its
-  // id from the element id and there cannot be any problem
-  // for parallelization.
-#pragma omp parallel for
-  for (int iSub = 0; iSub < numLocSub; ++iSub)
-    subDomain[iSub]->setupUVolumesInitialConditions(volid, UU, U(iSub));
-
+  #pragma omp parallel for
+  for(int iSub = 0; iSub < numLocSub; ++iSub) {
+    subDomain[iSub]->setupUVolumesInitialConditions_Step1(volid, UU, U(iSub), *vecPat);
+  }
+  vecPat->exchange();
+  #pragma omp parallel for
+  for(int iSub = 0; iSub < numLocSub; ++iSub) {
+    subDomain[iSub]->setupUVolumesInitialConditions_Step2(*vecPat, U(iSub));
+  }
 }
 
 template<int dim>
@@ -6085,7 +6083,7 @@ void Domain::setExactBoundaryJacobian(DistSVec<double,dim>& U, DistSVec<double,3
 }
 
 //-------------------------------------------------------------------------------
-/**   Function Domain::computeMaterailMassEnergy
+/**   Function Domain::computeMaterailConservationScalars
    *  Mass is the mass vector to save mass of different fluid materials
    *  size is the numFluidPhases + 1(ghost node)
    *  U is the conservative state variables
@@ -6093,15 +6091,22 @@ void Domain::setExactBoundaryJacobian(DistSVec<double,dim>& U, DistSVec<double,3
    *  fluidId is the fluid Id vector for mutiphase problem, and NULL for single phase problem
    */
 template<int dim>
-void Domain::computeMaterialMassEnergy(double *Mass, double *Energy, int size, DistSVec<double,dim> &U, DistVec<double> &A, DistVec<int> *fluidId)
+void Domain::computeMaterialConservationScalars(double *Mass,  double *MomentumX, double *MomentumY, double *MomentumZ, double *Energy,
+                                       int size, DistSVec<double,dim> &U, DistVec<double> &A, DistVec<int> *fluidId)
 {
   double subMass[numLocSub][size];
-  double subEnergy[numLocSub][size];
+  double subMomentumX[numLocSub][size];
+    double subMomentumY[numLocSub][size];
+    double subMomentumZ[numLocSub][size];
+    double subEnergy[numLocSub][size];
 #pragma omp parallel for
   for (int iSub=0; iSub<numLocSub; ++iSub) {
     for(int i=0; i<size; i++) {
       subMass[iSub][i] = 0.0;
       subEnergy[iSub][i] = 0.0;
+        subMomentumX[iSub][i] = 0.0;
+        subMomentumY[iSub][i] = 0.0;
+        subMomentumZ[iSub][i] = 0.0;
     }
     double *subA = A.subData(iSub);
     double (*subU)[dim] = U.subData(iSub);
@@ -6117,17 +6122,27 @@ void Domain::computeMaterialMassEnergy(double *Mass, double *Energy, int size, D
         exit(-1);
       }
       //subU[i][0] is the density
-      subMass[iSub][myId] += subA[i]*subU[i][0];
-      subEnergy[iSub][myId] += subA[i]*subU[i][4];
+        subMass[iSub][myId] += subA[i]*subU[i][0];
+        subMomentumX[iSub][myId] += subA[i]*subU[i][1];
+        subMomentumY[iSub][myId] += subA[i]*subU[i][2];
+        subMomentumZ[iSub][myId] += subA[i]*subU[i][3];
+        subEnergy[iSub][myId] += subA[i]*subU[i][4];
     }
   }
 
   for(int iSub=0; iSub<numLocSub; ++iSub)
     for(int i=0; i<size; i++) {
-      Mass[i] += subMass[iSub][i];
-      Energy[i] += subEnergy[iSub][i];
+        Mass[i] += subMass[iSub][i];
+        MomentumX[i] += subMomentumX[iSub][i];
+        MomentumY[i] += subMomentumY[iSub][i];
+
+        MomentumZ[i] += subMomentumZ[iSub][i];
+        Energy[i] += subEnergy[iSub][i];
     }
 
-  com->globalSum(size, Mass);
-  com->globalSum(size, Energy);
+    com->globalSum(size, Mass);
+    com->globalSum(size, Energy);
+    com->globalSum(size, MomentumX);
+    com->globalSum(size, MomentumY);
+    com->globalSum(size, MomentumZ);
 }

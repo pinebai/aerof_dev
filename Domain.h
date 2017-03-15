@@ -1276,7 +1276,7 @@ public:
   void computeMaterialVolumes(double*, int, DistVec<double> &, DistVec<int> *);
 
   template<int dim>
-  void computeMaterialMassEnergy(double*, double*, int, DistSVec<double, dim> &, DistVec<double> &, DistVec<int> *);
+  void computeMaterialConservationScalars(double*, double*, double*, double*, double*, int, DistSVec<double, dim> &, DistVec<double> &, DistVec<int> *);
 
   void computeCharacteristicEdgeLength(DistSVec<double,3> &, double&, double&, double&, int&, const double, const double, const double, const double, const double, const double);
 

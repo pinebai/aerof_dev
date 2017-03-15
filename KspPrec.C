@@ -93,7 +93,7 @@ void JacobiPrec<Scalar,dim, Scalar2>::apply(DistSVec<Scalar2,dim> &y, DistSVec<S
   for (iSub = 0; iSub < this->numLocSub; ++iSub)
     A[iSub]->apply(y(iSub), x(iSub));
 
-  x.restrict();
+  x.killSlave();
 
   CommPattern<Scalar2> *vPat = this->getCommPat(x);
 #pragma omp parallel for
@@ -251,14 +251,14 @@ void IluPrec<Scalar,dim, Scalar2>::apply(DistSVec<Scalar2,dim> &y, DistSVec<Scal
   
   DistSVec<Scalar2, dim> tmp(y);
 
-  if (type == PcData::ASH) tmp.restrict();
+  if (type == PcData::ASH) tmp.killSlave();
   if (type == PcData::AAS) tmp.average();
 
 #pragma omp parallel for
   for (iSub = 0; iSub < this->numLocSub; ++iSub)
     A[iSub]->lusol(tmp(iSub), x(iSub));
 
-  if (type == PcData::RAS) x.restrict();
+  if (type == PcData::RAS) x.killSlave();
   if (type == PcData::AAS) x.average();
 
   CommPattern<Scalar2> *vPat = this->getCommPat(x);
@@ -288,7 +288,7 @@ void IluPrec<Scalar,dim, Scalar2>::applyT(DistSVec<Scalar2,dim> &y, DistSVec<Sca
 
   // switched RAS to ASH
 
-  if (type == PcData::ASH) tmp.restrict();
+  if (type == PcData::ASH) tmp.killSlave();
   if (type == PcData::AAS) tmp.average();
 
 #pragma omp parallel for
@@ -296,7 +296,7 @@ void IluPrec<Scalar,dim, Scalar2>::applyT(DistSVec<Scalar2,dim> &y, DistSVec<Sca
     A[iSub]->lusolTR(tmp(iSub), x(iSub));
 
   // switched ASH to RAS
-  if (type == PcData::RAS) x.restrict();
+  if (type == PcData::RAS) x.killSlave();
   if (type == PcData::AAS) x.average();
 
   CommPattern<Scalar2> *vPat = this->getCommPat(x);

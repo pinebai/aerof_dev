@@ -384,7 +384,7 @@ int EmbeddedAlternatingLeastSquare<dim>::initialization(VecSet<DistSVec<double, 
  */
 template<int dim>
 void EmbeddedAlternatingLeastSquare<dim>::ReducedOrderBasisConstruction() {
-    int n = min(min(this->numSnapshots, this->maxBasisSize), (*(this->snap)).numVectors());
+    int n = min(this->maxBasisSize, (*(this->snap)).numVectors());
     VecSet<DistSVec<double, dim> > *basisInitTemp = new VecSet<DistSVec<double, dim> >(n, this->domain.getNodeDistInfo());
     VecSet<DistSVec<double, dim> > basisInit = *basisInitTemp;
     int k = initialization(basisInit);
@@ -416,10 +416,10 @@ void EmbeddedAlternatingLeastSquare<dim>::ReducedOrderBasisConstruction(int _dim
     for(int i = 0; i < this->numMasters.size(); i++){
         nrow += this->numMasters[i];
     }
-    int ncol = min(this->numSnapshots, (*(this->snap)).numVectors());
+    int ncol = (*(this->snap)).numVectors();
     int k = _dim; //TODO: change it
     this->reducedDimension = _dim; //TODO: change it
-    this->com->fprintf(stderr, "... (M, N) is [%d, %d], reduced dimension is %d\n", nrow, ncol, _dim);
+    this->com->fprintf(stderr, "... (M, N) is [%d, %d], reduced dimension is %d\n", nrow, ncol, this->reducedDimension);
     // set up X, M
     VecSet< DistSVec<double, dim> > Snap = *(this->snap);
     VecSet< DistSVec<char, dim> > Mask = *(this->mask);
