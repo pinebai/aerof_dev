@@ -130,11 +130,11 @@ public:
 // Included (MB)
   void updateSA(DistSVec<double,3> &, DistSVec<double,3> &, double &);
   void rstVar(IoData &ioData);
-  virtual void computeDerivativeOfNodeValue(DistSVec<double,3> &, DistSVec<double,3> &)
-  {   Dev::Error(this->com,"Message",true);
-	  //std::cout<<"ERROR: header computeDerivativeOfNodeValue called\n"<<__FILE__<<__LINE__<<std::endl; exit(-1);
-  }//TODO BUUGHUNT
 
+  virtual void computeDerivativeOfNodeValue(DistSVec<double,3> &, DistSVec<double,3> &)
+  {
+    std::cout<<"ERROR: header computeDerivativeOfNodeValue called"<<std::endl; exit(-1);
+  }
   virtual void computeNodeWallValues(DistSVec<double,3> &)
   {std::cout<<"ERROR: header computeNodeWallValues called"<<std::endl; exit(-1);}//TODO BUUGHUNT
 
@@ -191,6 +191,7 @@ private:
 
 public:
 
+  void computeDerivativeOfNodeValue(DistSVec<double,3> &, DistSVec<double,3> &);
   DistBcDataEuler(IoData &, VarFcn *, Domain *, DistSVec<double,3> &);
   ~DistBcDataEuler() {}
 

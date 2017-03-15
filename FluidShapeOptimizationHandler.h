@@ -224,6 +224,7 @@ public:
     L[0] =  F[0]*cos_a*cos_b + F[1]*-cos_a*sin_b + F[2]*sin_a;
     L[1] =  F[0]*sin_b       + F[1]*cos_b;
     L[2] = -F[0]*sin_a*cos_b + F[1]*sin_a*sin_b + F[2]*cos_a;
+    L[0] =  L[0]*-1.0;
     //TODO old version
 //    L[0] =  F[0]*cos_a*cos_b + F[1]*cos_a*sin_b + F[2]*sin_a;
 //    L[1] = -F[0]*sin_b       + F[1]*cos_b;

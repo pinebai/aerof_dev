@@ -1861,7 +1861,7 @@ struct SensitivityAnalysis {
   enum FixSolution {NONEFIX = 0, PREVIOUSVALEUSFIX = 1} fixsol;
   enum AdaptiveEpsFSI {OFF_ADAPTIVEEPSFSI = 0, ON_ADAPTIVEEPSFSI = 1} adaptiveEpsFSI;
 
-  enum SparseComputation {OFF_SPARSE = 0, ON_SPARSE = 1} sparseComputation;//TODO what was the point here again
+  //enum SparseComputation {OFF_SPARSE = 0, ON_SPARSE = 1} sparseComputation;//TODO what was the point here again
 
   double machref;
   double alpharef;

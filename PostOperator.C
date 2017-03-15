@@ -790,7 +790,7 @@ void PostOperator<dim>::computeDerivativeOfForceAndMoment(Vec3D &x0, DistSVec<do
 
 // Included (YC)
 // computes the derivative of non-dimensional forces and moments
-
+// spare implementation
 template<int dim>
 void PostOperator<dim>::computeDerivativeOfForceAndMoment(dRdXoperators<dim> *dRdXop, DistSVec<double,3> &dX,
                                                           DistSVec<double,dim> &dU, double dS[3], DistSVec<double,3> &dGradP,
@@ -806,7 +806,7 @@ void PostOperator<dim>::computeDerivativeOfForceAndMoment(dRdXoperators<dim> *dR
   }
 
 #pragma omp parallel for
-  for (int iSub = 0; iSub < numLocSub; ++iSub) {
+  for (int iSub = 0; iSub < numLocSub; ++iSub) {//llooping over all subdomains
     dRdXop->dVdU[iSub]->apply(dU(iSub), (*dV)(iSub));
     Vec3D *dfi = new Vec3D[numSurf];
     Vec3D *dmi = new Vec3D[numSurf];
@@ -820,10 +820,12 @@ void PostOperator<dim>::computeDerivativeOfForceAndMoment(dRdXoperators<dim> *dR
     }
 
     subDomain[iSub]->computeDerivativeOfForceAndMoment(dRdXop->dFidGradP[iSub],
-                                                       dRdXop->dFidX[iSub], dRdXop->dFidV[iSub],
-                                                       dRdXop->dFvdX[iSub], dRdXop->dFvdV[iSub],
-                                                       dRdXop->dFidS[iSub], dRdXop->dMidGradP[iSub], dRdXop->dMidX[iSub],
-                                                       dRdXop->dMidV[iSub], dRdXop->dMidS[iSub], dRdXop->dMvdX[iSub], dRdXop->dMvdV[iSub],
+                                                       dRdXop->dFidX[iSub],     dRdXop->dFidV[iSub],
+                                                       dRdXop->dFvdX[iSub],     dRdXop->dFvdV[iSub],
+                                                       dRdXop->dFidS[iSub],
+                                                       dRdXop->dMidGradP[iSub], dRdXop->dMidX[iSub],
+                                                       dRdXop->dMidV[iSub],     dRdXop->dMidS[iSub],
+                                                       dRdXop->dMvdX[iSub],     dRdXop->dMvdV[iSub],
                                                        dX(iSub), (*dV)(iSub), dS, dGradP(iSub),
                                                        dfi, dmi, dfv, dmv, hydro);
 
@@ -841,7 +843,7 @@ void PostOperator<dim>::computeDerivativeOfForceAndMoment(dRdXoperators<dim> *dR
     delete [] dmi;
     delete [] dfv;
     delete [] dmv;
-  }
+  }//end loop over all subdomains
 
   for(iSurf = 0; iSurf < numSurf; ++iSurf) {
 //#pragma omp critical

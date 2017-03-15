@@ -6352,9 +6352,10 @@ void SubDomain::computeDerivativeOfForceAndMoment(RectangularSparseMat<double,3,
   dFvSVec[0][0] = dFv[0][0];
   dFvSVec[0][1] = dFv[0][1];
   dFvSVec[0][2] = dFv[0][2];
-  dSSVec[0][0] = dS[0];
-  dSSVec[0][1] = dS[1];
-  dSSVec[0][2] = dS[2];
+  dSSVec[0][0]  = dS[0];
+  dSSVec[0][1]  = dS[1];
+  dSSVec[0][2]  = dS[2];
+
   dFidV->apply(dV, dummy);
   dFiSVec += dummy;
   dFidGradP->apply(dGradPSVec, dummy);

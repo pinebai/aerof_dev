@@ -3326,7 +3326,7 @@ void SensitivityAnalysis::setup(const char *name, ClassAssigner *father)
   new ClassToken<SensitivityAnalysis>(ca, "FixSolution",    this, reinterpret_cast<int SensitivityAnalysis::*>(&SensitivityAnalysis::fixsol), 2, "None", 0, "PreviousValues", 1);
   new ClassInt<SensitivityAnalysis>(ca, "AverageStateIterations", this, &SensitivityAnalysis::avgsIt);
 
-  new ClassToken<SensitivityAnalysis>(ca, "SparseComputation", this, reinterpret_cast<int SensitivityAnalysis::*>(&SensitivityAnalysis::sparseComputation), 2, "Off", 0, "On", 1);
+  //new ClassToken<SensitivityAnalysis>(ca, "SparseComputation", this, reinterpret_cast<int SensitivityAnalysis::*>(&SensitivityAnalysis::sparseComputation), 2, "Off", 0, "On", 1);
 
   //TODO delete line BUGHUNT
   new ClassStr<SensitivityAnalysis>(ca, "tempStateDeriv", this, &SensitivityAnalysis::tempStateDeriv);
