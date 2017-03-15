@@ -25,7 +25,6 @@
 template<int dim>
 void startNavierStokesCoupledSolver(IoData &ioData, GeoSource &geoSource, Domain &domain)
 {
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;
   Communicator* com = domain.getCommunicator();
 
   domain.createVecPat(dim, &ioData);
@@ -39,7 +38,6 @@ void startNavierStokesCoupledSolver(IoData &ioData, GeoSource &geoSource, Domain
   }
   //Sensitivity analysis on a provided steady state solution
   else if (ioData.problem.alltype == ProblemData::_SENSITIVITY_ANALYSIS_) {
-      std::cout<<__FILE__<<":"<<__LINE__<<std::endl;
       FluidShapeOptimizationHandler<dim> fsoh(ioData, geoSource, &domain);
 
 //Ori

@@ -1906,10 +1906,9 @@ bool FemEquationTermDES::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], doub
   bool porousmedia = false;
   sleep(1);//TODO delete line
 
-  //fprintf(stderr, "***** FemEquationTermDesc::computeDerivativeOfVolumeTerm");//TODO uncomment line
-  //fprintf(stderr, " >> Function not defined for TermDES *****\n");//TODO uncomment line
+  fprintf(stderr, "***** FemEquationTermDesc::computeDerivativeOfVolumeTerm");//TODO uncomment line
+  fprintf(stderr, " >> Function not defined for TermDES *****\n");//TODO uncomment line
 
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
   sleep(10);//TODO delete line
   fflush(stdout);//TODO delete line
   exit(-1);

@@ -1750,12 +1750,10 @@ void FaceTria::computeJacobianGalerkinTerm(ElemSet &elems, FemEquationTerm *fet,
   // This test keeps only some faces
   // with a code in {BC_ADIABATIC_WALL_*, BC_ISOTHERMAL_WALL_*}
   if (!fet->doesFaceTermExist(code)) return;
-  //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
 
   Vec3D n;
   computeNormal(X, n);
 
-  //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
   if (fet->doesFaceNeedGradientP1Function()) {
     elems[elemNum].computeFaceJacobianGalerkinTerm(fet, nodeNum(), code, n, X, ctrlVol, d2wall, Vwall, V, A);
   } else {
@@ -1763,16 +1761,13 @@ void FaceTria::computeJacobianGalerkinTerm(ElemSet &elems, FemEquationTerm *fet,
     double *v[3] = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)]};
 
     double dRdU[3][neq*neq];
-    //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
     fet->computeJacobianSurfaceTerm(code, n, d2w, Vwall, v, reinterpret_cast<double *>(dRdU));
-    //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
     for (int k=0; k<3; ++k) {
       Scalar *Aii = A.getElem_ii(nodeNum(k));
       for (int m=0; m<neq*neq; ++m)
 	Aii[m] -= third * dRdU[k][m];
     }
 
-    //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
     for (int l=0; l<3; ++l) {
       int i, j;
       if (nodeNum( edgeEnd(l,0) ) < nodeNum( edgeEnd(l,1) )) {
@@ -1784,7 +1779,6 @@ void FaceTria::computeJacobianGalerkinTerm(ElemSet &elems, FemEquationTerm *fet,
 	j = edgeEnd(l,0);
       }
 
-      //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
       Scalar *Aij = A.getElem_ij(edgeNum(l));
       Scalar *Aji = A.getElem_ji(edgeNum(l));
 
@@ -1795,7 +1789,6 @@ void FaceTria::computeJacobianGalerkinTerm(ElemSet &elems, FemEquationTerm *fet,
 	  Aij[m] -= cij * dRdU[j][m];
       }
 
-      //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
       if (Aji) {
 
 	double cji = third / ctrlVol[ nodeNum(j) ];

@@ -646,9 +646,9 @@ void DistGeoState::compute(TimeData &timeData, DistSVec<double,3> &Xsdot,
 // Included (MB)
 void DistGeoState::computeDerivatives(DistSVec<double,3> &X,       //mesh position
                                       DistSVec<double,3> &dX,      //derivative of mesh positions
-                                      DistSVec<double,3> &Xsdot,   //Boundary velocity
-                                      DistSVec<double,3> &dXsdot,  //Derivative of boundary velocity
-                                      DistVec<double> &dCtrlVol)   //Derivative of control volumes
+                                      DistSVec<double,3> &Xsdot,   //boundary velocity
+                                      DistSVec<double,3> &dXsdot,  //derivative of boundary velocity
+                                      DistVec<double> &dCtrlVol)   //derivative of control volumes
 {
 
 //Remark: Error mesage for pointers

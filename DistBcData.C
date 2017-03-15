@@ -1404,7 +1404,7 @@ void DistBcDataEuler<dim>::setBoundaryConditionsLiquidLiquid(IoData &iod,
 
 template<int dim>
 void DistBcDataEuler<dim>::setBoundaryConditionsGasLiquid(IoData &iod,
-				DistSVec<double,3> &X)
+                                                          DistSVec<double,3> &X)
 {
   int gas = 1, liq = 0;
 
@@ -1789,7 +1789,6 @@ void DistBcDataEuler<dim>::initializeSA(IoData &iod, DistSVec<double,3> &X,
                                         DistSVec<double,3> &dX,
                                         double & dM, double & dA, double & dB)//indicators for mach, alpha and beta sensitivity
 {
-  std::cout<<"DistBcDataEuler<dim>::initializeSA called with dmach of: "<<dM<<std::endl;//TODO BUGHUNT
 
   if (iod.eqs.numPhase == 1){
     if (iod.eqs.fluidModel.fluid == FluidModelData::PERFECT_GAS)
@@ -1828,7 +1827,6 @@ void DistBcDataEuler<dim>::initializeSA(IoData &iod, DistSVec<double,3> &X,
   }
 //  double dUfacenorm = this->dUface->norm();
 //  if(dUfacenorm != 0) fprintf(stderr, " *********** norm of dUface is %e\n", dUfacenorm);
-  std::cout<<"DistBcDataEuler<dim>::initializeSA exited with dmach of: "<<dM<<std::endl;//TODO BUGHUNT
 
 }
 
@@ -1888,10 +1886,8 @@ DistBcDataSA<dim>::DistBcDataSA(IoData &iod, VarFcn *vf, Domain *dom, DistSVec<d
 		iod.problem.alltype == ProblemData::_ROM_SHAPE_OPTIMIZATION_ ||
 		iod.problem.alltype == ProblemData::_SENSITIVITY_ANALYSIS_) {
       dtmp = new DistSVec<double,2>(dom->getNodeDistInfo());
-      std::cout<<__FILE__<<__LINE__<<std::endl; //TODO delete line
     }
     else {
-	std::cout<<__FILE__<<__LINE__<<std::endl; //TODO delete line
       dtmp = 0;
     }
 

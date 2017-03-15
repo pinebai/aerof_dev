@@ -147,7 +147,7 @@ void ElemTet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, SVec<double,
   for(int i=0; i<4; ++i)
     for(int j=0; j<3; ++j) {
       diff[i][j] = ddp1dxj[i][j] - ddp1dxj3[i][j];
-      if(diff[i][j] > 1e-8) {//TODO BUGHUNT changed from 1e-12
+      if(diff[i][j] > 1e-8) {//TODO changed from 1e-12
         fprintf(stderr, "%s:%d diff for ddp1dxj in ElemTet::computeDerivativeOfGalerkinTerm is %e\n",__FILE__,__LINE__,diff[i][j]);
         exit(-1);
       }
@@ -180,9 +180,6 @@ void ElemTet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, SVec<double,
         dR[idx][k] += dpr[3*j+k-1];
     }
   }
-
-  //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
-  //fflush(stdout);
 }
 
 //------------------------------------------------------------------------------

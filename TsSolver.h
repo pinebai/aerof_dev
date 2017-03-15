@@ -155,7 +155,6 @@ int TsSolver<ProblemDescriptor>::fsaSolve(IoData &ioData)
 
   probDesc->computeMeshMetrics();//redundant, since this is already done in fsoInitialize
 
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;
   probDesc->fsoHandler(ioData, U);
 
 //TODO this is what it originally looked like.

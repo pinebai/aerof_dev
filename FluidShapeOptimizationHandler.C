@@ -84,7 +84,6 @@ dFaceNorm(dom->getFaceNormDistInfo()),
 dFaceNormVel(dom->getFaceNormDistInfo()),
 dGradP(dom->getNodeDistInfo())
 {
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;
   // Initialize
   step = 0;
 
@@ -551,7 +550,7 @@ void FluidShapeOptimizationHandler<dim>::fsoGetDerivativeOfEffortsFiniteDifferen
                                          DistSVec<double,dim> &dU,
                                          Vec3D &dForces,
                                          Vec3D &dMoments,
-                                         Vec3D &dL)//TODO JBHO
+                                         Vec3D &dL)
 {
 
   //
@@ -1430,8 +1429,8 @@ void FluidShapeOptimizationHandler<dim>::fsoAnalytical
   }
   else{//non-sparse routine
     std::cout<<"geoState->computeDerivatives X: "<<X.norm()<<"  dXdS: "<<dXdS.norm()<<"  dAdS: "<<dAdS.norm()<<std::endl;//TODO delete line
-    std::cout<<"\033[94mFULL this->bcData->getVelocityVector() "<<this->bcData->getVelocityVector().norm()<<std::endl;//TODO delete line
-    std::cout<<"\033[94mFULL this->bcData->getDerivativeOfVelocityVector() "<<this->bcData->getDerivativeOfVelocityVector().norm()<<std::endl;//TODO delete line
+    std::cout<<"\033[94mFULL this->bcData->getVelocityVector() \033[00m"<<this->bcData->getVelocityVector().norm()<<std::endl;//TODO delete line
+    std::cout<<"\033[94mFULL this->bcData->getDerivativeOfVelocityVector() \033[00m"<<this->bcData->getDerivativeOfVelocityVector().norm()<<std::endl;//TODO delete line
     this->geoState->computeDerivatives(X,
                                        dXdS,
                                        this->bcData->getVelocityVector(),            //velocity of the boundary nodes
@@ -1455,10 +1454,7 @@ void FluidShapeOptimizationHandler<dim>::fsoAnalytical
   }
   else//non-sparse version
   {
-	  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
       this->spaceOp->computeDerivativeOfResidual(X, dXdS, A, dAdS, U, DFSPAR[0], Flux, dFdS, this->timeState);
-
-      std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
   }
 
   this->spaceOp->applyBCsToDerivativeOfResidual(U, dFdS);
@@ -1779,9 +1775,6 @@ void FluidShapeOptimizationHandler<dim>::fsoInitialize(IoData &ioData, DistSVec<
 template<int dim>
 int FluidShapeOptimizationHandler<dim>::fsoHandler(IoData &ioData, DistSVec<double,dim> &U)
 {
-  std::cout<<"\033[93m"<<__FILE__<<":"<<__LINE__<<"\033[00m"<<std::endl;
-  //ioData.sa.method = SensitivityAnalysis::DIRECT;//TODO EVIL HACK
-
   // xmach      -  Mach number
   // alpha      -  pitch angle
   // teta       -  yaw angle
@@ -1820,7 +1813,6 @@ int FluidShapeOptimizationHandler<dim>::fsoHandler(IoData &ioData, DistSVec<doub
   }
   //Direct routines
   else if (ioData.sa.method == SensitivityAnalysis::DIRECT) {
-    std::cout<<__FILE__<<":"<<__LINE__<<std::endl;
     fsoSetUpLinearSolver(ioData, *this->X, *this->A, U, dFdS);
     if (ioData.sa.sensMesh  == SensitivityAnalysis::ON_SENSITIVITYMESH)  fso_on_sensitivityMesh(isSparse, ioData, U);
     if (ioData.sa.sensMach  == SensitivityAnalysis::ON_SENSITIVITYMACH)  fso_on_sensitivityMach(isSparse, ioData, U);
@@ -2473,16 +2465,13 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeDerivativesOfFluxAndSolution(
 
     DistSVec<double,dim> dFdS2(dFdS), diff(dFdS);
 
-    fsoAnalytical(isSparse, ioData, X, dXdS, A, U, dFdS);//TODO uncomment
-//Verification
-//    fsoSemiAnalytical(ioData, X, A, U, dFdS2);
-//    diff = dFdS2 - dFdS;
-//    this->com->fprintf(stderr, "dFdS = %e, dFdS2 = %e\n",dFdS.norm(), dFdS2.norm());
+    fsoAnalytical(isSparse, ioData, X, dXdS, A, U, dFdS);
+
   } else {
     fsoSemiAnalytical(ioData, X, A, U, dFdS);
   }
 
-  //TODO BUGHUNG writing the linear solver right hand side to disk,
+  //TODO BUGHUNT writing the linear solver right hand side to disk,
   //this is can than be postprocessed with sower and xp2exo
   if (ioData.sa.linsolverhs != NULL)
 	  this->output->writeAnyVectorToDisk(ioData.sa.linsolverhs,step,step,dFdS);
@@ -2599,9 +2588,6 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeSensitivities(
   double sboom = 0.0;
   double dSboom = 0.0;
 
-  std::cout<<"fsoComputeSensitivites end, dUdS_norm: "<<dUdS.norm()<<" dFdS_norm: "<<dFdS.norm()<<std::endl;//TODO delete line
-
-
 /*  // Compute Flux norm and derivative
   if (ioData.sa.homotopy == SensitivityAnalysis::ON_HOMOTOPY)
      this->computeFunction(0,U,Flux,true);
@@ -2622,7 +2608,6 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeSensitivities(
   // This function is simply writing to the disk.
   //
   //this->output->writeDerivativeOfFluxNormToDisk(step, actvar, normF2, dnormF2);
-  std::cout<<"\n=========Step equals: "<<step<<std::endl;//TODO delete line
   this->output->writeDerivativeOfForcesToDisk(step, actvar, F, dFds, M, dMds, sboom, dSboom);
   this->output->writeDerivativeOfLiftDragToDisk(step, actvar, L, dLdS);
 

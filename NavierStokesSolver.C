@@ -8,7 +8,6 @@
 
 void startNavierStokesSolver(IoData &ioData, GeoSource &geoSource, Domain &domain)
 {
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;
   Communicator* com = domain.getCommunicator();
   int numBurnableFluids = ProgrammedBurn::countBurnableFluids(ioData);
   if (ioData.problem.framework==ProblemData::EMBEDDED || ioData.problem.framework==ProblemData::EMBEDDEDALE) { //Trigger the embedded framework

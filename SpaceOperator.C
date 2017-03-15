@@ -989,7 +989,6 @@ void SpaceOperator<dim>::computeDerivativeOfResidual
 
   if (fet)
   {
-	std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
     domain->computeDerivativeOfGalerkinTerm(fet, *bcData, *geoState, X, dX, *V, *dV, dMach, dR);
     bcData->computeNodeValue(X);
     bcData->computeDerivativeOfNodeValue(X, dX);
@@ -1008,7 +1007,6 @@ void SpaceOperator<dim>::computeDerivativeOfResidual
       ctrlVol, dCtrlVol, *irey, *direy, fluxFcn, recFcn, *bcData, *geoState,
       X, dX, *V, *dV, *ngrad, egrad, dMach, dR
     );
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
 
 
   domain->getGradP(*ngrad);
@@ -1016,16 +1014,12 @@ void SpaceOperator<dim>::computeDerivativeOfResidual
 
   if (volForce)
   {
-    std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
     domain->computeVolumicForceTerm(volForce, ctrlVol, *V, R);
-    std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
     domain->computeDerivativeOfVolumicForceTerm(volForce, ctrlVol, dCtrlVol, *V, *dV, dR);
   }
 
   if(dvms) {
-    std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
     dvms->compute(fluxFcn, recFcn, fet, geoState->getConfig(), ctrlVol, *bcData, *geoState, timeState, X, U, *V, R, failsafe, rshift);
-    std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
     dvms->computeDerivative(fluxFcn, recFcn, fet, geoState->getConfig(), ctrlVol, *bcData, *geoState, timeState, X, U, *V, R, failsafe, rshift);
   }
 

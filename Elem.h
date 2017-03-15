@@ -1200,8 +1200,10 @@ public:
 
   // Included (YC) //TODO UNSURE
   template<int dim>
-  void computeDerivativeOperatorsOfGalerkinTerm(FemEquationTerm *, GeoState &, SVec<double,3> &,
-                                      		   SVec<double,dim> &, RectangularSparseMat<double,3,dim> &);
+  void computeDerivativeOperatorsOfGalerkinTerm(FemEquationTerm *,
+                                                GeoState &, SVec<double,3> &,
+                                                SVec<double,dim> &,
+                                                RectangularSparseMat<double,3,dim> &);
 
   template<int dim>
   void computeGalerkinTerm(FemEquationTerm *, GeoState &, SVec<double,3> &, 

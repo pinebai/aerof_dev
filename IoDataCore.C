@@ -637,7 +637,7 @@ ROMOutputData::ROMOutputData()
 
   overwriteNonlinearSnaps = OVERWRITE_OFF;
 
-  resjacfrequency = 0;  //TODO
+  resjacfrequency = 0;
 
 }
 
@@ -3328,7 +3328,6 @@ void SensitivityAnalysis::setup(const char *name, ClassAssigner *father)
 
   //new ClassToken<SensitivityAnalysis>(ca, "SparseComputation", this, reinterpret_cast<int SensitivityAnalysis::*>(&SensitivityAnalysis::sparseComputation), 2, "Off", 0, "On", 1);
 
-  //TODO delete line BUGHUNT
   new ClassStr<SensitivityAnalysis>(ca, "tempStateDeriv", this, &SensitivityAnalysis::tempStateDeriv);
   new ClassStr<SensitivityAnalysis>(ca, "LinSolveRHS", this, &SensitivityAnalysis::linsolverhs);
   new ClassStr<SensitivityAnalysis>(ca, "dFdS_final", this, &SensitivityAnalysis::dFdS_final);
@@ -5768,8 +5767,7 @@ void IoData::resetInputValues()
       if (ts.implicit.tmcoupling == ImplicitData::WEAK)
       {
         com->fprintf(stderr, " ----- SA >> Time.Implicit.TurbulenceModelCoupling set to Strong -----\n");
-        //TODO HACK; Temporarily disabled the following code, since I wanted to test, whether I can get SA-RANS working with weak coupling
-        //com->fprintf(stderr, " ----- SA >> Time.Implicit.TurbulenceModelCoupling set to Strong -----\n");
+        //In previous implementations SA could only be done strongly coupled
         //ts.implicit.tmcoupling = ImplicitData::STRONG;
       }
       //---------------

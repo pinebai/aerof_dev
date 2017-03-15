@@ -16,7 +16,6 @@ template<int dim>
 ImplicitTsDesc<dim>::ImplicitTsDesc(IoData &ioData, GeoSource &geoSource, Domain *dom) :
   TsDesc<dim>(ioData, geoSource, dom)
 {
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
 
   tag = 0;
 

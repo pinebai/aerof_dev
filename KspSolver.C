@@ -908,11 +908,6 @@ GmresSolver<VecType,MatVecProdOp,PrecOp,IoOp,ScalarT>::solveT(VecType &b, VecTyp
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
-
-
-
 }
 //------------------------------------------------------------------------------
 inline double myConj(double x)  { return x; }

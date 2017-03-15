@@ -27,7 +27,6 @@ ImplicitCoupledTsDesc<dim>::
 ImplicitCoupledTsDesc(IoData &ioData, GeoSource &geoSource, Domain *dom) :
   ImplicitTsDesc<dim>(ioData, geoSource, dom)
 {
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
 
   ImplicitData &implicitData = ioData.ts.implicit;
 
@@ -62,7 +61,6 @@ ImplicitCoupledTsDesc(IoData &ioData, GeoSource &geoSource, Domain *dom) :
   pc->exportMemory(&mp);
 
   this->mmh = this->createMeshMotionHandler(ioData, geoSource, &mp);
-  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;
 
 }
 
