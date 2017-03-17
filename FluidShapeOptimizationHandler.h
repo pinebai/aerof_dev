@@ -220,31 +220,29 @@ public:
     double cos_a = cos(ioData.bc.inlet.alpha);
     double sin_b = sin(ioData.bc.inlet.beta);
     double cos_b = cos(ioData.bc.inlet.beta);
-    //TODO my version
-    L[0] =  F[0]*cos_a*cos_b + F[1]*-cos_a*sin_b + F[2]*sin_a;
-    L[1] =  F[0]*sin_b       + F[1]*cos_b;
-    L[2] = -F[0]*sin_a*cos_b + F[1]*sin_a*sin_b + F[2]*cos_a;
-    L[0] =  L[0]*-1.0;
-    //TODO old version
-//    L[0] =  F[0]*cos_a*cos_b + F[1]*cos_a*sin_b + F[2]*sin_a;
-//    L[1] = -F[0]*sin_b       + F[1]*cos_b;
-//    L[2] = -F[0]*sin_a*cos_b - F[1]*sin_a*sin_b + F[2]*cos_a;
+    L[0] =  F[0]*cos_a*cos_b + F[1]*cos_a*sin_b + F[2]*sin_a;
+    L[1] = -F[0]*sin_b       + F[1]*cos_b;
+    L[2] = -F[0]*sin_a*cos_b - F[1]*sin_a*sin_b + F[2]*cos_a;
   };
 
-  void dForces2dLifts(IoData &ioData, Vec3D &dF,Vec3D &dL){
+  void dForces2dLifts(IoData &ioData,Vec3D &F, Vec3D &dF,Vec3D &dL){
     Forces2Lifts(ioData,dF,dL);
-    //second part of the product rule missing
-    //  if(DFSPAR[1]!=0.0){//alpha sensitivity
-    //    dL[0] +=  F[0]*-sin_a*cos_b + F[1]*sin_a*sin_b + F[2]*cos_a;
-    //    dL[1] +=  F[0]*0.0          + F[1]*0.0           + F[2]*0.0;
-    //    dL[2] +=  F[0]*-cos_a*cos_b + F[1]*cos_a*sin_b + F[2]*-sin_a;
-    //  }
-
-    //  if(DFSPAR[2]!=0.0){//beta sensitivity
-    //    dL[0] += F[0]*-cos_a*sin_b  + F[1]*-cos_a*cos_b + F[2]*0.0  ;
-    //    dL[1] += F[0]*cos_b         + F[1]*-sin_b       + F[2]*0.0  ;
-    //    dL[2] += F[0]*sin_a*sin_b   + F[1]*sin_a*cos_b  + F[2]*0.0  ;
-    //  }
+    double sin_a = sin(ioData.bc.inlet.alpha);
+    double cos_a = cos(ioData.bc.inlet.alpha);
+    double sin_b = sin(ioData.bc.inlet.beta);
+    double cos_b = cos(ioData.bc.inlet.beta);
+    double dsin_a = cos_a*DFSPAR[1], dcos_a = -sin_a*DFSPAR[1];
+    double dsin_b = cos_b*DFSPAR[2], dcos_b = -sin_b*DFSPAR[2];
+    double convfac = ((ioData.sa.angleRad == ioData.sa.OFF_ANGLERAD) && (DFSPAR[1] || DFSPAR[2])) ? perRad2perDeg : 1.0;
+    dL[0] += (F[0]*(dcos_a*cos_b + cos_a*dcos_b) +
+              F[1]*(dcos_a*sin_b + cos_a*dsin_b) +
+              F[2]*dsin_a                          )*convfac;
+  
+    dL[1] += (-F[0]*dsin_b + F[1]*dcos_b           )*convfac;
+  
+    dL[2] += (-F[0]*(dsin_a*cos_b + sin_a*dcos_b) -
+              F[1]*(dsin_a*sin_b + sin_a*dsin_b) +
+              F[2]*dcos_a                         )*convfac;
   };
 
 
