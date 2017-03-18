@@ -175,6 +175,8 @@ dGradP(dom->getNodeDistInfo())
   if (ioData.sa.sensMesh == SensitivityAnalysis::ON_SENSITIVITYMESH ||
       ioData.problem.alltype == ProblemData::_AEROELASTIC_SHAPE_OPTIMIZATION_) {
     mms = new TetMeshMotionSolver(ioData.dmesh, geoSource.getMatchNodes(),domain,0);
+    //this->com->fprintf(stderr, "===geoSource.getMatchNodes() size %d\n",geoSource.getMatchNodes()[0][0]->size());//TODO delte line
+    //this->com->fprintf(stderr, "===geoSource.getMatchNodes() totsize %d\n",geoSource.getMatchNodes()[0][0]->size());//TODO delete line
   } else mms = 0;
 
   length = ioData.output.transient.length;
@@ -2428,13 +2430,34 @@ void FluidShapeOptimizationHandler<dim>::fso_on_sensitivityMesh(bool isSparse, I
 
       // Updating the mesh
       dXdS = *this->X;
+      this->com->fprintf(stderr, "dXdS.norm after multiplication: %13.16e \n",dXdS.norm());
       mms->solve(dXdSb, dXdS);
+      this->com->fprintf(stderr, "dXdS.norm after solve: %13.16e \n",dXdS.norm());
+      this->com->fprintf(stderr, "dXdSb.norm:after solver %13.16e \n",dXdSb.norm());
       dXdS -= *this->X;
+      this->com->fprintf(stderr, "dXdS.norm: after sbtraction%13.16e \n",dXdS.norm());
+
+      double reldiff = (dXdS.norm()-dXdSb.norm())/dXdSb.norm();
+      this->com->fprintf(stderr, "Relative difference: %13.16e \n",reldiff);
+
+      if (reldiff<1e-14)
+      {
+        this->com->fprintf(stderr, "ERROR mesh-motion seems to be defect\n");
+        exit(-1);
+      }
 
       // Check that the mesh perturbation is propagated
       if (dXdS.norm() == 0.0) this->com->fprintf(stderr, "\n !!! WARNING !!! No Mesh Sensitivity Perturbation !!!\n\n");
 
+      //Computes dFdS
       fsoComputeDerivativesOfFluxAndSolution(ioData, *this->X, *this->A, U, false, isSparse);
+
+      //TODO BUGHUNT writing the linear solver right hand side to disk,
+      //this is can than be postprocessed with sower and xp2exo
+      if (ioData.sa.linsolverhs != NULL)
+        this->output->writeAnyVectorToDisk(ioData.sa.linsolverhs,step,step,dFdS);
+
+      //Solves linear system [dFdU]*[dUdS]=[dFdS] for [dUdS]
       fsoComputeSensitivities(isSparse, ioData, "Derivatives with respect to the mesh position:", ioData.sa.sensoutput, *this->X, U);
 
       dXdSb = 0.0;
@@ -2466,15 +2489,11 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeDerivativesOfFluxAndSolution(
     DistSVec<double,dim> dFdS2(dFdS), diff(dFdS);
 
     fsoAnalytical(isSparse, ioData, X, dXdS, A, U, dFdS);
+    //fsoSemiAnalytical(ioData, X, A, U, dFdS);
 
   } else {
     fsoSemiAnalytical(ioData, X, A, U, dFdS);
   }
-
-  //TODO BUGHUNT writing the linear solver right hand side to disk,
-  //this is can than be postprocessed with sower and xp2exo
-  if (ioData.sa.linsolverhs != NULL)
-	  this->output->writeAnyVectorToDisk(ioData.sa.linsolverhs,step,step,dFdS);
 
   // Computing the derivative of the fluid variables
   // with respect to the optimization variables
@@ -2559,7 +2578,7 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeSensitivities(
     fsoGetDerivativeOfEffortsFiniteDifference(ioData, X, dXdS, *this->A, U, dUdS, dFds, dMds,dLdS);
   }
   else {
-    fsoGetDerivativeOfEffortsAnalytical(isSparse, ioData, X, dXdS, U, dUdS, dFds, dMds, dLdS);//TODO uncomments
+    fsoGetDerivativeOfEffortsAnalytical(isSparse, ioData, X, dXdS, U, dUdS, dFds, dMds, dLdS);
   }
 
 
@@ -2625,12 +2644,14 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeSensitivities(
   if (ioData.sa.dFdS_final != NULL)
 	  this->output->writeAnyVectorToDisk(ioData.sa.dFdS_final,1,1,dFdS);
 
+  //TODO BUGHUNT
+
   this->output->writeBinaryDerivativeOfVectorsToDisk(
                 step+1,         //iteration index
                 actvar,         //variable type
                 DFSPAR,
                 *this->X,
-                dXdS,
+                dXdS,            //Why is this zero everywhere for shape sensitivity
                 U,               //state vector
                 dUdS,            //derivative of state vector w.r.t shape variable
                 this->timeState,

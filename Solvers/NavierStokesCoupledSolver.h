@@ -121,7 +121,7 @@ void startNavierStokesCoupledSolver(IoData &ioData, GeoSource &geoSource, Domain
   }
   else if (ioData.ts.type == TsData::IMPLICIT) {
     if (ioData.problem.solutionMethod == ProblemData::TIMESTEPPING) {
-      //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
+      std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
       ImplicitCoupledTsDesc<dim> tsDesc(ioData, geoSource, &domain);
       //std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
       TsSolver<ImplicitCoupledTsDesc<dim> > tsSolver(&tsDesc);

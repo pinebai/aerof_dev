@@ -1881,9 +1881,9 @@ void TsOutput<dim>::openAsciiFiles()
         fprintf(stderr, "*** Error: could not open \'%s\'\n", material_conservation_scalars);
         exit(1);
       }
-      fprintf(fpMaterialConservationScalars, "# TimeIteration ElapsedTime ");
+      fprintf(fpMaterialConservationScalars, "#TimeIteration ElapsedTime ");
       for(int i=0; i<numFluidPhases; i++)
-        fprintf(fpMaterialConservationScalars, "Mass[FID==%d] MomentumX[FID==%d] MomentumY[FID==%d] MomentumZ[FID==%d] Energy[FId==%d]", i,i,i,i,i);
+        fprintf(fpMaterialConservationScalars, "Mass[FID==%d] MomentumX[FID==%d] MomentumY[FID==%d] MomentumZ[FID==%d] Energy[FId==%d] ", i,i,i,i,i);
       fprintf(fpMaterialConservationScalars, "Mass[FID==%d(Ghost)] MomentumX[FID==%d(Ghost)] MomentumY[FID==%d(Ghost)] MomentumZ[FID==%d(Ghost)] "
               "Energy[FID==%d(Ghost)] TotalMass TotalMomentumX TotalMomentumY TotalMomentumZ TotalEnergy\n", numFluidPhases, numFluidPhases,numFluidPhases, numFluidPhases,numFluidPhases);
     }
@@ -3650,10 +3650,11 @@ void TsOutput<dim>::writeBinaryDerivativeOfVectorsToDisk(
 							 DistVec<double>* A)
 {
   int    step = it-1;
-  double tag  = (double)actvar;
+  //double tag  = (double)actvar;
+  double tag  = (double)step;
 
   if (dSolutions)
-    domain->writeVectorToFile(dSolutions, step, tag, dU);
+    domain->writeVectorToFile(dSolutions, step, actvar, dU);
 
   int i;
   for (i=0; i<PostFcn::DSSIZE; ++i) {
@@ -3661,7 +3662,7 @@ void TsOutput<dim>::writeBinaryDerivativeOfVectorsToDisk(
       if (!Qs) Qs = new DistVec<double>(domain->getNodeDistInfo());
       postOp->computeDerivativeOfScalarQuantity(static_cast<PostFcn::ScalarDerivativeType>(i), dS, X, dX, U, dU, *Qs, timeState);
       DistSVec<double,1> Qs1(Qs->info(), reinterpret_cast<double (*)[1]>(Qs->data()));
-      domain->writeVectorToFile(dScalars[i], step, tag, Qs1, &(dSscale[i]));
+      domain->writeVectorToFile(dScalars[i], step, tag, Qs1, &(dSscale[i]));//TODO try to change the tag
 
       //Match Properties
       if (static_cast<PostFcn::ScalarDerivativeType>(i) == PostFcn::DERIVATIVE_PRESSURE  &&
