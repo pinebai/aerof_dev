@@ -746,39 +746,16 @@ void FluidShapeOptimizationHandler<dim>::fsoGetDerivativeOfEffortsFiniteDifferen
   else {
     dF *= this->refVal->force;
     dM *= this->refVal->energy;
-    std::cout<<"===force reference value is: "<<this->refVal->force<<std::endl;//TODO delete line
-    std::cout<<"===Force value is: "<<Force<<std::endl;//TODO delete line
     std::cout<<"===Force deriv part 1: "<<dF[0]<<" "<<dF[1]<<" "<<dF[2]<<std::endl;//TODO delete line
     Vec3D t(F*dForce);
     std::cout<<"===Force deriv part 2: "<<t[0]<<" "<<t[1]<<" "<<t[2]<<std::endl;//TODO delete line
-    F*=dForce;
-    M*=dEnergy;
-    dForces=dF+F;
-    dMoments=dM+M;
+    dForces = dF + F*dForce;
+    dMoments = dM + M*dEnergy;
+    F *= this->refVal->force;
+    M *= this->refVal->energy;
   }
 
-  double sin_a = sin(ioData.bc.inlet.alpha);
-  double cos_a = cos(ioData.bc.inlet.alpha);
-  double sin_b = sin(ioData.bc.inlet.beta);
-  double cos_b = cos(ioData.bc.inlet.beta);
-
-  dL[0] =  dF[0]*cos_a*cos_b + dF[1]*cos_a*sin_b + dF[2]*sin_a;
-  dL[1] = -dF[0]*sin_b       + dF[1]*cos_b;
-  dL[2] = -dF[0]*sin_a*cos_b - dF[1]*sin_a*sin_b + dF[2]*cos_a;
-
-  double dsin_a = cos_a*DFSPAR[1], dcos_a = -sin_a*DFSPAR[1];
-  double dsin_b = cos_b*DFSPAR[2], dcos_b = -sin_b*DFSPAR[2];
-
-  dL[0] += F[0]*(dcos_a*cos_b + cos_a*dcos_b) +
-           F[1]*(dcos_a*sin_b + cos_a*dsin_b) +
-           F[2]*dsin_a;
-
-  dL[1] += -F[0]*dsin_b + F[1]*dcos_b;
-
-  dL[2] += -F[0]*(dsin_a*cos_b + sin_a*dcos_b) -
-            F[1]*(dsin_a*sin_b + sin_a*dsin_b) +
-            F[2]*dcos_a;
-
+  dForces2dLifts(ioData,F,dForces,dL);
 }
 
 
@@ -881,34 +858,11 @@ void FluidShapeOptimizationHandler<dim>::fsoGetDerivativeOfEffortsAnalytical(
     std::cout<<"===Force deriv part 2: "<<t[0]<<" "<<t[1]<<" "<<t[2]<<std::endl;//TODO delete line
     dForces = dF+F*dForce;//product rule
     dMoments = dM+M*dEnergy;//product rule
+    F *= this->refVal->force;
+    M *= this->refVal->energy;
   }
 
-//  dForces2dLifts(ioData,dForces,dL);//new version that is not finished yet
-  dL = 0;
-  double sin_a = sin(ioData.bc.inlet.alpha);
-  double cos_a = cos(ioData.bc.inlet.alpha);
-  double sin_b = sin(ioData.bc.inlet.beta);
-  double cos_b = cos(ioData.bc.inlet.beta);
-
-  dL[0] =  dF[0]*cos_a*cos_b + dF[1]*cos_a*sin_b + dF[2]*sin_a;
-  dL[1] = -dF[0]*sin_b       + dF[1]*cos_b;
-  dL[2] = -dF[0]*sin_a*cos_b - dF[1]*sin_a*sin_b + dF[2]*cos_a;
-
-  double dsin_a = cos_a*DFSPAR[1], dcos_a = -sin_a*DFSPAR[1];
-  double dsin_b = cos_b*DFSPAR[2], dcos_b = -sin_b*DFSPAR[2];
-
-  double convfac = ((ioData.sa.angleRad == ioData.sa.OFF_ANGLERAD) && (DFSPAR[1] || DFSPAR[2])) ? perRad2perDeg : 1.0;
-
-  dL[0] += (F[0]*(dcos_a*cos_b + cos_a*dcos_b) +
-            F[1]*(dcos_a*sin_b + cos_a*dsin_b) +
-            F[2]*dsin_a                          )*convfac;
-
-  dL[1] += (-F[0]*dsin_b + F[1]*dcos_b           )*convfac;
-
-  dL[2] += (-F[0]*(dsin_a*cos_b + sin_a*dcos_b) -
-             F[1]*(dsin_a*sin_b + sin_a*dsin_b) +
-             F[2]*dcos_a                         )*convfac;
-
+  dForces2dLifts(ioData,F,dForces,dL);
 }
 
 //------------------------------------------------------------------------------
