@@ -345,8 +345,24 @@ void FluidShapeOptimizationHandler<dim>::fsoRestartBcFluxs(IoData &ioData)
     ioData.ref.pressure = ioData.bc.inlet.pressure;
     double velocity     = ioData.ref.mach * sqrt(gamma * (ioData.ref.pressure+Pstiff) / ioData.ref.density);
     ioData.ref.temperature = (ioData.ref.pressure + gamma*Pstiff)/ (ioData.ref.density * R);
-    double viscosity = ioData.eqs.viscosityModel.sutherlandConstant * sqrt(ioData.ref.temperature) /
-      (1.0 + ioData.eqs.viscosityModel.sutherlandReferenceTemperature/ioData.ref.temperature);
+    double viscosity;
+    //there should exist a better way to reset the viscosity -- this is a temporary fix, J.HO
+      if(ioData.eqs.viscosityModel.type == ViscosityModelData::CONSTANT) {
+          if (ioData.eqs.viscosityModel.dynamicViscosity < 0.0) {
+            this->com->fprintf(stderr, "*** Error: no valid dynamic viscosity (%f) given\n",ioData.eqs.viscosityModel.dynamicViscosity);
+          }
+          viscosity = ioData.eqs.viscosityModel.dynamicViscosity;
+        }
+      else if (ioData.eqs.viscosityModel.type == ViscosityModelData::SUTHERLAND){
+        viscosity = ioData.eqs.viscosityModel.sutherlandConstant * sqrt(ioData.ref.temperature) /
+           (1.0 + ioData.eqs.viscosityModel.sutherlandReferenceTemperature/ioData.ref.temperature);
+      }
+      else if (ioData.eqs.viscosityModel.type == ViscosityModelData::PRANDTL){
+        double gam = ioData.eqs.fluidModel.gasModel.specificHeatRatio;
+        double alpha = gam*(gam - 1.0) * ioData.ref.mach*ioData.ref.mach;
+        viscosity = alpha*ioData.ref.temperature; //not sure if we should be using reference temperature for bc here
+      }
+      
     ioData.ref.reynolds_mu = velocity * ioData.ref.length * ioData.ref.density / viscosity;
 
     double dvelocitydMach = sqrt(gamma * ioData.ref.pressure / ioData.ref.density);
@@ -744,9 +760,6 @@ void FluidShapeOptimizationHandler<dim>::fsoGetDerivativeOfEffortsFiniteDifferen
   else {
     dF *= this->refVal->force;
     dM *= this->refVal->energy;
-    std::cout<<"===Force deriv part 1: "<<dF[0]<<" "<<dF[1]<<" "<<dF[2]<<std::endl;//TODO delete line
-    Vec3D t(F*dForce);
-    std::cout<<"===Force deriv part 2: "<<t[0]<<" "<<t[1]<<" "<<t[2]<<std::endl;//TODO delete line
     dForces = dF + F*dForce;
     dMoments = dM + M*dEnergy;
     F *= this->refVal->force;
@@ -851,9 +864,6 @@ void FluidShapeOptimizationHandler<dim>::fsoGetDerivativeOfEffortsAnalytical(
   else {
     dF *= this->refVal->force;
     dM *= this->refVal->energy;
-    std::cout<<"===Force deriv part 1: "<<dF[0]<<" "<<dF[1]<<" "<<dF[2]<<std::endl;//TODO delete line
-    Vec3D t(F*dForce);
-    std::cout<<"===Force deriv part 2: "<<t[0]<<" "<<t[1]<<" "<<t[2]<<std::endl;//TODO delete line
     dForces = dF+F*dForce;//product rule
     dMoments = dM+M*dEnergy;//product rule
     F *= this->refVal->force;
@@ -2420,6 +2430,9 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeDerivativesOfFluxAndSolution(
     DistSVec<double,dim> dFdS2(dFdS), diff(dFdS);
 
     fsoAnalytical(isSparse, ioData, X, dXdS, A, U, dFdS);
+   //  fsoSemiAnalytical(ioData, X, A, U, dFdS2);
+   //  diff = dFdS2 - dFdS;
+   // this->com->fprintf(stderr, "Flux Resid: dFdS = %e, dFdS2 = %e\n",dFdS.norm(), dFdS2.norm());
 
   } else {
     fsoSemiAnalytical(ioData, X, A, U, dFdS);
@@ -2505,15 +2518,17 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeSensitivities(
 // Computing efforts (F: force, M: moment, L:LiftAndDrag)
   Vec3D F, M, L;
   fsoGetEfforts(ioData, X, U, F, M, L);
-
 // Computing derivative of the efforts
   Vec3D dFds, dMds, dLdS;
+  Vec3D dFds2, dMds2, dLdS2;
 
   if ( ioData.sa.scFlag == SensitivityAnalysis::FINITEDIFFERENCE ){
     fsoGetDerivativeOfEffortsFiniteDifference(ioData, X, dXdS, *this->A, U, dUdS, dFds, dMds,dLdS);
   }
   else {
     fsoGetDerivativeOfEffortsAnalytical(isSparse, ioData, X, dXdS, U, dUdS, dFds, dMds, dLdS);//TODO uncomments
+    // fsoGetDerivativeOfEffortsFiniteDifference(ioData, X, dXdS, *this->A, U, dUdS, dFds2, dMds2,dLdS2);
+    // this->com->fprintf(stderr, "Force: dFds = %e, dFds2 = %e\n",dFds.norm(), dFds2.norm());
   }
 
 
