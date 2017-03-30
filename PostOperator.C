@@ -693,7 +693,7 @@ map<int, int>::iterator it;
 
 
 // Included (MB)
-// computes the derivative of non-dimensional forces and moments
+// computes the derivative of non-dimensional forces and moments for ALE framework
 
 template<int dim>
 void PostOperator<dim>::computeDerivativeOfForceAndMoment(Vec3D &x0, DistSVec<double,3> &X, DistSVec<double,3> &dX,
@@ -946,9 +946,9 @@ void PostOperator<dim>::computeDerivativeOperatorsOfForceAndMoment(dRdXoperators
 
 
 
-
+// compute derivatives of forces and Moment for the embedded framework
 template<int dim>
-void PostOperator<dim>::computeDerivativeOfForceAndMoment(Vec3D &x0, DistSVec<double,3> &X,
+void PostOperator<dim>::computeDerivativeOfForceAndMomentEmb(Vec3D &x0, DistSVec<double,3> &X,
 							  DistSVec<double,dim> &U,
 							  DistSVec<double,dim> &dU,
 							  DistVec<int> *fluidId,

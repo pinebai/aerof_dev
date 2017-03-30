@@ -116,27 +116,36 @@ void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
 }
 
 
-
-// Included (MB)
+/****************************************************************************************
+ * Derivative of the viscous term in a non-embedded simulation.                         *
+ * This is the non-sparse implementations                                          (MB) *
+ ****************************************************************************************/
 template<int dim>
-void ElemTet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X, SVec<double,3> &dX,
-			      Vec<double> &d2wall, SVec<double,dim> &V, SVec<double,dim> &dV, double dMach,
-			      SVec<double,dim> &dR)
+void ElemTet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet,
+               SVec<double,3> &X,   SVec<double,3> &dX,
+               Vec<double> &d2wall,
+               SVec<double,dim> &V, SVec<double,dim> &dV,
+               double dMach,
+               SVec<double,dim> &dR)
 {
 
+  //dp1dxj[i][j] holds the derivative of node i in j direction
   double dp1dxj[4][3];
   double vol = computeGradientP1Function(X, dp1dxj);
 
+  //ddp1dxj[i][j] holds the second derivative of node i in j direction
   double ddp1dxj[4][3];
-  double ddp1dxj2[4][3];
-  double diff[4][3];
   double dvol = computeDerivativeOfGradientP1Function(X, dX, ddp1dxj);
+
+  //double ddp1dxj2[4][3];
+  double diff[4][3];
 
   double dvol2dNodes[4][3] = {0}, ddp1dxj2dNodes[4][3][4][3] = {0};
   computeDerivativeOperatorOfGradientP1Function(X, dvol2dNodes, ddp1dxj2dNodes);
+
   double dvol3(0), ddp1dxj3[4][3] = {0};
-  for(int i=0; i<4; ++i)
-    for(int j=0; j<3; ++j) {
+  for(int i=0; i<4; ++i)//loop over all nodess
+    for(int j=0; j<3; ++j) {//loop over x,y,z
       dvol3 += dvol2dNodes[i][j]*dX[ nodeNum(i) ][j];
       for(int k=0; k<4; ++k)
         for(int l=0; l<3; ++l) {
@@ -165,12 +174,15 @@ void ElemTet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, SVec<double,
   double dr[3][dim], ds[dim], dpr[12];
   fet->computeDerivativeOfVolumeTerm(dp1dxj, ddp1dxj, d2w, v, dv, dMach, reinterpret_cast<double *>(dr), ds, dpr, dvol, X, nodeNum(), volume_id);
 
+  //actual residual derivative computations
+  //j is the index of the node
+  //TODO what is dim
   for (int j=0; j<4; ++j) {
     int idx = nodeNum(j);
     for (int k=0; k<dim; ++k)
-      dR[idx][k] += dvol * ( (r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +
-			    r[2][k] * dp1dxj[j][2]) - fourth * s[k] ) + vol * ( (dr[0][k] * dp1dxj[j][0] + r[0][k] * ddp1dxj[j][0] + dr[1][k] * dp1dxj[j][1] + r[1][k] * ddp1dxj[j][1] +
-			    dr[2][k] * dp1dxj[j][2] + r[2][k] * ddp1dxj[j][2]) - fourth * ds[k] );
+      dR[idx][k] += dvol * ( ( r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +   r[2][k] * dp1dxj[j][2]) - fourth * s[k] )
+                 + vol   * ( (dr[0][k] * dp1dxj[j][0] + r[0][k] * ddp1dxj[j][0] + dr[1][k] * dp1dxj[j][1] + r[1][k] * ddp1dxj[j][1] +
+                              dr[2][k] * dp1dxj[j][2] + r[2][k] * ddp1dxj[j][2]) - fourth * ds[k] );
   }
 
   if (porousTermExists) {

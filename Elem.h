@@ -843,11 +843,15 @@ public:
 					     d2wall, Vwall, V, A);
   }
 
-// Included (MB)
+  // Computes the derivative of the viscous term for non-embedded simulations.
+  //This is the non-sparse implementation (MB)
   template<int dim>
-  void computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X, SVec<double,3> &dX,
-			      Vec<double> &d2wall, SVec<double,dim> &V, SVec<double,dim> &dV, double dMach,
-			      SVec<double,dim> &dR) {
+  void computeDerivativeOfGalerkinTerm(FemEquationTerm *fet,
+         SVec<double,3> &X,   SVec<double,3> &dX,
+         Vec<double> &d2wall,
+         SVec<double,dim> &V, SVec<double,dim> &dV,
+         double dMach,
+         SVec<double,dim> &dR) {
     ElemHelper_dim<dim> h;
     char xx[64];
     GenElemWrapper_dim<dim> *wrapper=

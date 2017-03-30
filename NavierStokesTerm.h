@@ -579,10 +579,17 @@ void NavierStokesTerm::computeStressTensor(double mu, double lambda, double dudx
 
 // Included (MB)
 inline
-void NavierStokesTerm::computeDerivativeOfStressTensor(double mu, double dmu, double lambda, double dlambda, double dudxj[3][3], double ddudxj[3][3], double dtij[3][3])
+void NavierStokesTerm::computeDerivativeOfStressTensor(
+                       double mu,
+                       double dmu,
+                       double lambda,
+                       double dlambda,
+                       double dudxj[3][3],
+                       double ddudxj[3][3],
+                       double dtij[3][3])
 {
 
-  double div = dudxj[0][0] + dudxj[1][1] + dudxj[2][2]; 
+  double div = dudxj[0][0] + dudxj[1][1] + dudxj[2][2];//divergence of the velocity
   double ddiv = ddudxj[0][0] + ddudxj[1][1] + ddudxj[2][2]; 
 
   dtij[0][0] = dlambda * div + lambda * ddiv + 2.0 * dmu *dudxj[0][0] + 2.0 * mu *ddudxj[0][0];
@@ -591,9 +598,9 @@ void NavierStokesTerm::computeDerivativeOfStressTensor(double mu, double dmu, do
   dtij[0][1] = dmu * (dudxj[1][0] + dudxj[0][1]) + mu * (ddudxj[1][0] + ddudxj[0][1]);
   dtij[0][2] = dmu * (dudxj[2][0] + dudxj[0][2]) + mu * (ddudxj[2][0] + ddudxj[0][2]);
   dtij[1][2] = dmu * (dudxj[2][1] + dudxj[1][2]) + mu * (ddudxj[2][1] + ddudxj[1][2]);
-  dtij[1][0] = dtij[0][1];
-  dtij[2][0] = dtij[0][2];
-  dtij[2][1] = dtij[1][2];
+  dtij[1][0] = dtij[0][1];//Symmetry
+  dtij[2][0] = dtij[0][2];//Symmetry
+  dtij[2][1] = dtij[1][2];//Symmetry
 
 }
 
@@ -766,9 +773,14 @@ void NavierStokesTerm::computeDerivativeOperatorsOfVolumeTermNS(double mu, doubl
 // Included (MB)
 template<int dim>
 inline
-void NavierStokesTerm::computeDerivativeOfVolumeTermNS(double mu, double dmu, double lambda, double dlambda, double kappa, double dkappa, double u[3], double du[3],
-					   double dudxj[3][3], double ddudxj[3][3], double dTdxj[3], double ddTdxj[3],
-					   double (*dr)[dim])
+void NavierStokesTerm::computeDerivativeOfVolumeTermNS(
+                       double mu, double dmu,            // (INPUT) (INPUT)
+                       double lambda, double dlambda,    // (INPUT) (INPUT)
+                       double kappa, double dkappa,      // (INPUT) (INPUT)
+                       double u[3], double du[3],        // (INPUT) (INPUT)
+					             double dudxj[3][3], double ddudxj[3][3],  // (INPUT) (INPUT)
+					             double dTdxj[3], double ddTdxj[3],// (INPUT) (INPUT)
+					             double (*dr)[dim])                // (OUTPUT)
 {
 
   double tij[3][3];
@@ -780,23 +792,26 @@ void NavierStokesTerm::computeDerivativeOfVolumeTermNS(double mu, double dmu, do
   double dqj[3];
   computeDerivativeOfHeatFluxVector(kappa, dkappa, dTdxj, ddTdxj, dqj);
 
+  //derivative of x-flux component
   dr[0][0] = 0.0;
   dr[0][1] = dtij[0][0];
   dr[0][2] = dtij[1][0];
   dr[0][3] = dtij[2][0];
   dr[0][4] = du[0] * tij[0][0] + u[0] * dtij[0][0] + du[1] * tij[1][0] + u[1] * dtij[1][0] + du[2] * tij[2][0]  + u[2] * dtij[2][0] - dqj[0];
 
+  //derivative of y-flux component
   dr[1][0] = 0.0;
   dr[1][1] = dtij[0][1];
   dr[1][2] = dtij[1][1];
   dr[1][3] = dtij[2][1];
   dr[1][4] = du[0] * tij[0][1] + u[0] * dtij[0][1] + du[1] * tij[1][1] + u[1] * dtij[1][1] + du[2] * tij[2][1]  + u[2] * dtij[2][1] - dqj[1];
 
+  //derivative of z-flux component
   dr[2][0] = 0.0;
   dr[2][1] = dtij[0][2];
   dr[2][2] = dtij[1][2];
   dr[2][3] = dtij[2][2];
-  dr[2][4] = du[0] * tij[0][2] + u[0] * dtij[0][2] + du[1] * tij[1][2] + u[1] * dtij[1][2] + du[2] * tij[2][2]  + u[2] * dtij[2][2] - dqj[2];
+  dr[2][4] = du[0] *  dtij[0][2] + du[1] * tij[1][2] + u[1] * dtij[1][2] + du[2] * tij[2][2]  + u[2] * dtij[2][2] - dqj[2];
 
 }
 

@@ -205,7 +205,7 @@ public:
                                                                            DistSVec<double,dim> &, DistSVec<double,dim> &, double [3],
                                                                            Vec3D *, Vec3D *, Vec3D *, Vec3D *, int = 0);
 
-  void computeDerivativeOfForceAndMoment(Vec3D &x0, DistSVec<double,3> &X, 
+  void computeDerivativeOfForceAndMomentEmb(Vec3D &x0, DistSVec<double,3> &X,
 					 DistSVec<double,dim> &U, 
 					 DistSVec<double,dim> &dU, 
 					 DistVec<int> *fluidId,

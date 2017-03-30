@@ -187,6 +187,8 @@ public:
 
   double computeDerivativeOfTemperature(double *V, double *dV) const {
     // Correction when Pstiff is non-zero.
+
+    //TODO original
     return ( invgam1 * dV[4] - computeTemperature(V) * dV[0] ) /V[0];
 
 //	//TODO BUGHUNT
@@ -209,20 +211,20 @@ public:
       return 0.0;
 
 ////TODO original
-//    return 1/(2.0*sqrt((V[1]*V[1] + V[2]*V[2] + V[3]*V[3]) * V[0] / (gam * (V[4]+Pstiff)))) * ( ( (2.0*(V[1]*dV[1] + V[2]*dV[2] + V[3]*dV[3]) * V[0] + (V[1]*V[1] + V[2]*V[2] + V[3]*V[3]) * dV[0]) * (V[4]+Pstiff) - (V[1]*V[1] + V[2]*V[2] + V[3]*V[3]) * V[0] * (dV[4] + dPstiff*dMach) ) / ( (V[4]+Pstiff) * (V[4]+Pstiff) ) );
+    return 1/(2.0*sqrt((V[1]*V[1] + V[2]*V[2] + V[3]*V[3]) * V[0] / (gam * (V[4]+Pstiff)))) * ( ( (2.0*(V[1]*dV[1] + V[2]*dV[2] + V[3]*dV[3]) * V[0] + (V[1]*V[1] + V[2]*V[2] + V[3]*V[3]) * dV[0]) * (V[4]+Pstiff) - (V[1]*V[1] + V[2]*V[2] + V[3]*V[3]) * V[0] * (dV[4] + dPstiff*dMach) ) / ( (V[4]+Pstiff) * (V[4]+Pstiff) ) );
 
-//TODO BUGHUNT
-    double dens=V[0]; double vx=V[1]; double vy=V[2]; double vz=V[3]; double press=V[4];
-    double pdMaBYdens = Ma/(2*dens);
-    double pdMaBYvx   = (dens)/(gam*press)*1/Ma*vx;
-    double pdMaBYvy   = (dens)/(gam*press)*1/Ma*vy;
-    double pdMaBYvz   = (dens)/(gam*press)*1/Ma*vz;
-    double pdMaBYpress= -Ma/(2*press);
-    return pdMaBYdens *dV[0] +
-	   pdMaBYvx   *dV[1] +
-	   pdMaBYvy   *dV[2] +
-	   pdMaBYvz   *dV[3] +
-	   pdMaBYpress*dV[4];
+////TODO BUGHUNT
+//    double dens=V[0]; double vx=V[1]; double vy=V[2]; double vz=V[3]; double press=V[4];
+//    double pdMaBYdens = Ma/(2*dens);
+//    double pdMaBYvx   = (dens)/(gam*press)*1/Ma*vx;
+//    double pdMaBYvy   = (dens)/(gam*press)*1/Ma*vy;
+//    double pdMaBYvz   = (dens)/(gam*press)*1/Ma*vz;
+//    double pdMaBYpress= -Ma/(2*press);
+//    return pdMaBYdens *dV[0] +
+//	   pdMaBYvx   *dV[1] +
+//	   pdMaBYvy   *dV[2] +
+//	   pdMaBYvz   *dV[3] +
+//	   pdMaBYpress*dV[4];
   }
 
   double computeDerivativeOfSoundSpeed(double *V, double *dV, double dMach) const {

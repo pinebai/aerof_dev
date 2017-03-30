@@ -2046,29 +2046,38 @@ void SubDomain::computeGalerkinTerm(FemEquationTerm *fet, BcData<dim> &bcData,
 
 //------------------------------------------------------------------------------
 
-// Included (MB)
+/****************************************************************************************
+ * Computes the derivative of the viscous term for non-embedded simulations.            *
+ * This is the non-sparse implementation                                           (MB) *
+ ****************************************************************************************/
 template<int dim>
-void SubDomain::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, BcData<dim> &bcData,
-				    GeoState &geoState, SVec<double,3> &X, SVec<double,3> &dX,
-				    SVec<double,dim> &V, SVec<double,dim> &dV, double dMach, SVec<double,dim> &dR)
+void SubDomain::computeDerivativeOfGalerkinTerm(
+                  FemEquationTerm *fet, BcData<dim> &bcData,
+                  GeoState &geoState,
+                  SVec<double,3> &X,   SVec<double,3> &dX,
+                  SVec<double,dim> &V, SVec<double,dim> &dV,
+                  double dMach,
+                  SVec<double,dim> &dR)
 {
-
   elems.computeDerivativeOfGalerkinTerm(fet, geoState, X, dX, V, dV, dMach, dR);
-  //std::cout<<"\033[91mmelems.computeDerivativeOfGalerkinTerm fnished on\033[00m"<<this->globSubNum<<std::endl;//TODO delete line
-
   faces.computeDerivativeOfGalerkinTerm(elems, fet, bcData, geoState, X, dX, V, dV, dMach, dR);
-  //std::cout<<"\033[91mfaces.computeDerivativeOfGalerkinTerm fnished on\033[00m"<<this->globSubNum<<std::endl;//TODO delete line
-
 }
 
-//------------------------------------------------------------------------------
 
+/****************************************************************************************
+ * Computes the derivative of the viscous term for non-embedded simulations.            *
+ * This is the sparse implementation                                                    *
+ ****************************************************************************************/
 template<int dim>
-void SubDomain::computeDerivativeOfGalerkinTerm(RectangularSparseMat<double,3,dim> *dViscousFluxdX,
-            FemEquationTerm *fet, BcData<dim> &bcData,
-				    GeoState &geoState, SVec<double,3> &X, SVec<double,3> &dX,
-				    SVec<double,dim> &V, SVec<double,dim> &dV, double dMach, SVec<double,dim> &dR)
-{ //YC
+void SubDomain::computeDerivativeOfGalerkinTerm(
+                  RectangularSparseMat<double,3,dim> *dViscousFluxdX,
+                  FemEquationTerm *fet, BcData<dim> &bcData,
+                  GeoState &geoState,
+                  SVec<double,3> &X,   SVec<double,3> &dX,
+                  SVec<double,dim> &V, SVec<double,dim> &dV,
+                  double dMach,
+                  SVec<double,dim> &dR)
+{
 
   dViscousFluxdX->apply(dX,dR);
 //  faces.computeDerivativeOfGalerkinTerm(elems, fet, bcData, geoState, X, dX, V, dV, dMach, dR2); // for Turbulent flow

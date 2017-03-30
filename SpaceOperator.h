@@ -81,14 +81,14 @@ protected:
   DistNodalGrad<dim, double> *ngraddV;
 
   DistEdgeGrad<dim> *egrad;
-  DistExtrapolation<dim> *xpol;
-  DistVMSLESTerm<dim> *vms;
-  DistDynamicLESTerm<dim> *dles;
-  DistDynamicVMSTerm<dim> *dvms;
-  FemEquationTerm *fet;
-  SmagorinskyLESTerm *smag;
-  WaleLESTerm *wale;
-  VolumicForceTerm *volForce;
+  DistExtrapolation<dim> *xpol; //might has to do with impsing far-field boundary conditions
+  DistVMSLESTerm<dim> *vms;     //LES VMS term (RANS)
+  DistDynamicLESTerm<dim> *dles;//VMS term (RANS)
+  DistDynamicVMSTerm<dim> *dvms;//variational multi scale term
+  FemEquationTerm *fet;         //viscous terms
+  SmagorinskyLESTerm *smag;     //RANS
+  WaleLESTerm *wale;            //RANS term for walls
+  VolumicForceTerm *volForce;   //e.g. gravity
 
   Domain *domain;
 
@@ -379,18 +379,19 @@ public:
                                             DistSVec<double,dim> &, DistSVec<double,dim> &, DistSVec<double,dim> &, DistVec<Vec3D>&,
                                             DistVec<Vec3D>&, DistVec<double>&, DistSVec<double,6>& );
 
-  void computeDerivativeOfResidual(DistSVec<double,3> &X,
-				   DistVec<double> &ctrlVol,
-				   DistSVec<double,dim> &U,
-				   DistLevelSetStructure *distLSS,
-				   bool linRecAtInterface, bool viscSecOrder, 
-				   DistVec<int> &fluidId, 
-				   DistExactRiemannSolver<dim> *riemann, 
-				   int Nriemann,
-				   DistVec<GhostPoint<dim>*> *ghostPoints,
-				   double dMach,
-				   DistSVec<double,dim> &R, DistSVec<double,dim> &dR,
-				   DistTimeState<dim> *timeState);
+  void computeDerivativeOfResidualEmb(
+         DistSVec<double,3> &X,
+         DistVec<double> &ctrlVol,
+         DistSVec<double,dim> &U,
+         DistLevelSetStructure *distLSS,
+         bool linRecAtInterface, bool viscSecOrder,
+         DistVec<int> &fluidId,
+         DistExactRiemannSolver<dim> *riemann,
+         int Nriemann,
+         DistVec<GhostPoint<dim>*> *ghostPoints,
+         double dMach,
+         DistSVec<double,dim> &R, DistSVec<double,dim> &dR,
+         DistTimeState<dim> *timeState);
 
   // Included (MB)
   void applyBCsToDerivativeOfResidual(DistSVec<double,dim> &, DistSVec<double,dim> &);

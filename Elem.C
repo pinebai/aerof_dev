@@ -146,18 +146,23 @@ void ElemSet::computeGalerkinTermRestrict(FemEquationTerm *fet, GeoState &geoSta
 }
 //------------------------------------------------------------------------------
 
-// Included
+/****************************************************************************************
+ * Computes the derivative of the viscous term for non-embedded simulations.            *
+ * This is the non-sparse implementation                                           (MB) *
+ ****************************************************************************************/
 template<int dim>
-void ElemSet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, GeoState &geoState,
-				 SVec<double,3> &X, SVec<double,3> &dX, SVec<double,dim> &V, SVec<double,dim> &dV,
-				 double dMach, SVec<double,dim> &dR)
+void ElemSet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet,
+                GeoState &geoState,
+                SVec<double,3> &X,
+                SVec<double,3> &dX,
+                SVec<double,dim> &V, SVec<double,dim> &dV,
+                double dMach,
+                SVec<double,dim> &dR)
 {
-
   Vec<double> &d2wall = geoState.getDistanceToWall();
 
   for (int i=0; i<numElems; ++i)
     elems[i]->computeDerivativeOfGalerkinTerm(fet, X, dX, d2wall, V, dV, dMach, dR);
-
 }
 
 //------------------------------------------------------------------------------

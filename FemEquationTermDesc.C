@@ -152,10 +152,19 @@ bool FemEquationTermNS::computeVolumeTerm(double dp1dxj[4][3], double d2w[4],
 //------------------------------------------------------------------------------
 
 // Included (MB)
-bool FemEquationTermNS::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], double ddp1dxj[4][3], double d2w[4],
-																		double *V[4], double *dV[4], double dMach, double *dr, 
-																		double *dS, double *dPR, double dtetVol, SVec<double,3> &X,
-                                          int nodeNum[4], int material_id)
+bool FemEquationTermNS::computeDerivativeOfVolumeTerm(
+                        double dp1dxj[4][3],  //first derivatives of the shape-functions (INPUT)
+                        double ddp1dxj[4][3], //second derivatives of the shape functions (INPUT)
+                        double d2w[4],
+												double *V[4], double *dV[4],
+												double dMach,
+												double *dr,
+												double *dS,
+												double *dPR,
+												double dtetVol,
+												SVec<double,3> &X,
+                        int nodeNum[4],
+                        int material_id)
 {
 
   bool porousmedia = false; 
@@ -184,6 +193,8 @@ bool FemEquationTermNS::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], doubl
   double ddTdxj[3];
   computeDerivativeOfTemperatureGradient(dp1dxj, ddp1dxj, T, dT, ddTdxj);
 
+  //derivative of reynolds with respect to sensitivity variable
+  //only non-zero when mach sensitivity is considered
   double dooreynolds_mu = -1.0 / ( reynolds_muNS * reynolds_muNS ) * dRe_mudMachNS * dMach;
 
   double mu, lambda, kappa;
