@@ -1168,7 +1168,7 @@ public:
                                                       dRdXoperators<dim> &);
 
   template<int dim>
-    void computeDerivativeOfFiniteVolumeTerm(FluxFcn** fluxFcn,  RecFcn* recFcn,
+    void computeDerivativeOfFiniteVolumeTermEmb(FluxFcn** fluxFcn,  RecFcn* recFcn,
 					     DistBcData<dim>& bcData, DistGeoState& geoState,
 					     DistSVec<double,3> &X,
 					     DistLevelSetStructure *distLSS,
@@ -1184,13 +1184,22 @@ public:
 
   template<int dim>
   void computeDerivativeOfGalerkinTerm(FemEquationTerm *, DistBcData<dim> &,
-			   DistGeoState &, DistSVec<double,3> &, DistSVec<double,3> &,
-			   DistSVec<double,dim> &, DistSVec<double,dim> &, double, DistSVec<double,dim> &);
+         DistGeoState &, DistSVec<double,3> &, DistSVec<double,3> &,
+         DistSVec<double,dim> &, DistSVec<double,dim> &, double, DistSVec<double,dim> &);
+
+  //TODO VISCOUSDERIV
+  template<int dim>
+  void computeDerivativeOfGalerkinTermEmb(FemEquationTerm *, DistBcData<dim> &,
+         DistGeoState &, DistSVec<double,3> &, DistSVec<double,3> &,
+         DistSVec<double,dim> &, DistSVec<double,dim> &, double, DistSVec<double,dim> &,
+         DistVec<GhostPoint<dim>*>*, DistLevelSetStructure*);
 
   template<int dim>
   void computeDerivativeOfGalerkinTerm(dRdXoperators<dim> &, FemEquationTerm *, DistBcData<dim> &,
-			   DistGeoState &, DistSVec<double,3> &, DistSVec<double,3> &,
-			   DistSVec<double,dim> &, DistSVec<double,dim> &, double, DistSVec<double,dim> &);
+         DistGeoState &, DistSVec<double,3> &, DistSVec<double,3> &,
+         DistSVec<double,dim> &, DistSVec<double,dim> &, double, DistSVec<double,dim> &);
+
+
 
   template<int dim>
   void computeTransposeDerivativeOfGalerkinTerm(dRdXoperators<dim> &, DistSVec<double,dim> &, DistSVec<double,3> &);

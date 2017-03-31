@@ -87,40 +87,40 @@ void ElemSet::computeTimeStep(FemEquationTerm *fet, SVec<double,3> &X,
 
 template<int dim>
 void ElemSet::computeGalerkinTerm(FemEquationTerm *fet, GeoState &geoState, 
-				  SVec<double,3> &X, SVec<double,dim> &V, 
-				  SVec<double,dim> &R,
-											 Vec<GhostPoint<dim>*> *ghostPoints, 
-											 LevelSetStructure *LSS, bool externalSI)
+                SVec<double,3> &X, SVec<double,dim> &V,
+                SVec<double,dim> &R,
+                Vec<GhostPoint<dim>*> *ghostPoints,
+                LevelSetStructure *LSS, bool externalSI)
 {
 
   Vec<double> &d2wall = geoState.getDistanceToWall();
 
-	if(!externalSI)
-	{
-		if (sampleMesh)
-		{
-			for (int iElem=0; iElem<numSampledElems; ++iElem)
-			elems[ (elemsConnectedToSampleNode[iElem]) ]->computeGalerkinTerm(fet, X, d2wall, V, R, ghostPoints,LSS);
-		}
-		else
-		{
-			for (int iElem=0; iElem<numSampledElems; ++iElem)
-			elems[ iElem ]->computeGalerkinTerm(fet, X, d2wall, V, R, ghostPoints,LSS);
-		}
-	}
-	else
-	{
-		if (sampleMesh)
-		{
-			for (int iElem=0; iElem<numSampledElems; ++iElem) 
-				elems[ (elemsConnectedToSampleNode[iElem]) ]->computeGalerkinTerm_e(fet, X, d2wall, V, R, ghostPoints, LSS);
-		}
-		else 
-		{
-			for (int iElem=0; iElem<numSampledElems; ++iElem)
-				elems[ iElem ]->computeGalerkinTerm_e(fet, X, d2wall, V, R, ghostPoints, LSS);
-		}
-	}
+  if(!externalSI)
+  {
+    if (sampleMesh)
+    {
+      for (int iElem=0; iElem<numSampledElems; ++iElem)
+      elems[ (elemsConnectedToSampleNode[iElem]) ]->computeGalerkinTerm(fet, X, d2wall, V, R, ghostPoints,LSS);
+    }
+    else
+    {
+      for (int iElem=0; iElem<numSampledElems; ++iElem)
+      elems[ iElem ]->computeGalerkinTerm(fet, X, d2wall, V, R, ghostPoints,LSS);
+    }
+  }
+  else
+  {
+    if (sampleMesh)
+    {
+      for (int iElem=0; iElem<numSampledElems; ++iElem)
+        elems[ (elemsConnectedToSampleNode[iElem]) ]->computeGalerkinTerm_e(fet, X, d2wall, V, R, ghostPoints, LSS);
+    }
+    else
+    {
+      for (int iElem=0; iElem<numSampledElems; ++iElem)
+        elems[ iElem ]->computeGalerkinTerm_e(fet, X, d2wall, V, R, ghostPoints, LSS);
+    }
+  }
 
 }
 
@@ -164,6 +164,33 @@ void ElemSet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet,
   for (int i=0; i<numElems; ++i)
     elems[i]->computeDerivativeOfGalerkinTerm(fet, X, dX, d2wall, V, dV, dMach, dR);
 }
+
+
+
+
+//TODO VISCOUSDERIV
+/****************************************************************************************
+ * Computes the derivative of the viscous term for non-embedded simulations.            *
+ * This is the non-sparse implementation                                           (MB) *
+ ****************************************************************************************/
+template<int dim>
+void ElemSet::computeDerivativeOfGalerkinTermEmb(FemEquationTerm *fet,
+                GeoState &geoState,
+                SVec<double,3> &X,
+                SVec<double,3> &dX,
+                SVec<double,dim> &V, SVec<double,dim> &dV,
+                double dMach,
+                SVec<double,dim> &dR,
+                Vec<GhostPoint<dim>*> *ghostPoints,LevelSetStructure *LSS)
+{
+  Vec<double> &d2wall = geoState.getDistanceToWall();
+
+  for (int i=0; i<numElems; ++i)
+    elems[i]->computeDerivativeOfGalerkinTermEmb(fet, X, dX, d2wall, V, dV, dMach, dR, ghostPoints,LSS);
+}
+
+
+
 
 //------------------------------------------------------------------------------
 

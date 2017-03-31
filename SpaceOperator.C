@@ -1374,7 +1374,7 @@ void SpaceOperator<dim>::computeDerivativeOfResidualEmb(
 
   //****
 
-  domain->computeDerivativeOfFiniteVolumeTerm(
+  domain->computeDerivativeOfFiniteVolumeTermEmb(
             fluxFcn, recFcn, *bcData, *geoState,
             X, distLSS,
             linRecAtInterface, viscSecOrder,

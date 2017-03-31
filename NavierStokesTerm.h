@@ -590,7 +590,7 @@ void NavierStokesTerm::computeDerivativeOfStressTensor(
 {
 
   double div = dudxj[0][0] + dudxj[1][1] + dudxj[2][2];//divergence of the velocity
-  double ddiv = ddudxj[0][0] + ddudxj[1][1] + ddudxj[2][2]; 
+  double ddiv = ddudxj[0][0] + ddudxj[1][1] + ddudxj[2][2];//laplacian of the velocity
 
   dtij[0][0] = dlambda * div + lambda * ddiv + 2.0 * dmu *dudxj[0][0] + 2.0 * mu *ddudxj[0][0];
   dtij[1][1] = dlambda * div + lambda * ddiv + 2.0 * dmu *dudxj[1][1] + 2.0 * mu *ddudxj[1][1];
@@ -687,9 +687,14 @@ void NavierStokesTerm::computeDerivativeOperatorsOfHeatFluxVector(double kappa, 
 
 template<int dim>
 inline
-void NavierStokesTerm::computeVolumeTermNS(double mu, double lambda, double kappa, double u[3], 
-					   double dudxj[3][3], double dTdxj[3], 
-					   double (*r)[dim])
+void NavierStokesTerm::computeVolumeTermNS(
+                         double mu,          // (INPUT) transport coefficient
+                         double lambda,      // (INPUT) transport coefficient
+                         double kappa,       // (INPUT) transport coefficient
+                         double u[3],        // (INPUT) velocity
+                         double dudxj[3][3], // (INPUT) spatial velocity derivative
+                         double dTdxj[3],    // (INPUT) spatial temperature derivative
+                         double (*r)[dim])   // (OUTPUT) viscous volume term
 {
 
   double tij[3][3];

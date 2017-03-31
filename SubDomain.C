@@ -2030,14 +2030,14 @@ void SubDomain::computeDerivativeOfVolumicForceTerm(VolumicForceTerm *volForce, 
 */
 template<int dim>
 void SubDomain::computeGalerkinTerm(FemEquationTerm *fet, BcData<dim> &bcData,
-				    GeoState &geoState, SVec<double,3> &X,
-				    SVec<double,dim> &V, SVec<double,dim> &R,
-												Vec<GhostPoint<dim>*> *ghostPoints,
-												LevelSetStructure *LSS, 
-												bool externalSI)
+                  GeoState &geoState, SVec<double,3> &X,
+                  SVec<double,dim> &V, SVec<double,dim> &R,
+                  Vec<GhostPoint<dim>*> *ghostPoints,
+                  LevelSetStructure *LSS,
+                  bool externalSI)
 {
 
-	elems.computeGalerkinTerm(fet, geoState, X, V, R,ghostPoints, LSS, externalSI);
+  elems.computeGalerkinTerm(fet, geoState, X, V, R,ghostPoints, LSS, externalSI);
 
   faces.computeGalerkinTerm(elems, fet, bcData, geoState, X, V, R,LSS);
 
@@ -2046,6 +2046,8 @@ void SubDomain::computeGalerkinTerm(FemEquationTerm *fet, BcData<dim> &bcData,
 
 //------------------------------------------------------------------------------
 
+
+//TODO VISCOUSDERIV
 /****************************************************************************************
  * Computes the derivative of the viscous term for non-embedded simulations.            *
  * This is the non-sparse implementation                                           (MB) *
@@ -2060,7 +2062,27 @@ void SubDomain::computeDerivativeOfGalerkinTerm(
                   SVec<double,dim> &dR)
 {
   elems.computeDerivativeOfGalerkinTerm(fet, geoState, X, dX, V, dV, dMach, dR);
-  faces.computeDerivativeOfGalerkinTerm(elems, fet, bcData, geoState, X, dX, V, dV, dMach, dR);
+  faces.computeDerivativeOfGalerkinTerm(elems, fet, bcData, geoState, X, dX, V, dV, dMach, dR);//based on the embedded Version of computeGalerkinTerms, ghost points are not needed here
+}
+
+
+/****************************************************************************************
+ * Computes the derivative of the viscous term for embedded simulations.                *
+ * This is the non-sparse implementation                                     (lscheuch) *
+ ****************************************************************************************/
+template<int dim>
+void SubDomain::computeDerivativeOfGalerkinTermEmb(
+                  FemEquationTerm *fet, BcData<dim> &bcData,
+                  GeoState &geoState,
+                  SVec<double,3> &X,   SVec<double,3> &dX,
+                  SVec<double,dim> &V, SVec<double,dim> &dV,
+                  double dMach,
+                  SVec<double,dim> &dR,
+                  Vec<GhostPoint<dim>*> *ghostPoints,
+                  LevelSetStructure *LSS)
+{
+  elems.computeDerivativeOfGalerkinTermEmb(fet, geoState, X, dX, V, dV, dMach, dR, ghostPoints, LSS);
+  //faces.computeDerivativeOfGalerkinTermEmb(elems, fet, bcData, geoState, X, dX, V, dV, dMach, dR, LSS);
 }
 
 
