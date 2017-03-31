@@ -381,6 +381,7 @@ public:
 
   void computeDerivativeOfResidualEmb(
          DistSVec<double,3> &X,
+         DistSVec<double,3> &dX,
          DistVec<double> &ctrlVol,
          DistSVec<double,dim> &U,
          DistLevelSetStructure *distLSS,

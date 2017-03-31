@@ -697,7 +697,9 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoAnalytical
  
   // Computing the partial derivative of the flux with respect to the variables
   // Question: who stores the mesh derivative information here? DistLSS?
-  this->spaceOp->computeDerivativeOfResidualEmb(X, A, U,
+
+  //this->spaceOp->computeDerivativeOfResidual(X, dXdS, A, dAdS, U, DFSPAR[0], Flux, dFdS, this->timeState);
+  this->spaceOp->computeDerivativeOfResidualEmb(X, dXdS, A, U,
                                              this->distLSS,
                                              this->linRecAtInterface, this->viscSecOrder,
                                              this->nodeTag, this->riemann, this->riemannNormal,

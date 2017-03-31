@@ -1304,6 +1304,7 @@ void SpaceOperator<dim>::computeTransposeDerivativeOfResidual(dRdXoperators<dim>
 template<int dim>
 void SpaceOperator<dim>::computeDerivativeOfResidualEmb(
                          DistSVec<double,3> &X,
+                         DistSVec<double,3> &dX,
                          DistVec<double> &ctrlVol,
                          DistSVec<double,dim> &U,
                          DistLevelSetStructure *distLSS,
@@ -1390,10 +1391,14 @@ void SpaceOperator<dim>::computeDerivativeOfResidualEmb(
   //TODO the fet term is newly added
   if (fet)
   {
-    this->com->fprintf(stderr, "\033[93m***** fet-term derivative not yet implemented for embedded simulations\033[00m");
-    //exit(-1);
-//    domain->computeDerivativeOfGalerkinTerm(fet, *bcData, *geoState, X, dX, *V, *dV, dMach, dR);
-//    bcData->computeNodeValue(X);
+    //this->com->fprintf(stderr, "\033[93m***** fet-term derivative not yet implemented for embedded simulations\033[00m");
+    //TODO this is a simple temporary hack so that the viscous part of the derivative can be turned on and off in the input file
+    if(iod->sa.newEmbDerivs==iod->sa.ON_NEWEMBDERIVS)
+    {
+      this->com->fprintf(stderr, "\033[93m***** viscous derivative part not yet fully implemented for Embedded\033[00m");
+      domain->computeDerivativeOfGalerkinTermEmb(fet, *bcData, *geoState, X, dX, *V, *dV, dMach, dR,ghostPoints, distLSS);
+    }
+       //    bcData->computeNodeValue(X);
 //    bcData->computeDerivativeOfNodeValue(X, dX);
   }
 
