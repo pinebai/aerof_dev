@@ -1411,8 +1411,11 @@ int EdgeSet::computeFiniteVolumeTermRestrict(int* locToGlobNodeMap, Vec<double>
 
 }
 
-//------------------------------------------------------------------------------
-// Included (YC)
+
+/****************************************************************************************
+ * Computes the derivative of the Inviscid term for non-emebedded simulations.          *
+ * This is the sparse implementation                                               (YC) *
+ ****************************************************************************************/
 template<int dim>
 void EdgeSet::computeDerivativeOfFiniteVolumeTerm(
                                         RectangularSparseMat<double,dim,dim> *dFluxdddx,
@@ -1483,7 +1486,10 @@ void EdgeSet::computeTransposeDerivativeOfFiniteVolumeTerm(
 
 //------------------------------------------------------------------------------
 
-// Included (MB)
+/****************************************************************************************
+ * Computes the derivative of the Inviscid term for non-emebedded simulations.          *
+ * This is the non-sparse implementation                                           (MB) *
+ ****************************************************************************************/
 template<int dim>
 void EdgeSet::computeDerivativeOfFiniteVolumeTerm(Vec<double> &irey, Vec<double> &dIrey, FluxFcn** fluxFcn, RecFcn* recFcn,
                                         ElemSet& elems, GeoState& geoState, SVec<double,3>& X, SVec<double,3>& dX,
@@ -1566,8 +1572,11 @@ void EdgeSet::computeDerivativeOfFiniteVolumeTerm(Vec<double> &irey, Vec<double>
   }
 }
 
-//------------------------------------------------------------------------------
-
+/****************************************************************************************
+ * Computes the derivative Operator of the Inviscid term for non-emebedded simulations. *
+ * The operator is needed for adjoint sensitivity analysis.                             *
+ * This is the sparse implementation                                               (YC) *
+ ****************************************************************************************/
 // Included (YC)
 template<int dim>
 void EdgeSet::computeDerivativeOperatorsOfFiniteVolumeTerm(Vec<double> &irey, Vec<double> &dIrey, FluxFcn** fluxFcn, RecFcn* recFcn,
@@ -1712,7 +1721,11 @@ void EdgeSet::computeDerivativeOperatorsOfFiniteVolumeTerm(Vec<double> &irey, Ve
 
 }
 
-//------------------------------------------------------------------------------
+
+/****************************************************************************************
+ * Derivative of Finite Volume Term for Embedded simulation                             *
+ * This is the non-spare implementation                                                 *
+ ****************************************************************************************/
 template<int dim>
 void EdgeSet::computeDerivativeOfFiniteVolumeTerm(FluxFcn** fluxFcn, RecFcn* recFcn,
 						  GeoState& geoState, SVec<double,3>& X, LevelSetStructure &LSS,

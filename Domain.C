@@ -1031,15 +1031,21 @@ void Domain::computeFiniteVolumeTerm(DistExactRiemannSolver<dim>& riemann,
 
 //------------------------------------------------------------------------------
 
-// Included (MB)
+/****************************************************************************************
+ * Derivative of the inviscid term for non embedded simulations                         *
+ * This is the non-sparse Implementation                                           (MB) *
+ ****************************************************************************************/
 template<int dim>
-void Domain::computeDerivativeOfFiniteVolumeTerm(DistVec<double> &ctrlVol, DistVec<double> &dCtrlVol,
-						 DistVec<double>& irey, DistVec<double>& dIrey,
-						 FluxFcn** fluxFcn, RecFcn* recFcn,
-						 DistBcData<dim>& bcData, DistGeoState& geoState,
-						 DistSVec<double,3>& X, DistSVec<double,3>& dX, DistSVec<double,dim>& V, DistSVec<double,dim>& dV,
-						 DistNodalGrad<dim>& ngrad, DistEdgeGrad<dim>* egrad, double dMach,
-						 DistSVec<double,dim>& dF)
+void Domain::computeDerivativeOfFiniteVolumeTerm(
+               DistVec<double> &ctrlVol,DistVec<double> &dCtrlVol,
+               DistVec<double>& irey,   DistVec<double>& dIrey,
+               FluxFcn** fluxFcn,       RecFcn* recFcn,
+               DistBcData<dim>& bcData, DistGeoState& geoState,
+               DistSVec<double,3>& X,   DistSVec<double,3>& dX,
+               DistSVec<double,dim>& V, DistSVec<double,dim>& dV,
+               DistNodalGrad<dim>& ngrad, DistEdgeGrad<dim>* egrad,
+               double dMach,
+               DistSVec<double,dim>& dF)
 {
 
   double t0 = timer->getTime();
@@ -1185,22 +1191,27 @@ void Domain::computeDerivativeOperatorsOfFiniteVolumeTerm(DistVec<double>& irey,
 
 }
 
-//------------------------------------------------------------------------------
 
+
+/****************************************************************************************
+ * Derivative of the inviscid term for emebedded simulations                            *
+ * This is the non-sparse Implementation                                                *
+ ****************************************************************************************/
 template<int dim>
-void Domain::computeDerivativeOfFiniteVolumeTerm(FluxFcn** fluxFcn, RecFcn* recFcn,
-						 DistBcData<dim>& bcData, DistGeoState& geoState,
-						 DistSVec<double,3> &X,
-						 DistLevelSetStructure *distLSS,
-						 bool linRecAtInterface, bool viscSecOrder, 
-						 DistVec<int> &fluidId, 
-						 DistExactRiemannSolver<dim> &riemann, 
-						 int Nriemann,
-						 DistNodalGrad<dim>& ngrad, 
-						 DistEdgeGrad<dim>* egrad,
-						 double dMach,
-						 DistSVec<double,dim>& V,
-						 DistSVec<double,dim>& dF)
+void Domain::computeDerivativeOfFiniteVolumeTermEmb(
+               FluxFcn** fluxFcn, RecFcn* recFcn,
+               DistBcData<dim>& bcData, DistGeoState& geoState,
+               DistSVec<double,3> &X,
+               DistLevelSetStructure *distLSS,
+               bool linRecAtInterface, bool viscSecOrder,
+               DistVec<int> &fluidId,
+               DistExactRiemannSolver<dim> &riemann,
+               int Nriemann,
+               DistNodalGrad<dim>& ngrad,
+               DistEdgeGrad<dim>* egrad,
+               double dMach,
+               DistSVec<double,dim>& V,
+               DistSVec<double,dim>& dF)
 {
 
   double t0 = timer->getTime();
@@ -1214,11 +1225,11 @@ void Domain::computeDerivativeOfFiniteVolumeTerm(FluxFcn** fluxFcn, RecFcn* recF
     Vec<int> &FluidId = fluidId(iSub);
 
     subDomain[iSub]->computeDerivativeOfFiniteVolumeTerm(fluxFcn, recFcn, bcData(iSub), geoState(iSub),
-							 X(iSub), (*distLSS)(iSub), 
-							 linRecAtInterface,  viscSecOrder, 
-							 FluidId, riemann(iSub), Nriemann,
-							 ngrad(iSub), legrad, dMach,
-							 V(iSub), dF(iSub));
+                       X(iSub), (*distLSS)(iSub),
+                       linRecAtInterface,  viscSecOrder,
+                       FluidId, riemann(iSub), Nriemann,
+                       ngrad(iSub), legrad, dMach,
+                       V(iSub), dF(iSub));
 
     subDomain[iSub]->sndData(*vecPat, dF.subData(iSub));
 
@@ -2293,18 +2304,25 @@ void Domain::finishJacobianGalerkinTerm(DistVec<double> &ctrlVol, DistMat<Scalar
 
 //------------------------------------------------------------------------------
 
+/*******************************************************************************
+ * computes the Galerkin term for both embedded and non-embedded simulations   *
+ *******************************************************************************/
 template<int dim>
-void Domain::computeGalerkinTerm(FemEquationTerm *fet, DistBcData<dim> &bcData,
-				 DistGeoState &geoState, DistSVec<double,3> &X,
-				 DistSVec<double,dim> &V, DistSVec<double,dim> &R,
-											DistVec<GhostPoint<dim>*> *ghostPoints,
-											DistLevelSetStructure *LSS, 
-											bool externalSI)
+void Domain::computeGalerkinTerm(
+               FemEquationTerm *fet,
+               DistBcData<dim> &bcData,
+               DistGeoState &geoState,
+               DistSVec<double,3> &X,
+               DistSVec<double,dim> &V,
+               DistSVec<double,dim> &R,
+               DistVec<GhostPoint<dim>*> *ghostPoints,
+               DistLevelSetStructure *LSS,
+               bool externalSI)
 {
 
   double t0 = timer->getTime();
 
-  if(ghostPoints)
+  if(ghostPoints)//call the embedded version
   {
     if(!LSS) 
     {
@@ -2316,13 +2334,13 @@ void Domain::computeGalerkinTerm(FemEquationTerm *fet, DistBcData<dim> &bcData,
     for (int iSub = 0; iSub < numLocSub; ++iSub)
     {
       subDomain[iSub]->computeGalerkinTerm(fet, bcData(iSub), geoState(iSub),
-															 X(iSub), V(iSub), R(iSub),
-															 ghostPoints->operator[](iSub),
-															 &(LSS->operator()(iSub)), 
-															 externalSI);
+                         X(iSub), V(iSub), R(iSub),
+                         ghostPoints->operator[](iSub),
+                         &(LSS->operator()(iSub)),
+                         externalSI);
     }
   }
-  else
+  else//call the non-embedded version
   {
 #pragma omp parallel for
 		for (int iSub = 0; iSub < numLocSub; ++iSub) 
@@ -2337,11 +2355,17 @@ void Domain::computeGalerkinTerm(FemEquationTerm *fet, DistBcData<dim> &bcData,
 
 //------------------------------------------------------------------------------
 
-// Included (MB)
+/****************************************************************************************
+ * Computes the derivative of the viscous term for non-embedded simulations.            *
+ * This is the non-sparse implementation                                           (MB) *
+ ****************************************************************************************/
 template<int dim>
-void Domain::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, DistBcData<dim> &bcData,
-				 DistGeoState &geoState, DistSVec<double,3> &X, DistSVec<double,3> &dX,
-				 DistSVec<double,dim> &V, DistSVec<double,dim> &dV, double dMach, DistSVec<double,dim> &dR)
+void Domain::computeDerivativeOfGalerkinTerm(
+              FemEquationTerm *fet, DistBcData<dim> &bcData,
+              DistGeoState &geoState,
+              DistSVec<double,3> &X,   DistSVec<double,3> &dX,
+              DistSVec<double,dim> &V, DistSVec<double,dim> &dV,
+              double dMach, DistSVec<double,dim> &dR)
 {
 
   double t0 = timer->getTime();
@@ -2349,30 +2373,80 @@ void Domain::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet, DistBcData<di
 #pragma omp parallel for
   for (int iSub = 0; iSub < numLocSub; ++iSub)
     subDomain[iSub]->computeDerivativeOfGalerkinTerm(fet, bcData(iSub), geoState(iSub),
-					 X(iSub), dX(iSub), V(iSub), dV(iSub), dMach, dR(iSub));
+                       X(iSub), dX(iSub), V(iSub), dV(iSub), dMach, dR(iSub));
 
   timer->addFiniteElementTermTime(t0);
 
 }
 
-//------------------------------------------------------------------------------
 
+
+
+
+//TODO VISCOUSDERIV
+/****************************************************************************************
+ * Computes the derivative of the viscous term for embedded simulations.                *
+ * This is the non-sparse implementation                                         (lscheuch) *
+ ****************************************************************************************/
 template<int dim>
-void Domain::computeDerivativeOfGalerkinTerm(dRdXoperators<dim> &dRdXop, FemEquationTerm *fet, DistBcData<dim> &bcData,
-				 DistGeoState &geoState, DistSVec<double,3> &X, DistSVec<double,3> &dX,
-				 DistSVec<double,dim> &V, DistSVec<double,dim> &dV, double dMach, DistSVec<double,dim> &dR)
-{ // YC
+void Domain::computeDerivativeOfGalerkinTermEmb(
+              FemEquationTerm *fet, DistBcData<dim> &bcData,
+              DistGeoState &geoState,
+              DistSVec<double,3> &X,   DistSVec<double,3> &dX,
+              DistSVec<double,dim> &V, DistSVec<double,dim> &dV,
+              double dMach, DistSVec<double,dim> &dR,
+              DistVec<GhostPoint<dim>*> *distghostPoints,
+              DistLevelSetStructure *distLSS)
+{
+
+  double t0 = timer->getTime();
+
+#pragma omp parallel for
+  for (int iSub = 0; iSub < numLocSub; ++iSub)
+    subDomain[iSub]->computeDerivativeOfGalerkinTermEmb(
+                      fet, bcData(iSub), geoState(iSub),
+                       X(iSub), dX(iSub), V(iSub), dV(iSub), dMach, dR(iSub),
+                       distghostPoints->operator[](iSub),
+                       &(distLSS->operator()(iSub))        );
+
+  timer->addFiniteElementTermTime(t0);
+
+}
+
+
+
+
+
+/****************************************************************************************
+ * Computes the derivative of the viscous term for non-embedded simulations.            *
+ * This is the sparse implementation                                               (YC) *
+ ****************************************************************************************/
+template<int dim>
+void Domain::computeDerivativeOfGalerkinTerm(dRdXoperators<dim> &dRdXop,
+               FemEquationTerm *fet,
+               DistBcData<dim> &bcData,
+               DistGeoState &geoState,
+               DistSVec<double,3> &X,   DistSVec<double,3> &dX,
+               DistSVec<double,dim> &V, DistSVec<double,dim> &dV,
+               double dMach,
+               DistSVec<double,dim> &dR)
+{
 
   double t0 = timer->getTime();
 
 #pragma omp parallel for
   for (int iSub = 0; iSub < numLocSub; ++iSub)
     subDomain[iSub]->computeDerivativeOfGalerkinTerm(dRdXop.dViscousFluxdX[iSub], fet, bcData(iSub), geoState(iSub),
-					 X(iSub), dX(iSub), V(iSub), dV(iSub), dMach, dR(iSub));
+         X(iSub), dX(iSub), V(iSub), dV(iSub), dMach, dR(iSub));
 
   timer->addFiniteElementTermTime(t0);
 
 }
+
+
+
+
+
 
 //------------------------------------------------------------------------------
 

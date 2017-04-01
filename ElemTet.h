@@ -210,6 +210,11 @@ public:
 			   SVec<double,dim> &, SVec<double,dim> &, double, SVec<double,dim> &);
 
   template<int dim>
+  void computeDerivativeOfGalerkinTermEmb(FemEquationTerm *, SVec<double,3> &, SVec<double,3> &, Vec<double> &,
+         SVec<double,dim> &, SVec<double,dim> &, double, SVec<double,dim> &,
+         Vec<GhostPoint<dim>*> *ghostPoints,LevelSetStructure *LSS);
+
+  template<int dim>
   void computeDerivativeOperatorsOfGalerkinTerm(FemEquationTerm *, SVec<double,3> &, Vec<double> &,
                                                 SVec<double,dim> &, RectangularSparseMat<double,3,dim> &);
   template<int dim>

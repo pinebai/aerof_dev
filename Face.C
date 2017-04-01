@@ -1577,9 +1577,12 @@ void FaceSet::computeGalerkinTerm(ElemSet &elems, FemEquationTerm *fet,
 
 }
 
-//------------------------------------------------------------------------------
 
-// Included (MB)
+
+/****************************************************************************************
+ * Computes the derivative of the viscous term for non-embedded simulations.            *
+ * This is the non-sparse implementation                                           (MB) *
+ ****************************************************************************************/
 template<int dim>
 void FaceSet::computeDerivativeOfGalerkinTerm(ElemSet &elems, FemEquationTerm *fet, BcData<dim> &bcData,
 				  GeoState &geoState, SVec<double,3> &X, SVec<double,3> &dX,

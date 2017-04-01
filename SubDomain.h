@@ -1644,7 +1644,13 @@ public:
 
   template<int dim>
   void computeDerivativeOfGalerkinTerm(FemEquationTerm *, BcData<dim> &, GeoState &,
-			   SVec<double,3> &, SVec<double,3> &, SVec<double,dim> &, SVec<double,dim> &, double, SVec<double,dim> &);
+         SVec<double,3> &, SVec<double,3> &, SVec<double,dim> &, SVec<double,dim> &, double, SVec<double,dim> &);
+
+  template<int dim>
+  void computeDerivativeOfGalerkinTermEmb(FemEquationTerm *, BcData<dim> &, GeoState &,
+         SVec<double,3> &, SVec<double,3> &, SVec<double,dim> &, SVec<double,dim> &, double, SVec<double,dim> &,
+         Vec<GhostPoint<dim>*>* ghostPoints, LevelSetStructure* );
+
 
   template<int dim>
   void computeDerivativeOfGalerkinTerm(RectangularSparseMat<double,3,dim> *, FemEquationTerm *, BcData<dim> &, GeoState &,

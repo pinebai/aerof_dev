@@ -1878,6 +1878,8 @@ struct SensitivityAnalysis {
   const char* linsolverhs;
   const char* dFdS_final;
 
+  enum SensitivityNewEmbDerivs  {OFF_NEWEMBDERIVS  = 0, ON_NEWEMBDERIVS  = 1} newEmbDerivs;
+
   bool densFlag;
   bool pressFlag;
   bool apressFlag;

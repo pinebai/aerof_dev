@@ -4,6 +4,11 @@
 #include <ImplicitEmbeddedCoupledTsDesc.h>
 #include <string>
 
+#define Deg2Rad         0.01745329251994329576923
+#define Rad2Deg        57.29577951308232087679815
+#define perDeg2perRad  57.29577951308232087679815
+#define perRad2perDeg   0.01745329251994329576923
+
 class IoData;
 class Domain;
 class GeoSource;
@@ -28,8 +33,9 @@ class EmbeddedFluidShapeOptimizationHandler : public ImplicitEmbeddedCoupledTsDe
 
 private:
 
-  //  Domain *domain;
+  Domain *domain;
   MatVecProd<dim,dim> *mvp;
+  MatVecProd<dim,dim> *dRdX;
   KspPrec<dim> *pc;
   KspSolver<DistEmbeddedVec<double,dim>, MatVecProd<dim,dim>, KspPrec<dim>, Communicator> *ksp;
   double steadyTol;
@@ -45,6 +51,11 @@ private:
 
   //DistEmbeddedVec?????
   DistVec<double> Pin;
+  DistVec<double> dAdS;
+
+  DistSVec<double,dim> dddx;  // nodal gradients or adjoint vectors
+  DistSVec<double,dim> dddy;
+  DistSVec<double,dim> dddz;
 
   DistSVec<double,3> *load;
   DistSVec<double,3> *dLoad;
@@ -122,10 +133,10 @@ public:
 
   void fsoRestartBcFluxs(IoData &);
 
-  void fso_on_sensitivityMesh(IoData &,  DistSVec<double,dim> &);
-  void fso_on_sensitivityMach(IoData &,  DistSVec<double,dim> &);
-  void fso_on_sensitivityBeta(IoData &,  DistSVec<double,dim> &);
-  void fso_on_sensitivityAlpha(IoData &, DistSVec<double,dim> &);
+  void fso_on_sensitivityMesh(bool isSparse,IoData &,  DistSVec<double,dim> &);
+  void fso_on_sensitivityMach(bool isSparse,IoData &,  DistSVec<double,dim> &);
+  void fso_on_sensitivityBeta(bool isSparse,IoData &,  DistSVec<double,dim> &);
+  void fso_on_sensitivityAlpha(bool isSparse,IoData &, DistSVec<double,dim> &);
 
   void fsoComputeDerivativesOfFluxAndSolution(IoData &,
 					      DistSVec<double,3> &, 
@@ -150,7 +161,7 @@ public:
 		       DistSVec<double,dim> &,
 		       bool);
 
-  void fsoComputeSensitivities(IoData &,
+  void fsoComputeSensitivities(bool isSparse,IoData &,
 			       const char *, 
 			       const char *, 
 			       DistSVec<double,3> &, 
@@ -161,7 +172,7 @@ public:
 		     DistSVec<double,dim> &, 
 		     Vec3D &, Vec3D &, Vec3D &);
 
-  void fsoGetDerivativeOfEffortsAnalytical(IoData &ioData,  DistSVec<double,3>   &X,
+  void fsoGetDerivativeOfEffortsAnalytical(bool isSparse,IoData &ioData,  DistSVec<double,3>   &X,DistSVec<double,3> &dX,
 					   DistSVec<double,dim> &U, DistSVec<double,dim> &dU,
 					   Vec3D &dForces, Vec3D &dMoments, Vec3D &dL);
 
@@ -178,6 +189,37 @@ public:
   bool getdXdSb(int);
 
   Communicator* getComm(){return this->com;};//TODO HACK
+
+  void Forces2Lifts(IoData &ioData, Vec3D &F, Vec3D &L)
+  {
+    double sin_a = sin(ioData.bc.inlet.alpha);
+    double cos_a = cos(ioData.bc.inlet.alpha);
+    double sin_b = sin(ioData.bc.inlet.beta);
+    double cos_b = cos(ioData.bc.inlet.beta);
+    L[0] =  F[0]*cos_a*cos_b + F[1]*cos_a*sin_b + F[2]*sin_a;
+    L[1] = -F[0]*sin_b       + F[1]*cos_b;
+    L[2] = -F[0]*sin_a*cos_b - F[1]*sin_a*sin_b + F[2]*cos_a;
+  };
+
+  void dForces2dLifts(IoData &ioData,Vec3D &F, Vec3D &dF,Vec3D &dL){
+    Forces2Lifts(ioData,dF,dL);
+    double sin_a = sin(ioData.bc.inlet.alpha);
+    double cos_a = cos(ioData.bc.inlet.alpha);
+    double sin_b = sin(ioData.bc.inlet.beta);
+    double cos_b = cos(ioData.bc.inlet.beta);
+    double dsin_a = cos_a*DFSPAR[1], dcos_a = -sin_a*DFSPAR[1];
+    double dsin_b = cos_b*DFSPAR[2], dcos_b = -sin_b*DFSPAR[2];
+    double convfac = ((ioData.sa.angleRad == ioData.sa.OFF_ANGLERAD) && (DFSPAR[1] || DFSPAR[2])) ? perRad2perDeg : 1.0;
+    dL[0] += (F[0]*(dcos_a*cos_b + cos_a*dcos_b) +
+              F[1]*(dcos_a*sin_b + cos_a*dsin_b) +
+              F[2]*dsin_a                          )*convfac;
+
+    dL[1] += (-F[0]*dsin_b + F[1]*dcos_b           )*convfac;
+
+    dL[2] += (-F[0]*(dsin_a*cos_b + sin_a*dcos_b) -
+              F[1]*(dsin_a*sin_b + sin_a*dsin_b) +
+              F[2]*dcos_a                         )*convfac;
+  };
 
 };
 

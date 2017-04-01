@@ -3348,6 +3348,7 @@ void SensitivityAnalysis::setup(const char *name, ClassAssigner *father)
   new ClassStr<SensitivityAnalysis>(ca, "tempStateDeriv", this, &SensitivityAnalysis::tempStateDeriv);
   new ClassStr<SensitivityAnalysis>(ca, "LinSolveRHS", this, &SensitivityAnalysis::linsolverhs);
   new ClassStr<SensitivityAnalysis>(ca, "dFdS_final", this, &SensitivityAnalysis::dFdS_final);
+  new ClassToken<SensitivityAnalysis>(ca, "NewEmbDerivs", this,  reinterpret_cast<int SensitivityAnalysis::*>(&SensitivityAnalysis::newEmbDerivs), 2, "Off", 0, "On", 1);
 
   ksp.setup("LinearSolver", ca);
 
