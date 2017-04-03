@@ -11,7 +11,6 @@
 #include <MemoryPool.h>
 
 #include <cmath>
-
 #include <iostream>
 #include <string>
 
@@ -364,7 +363,7 @@ void FluidShapeOptimizationHandler<dim>::fsoRestartBcFluxs(IoData &ioData)
         double alpha = gam*(gam - 1.0) * ioData.ref.mach*ioData.ref.mach;
         viscosity = alpha*ioData.ref.temperature; //not sure if we should be using reference temperature for bc here
       }
-      
+    cout << "viscosity: " << viscosity << "\n";
     ioData.ref.reynolds_mu = velocity * ioData.ref.length * ioData.ref.density / viscosity;
 
     double dvelocitydMach = sqrt(gamma * ioData.ref.pressure / ioData.ref.density);
@@ -1563,7 +1562,7 @@ void FluidShapeOptimizationHandler<dim>::fsoLinearSolver(
                                          bool isFSI
 )
 {
-  fsoPrintTextOnScreen("Starting LinearSolver");
+  fsoPrintTextOnScreen("Starting2 LinearSolver");
 
 //  dUdS = 0.0;
 
@@ -2453,9 +2452,9 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeDerivativesOfFluxAndSolution(
     DistSVec<double,dim> dFdS2(dFdS), diff(dFdS);
 
     fsoAnalytical(isSparse, ioData, X, dXdS, A, U, dFdS);
-   //  fsoSemiAnalytical(ioData, X, A, U, dFdS2);
-   //  diff = dFdS2 - dFdS;
-   // this->com->fprintf(stderr, "Flux Resid: dFdS = %e, dFdS2 = %e\n",dFdS.norm(), dFdS2.norm());
+    fsoSemiAnalytical(ioData, X, A, U, dFdS2);
+    diff = dFdS2 - dFdS;
+   this->com->fprintf(stderr, "Flux Resid: dFdS = %e, dFdS2 = %e\n",dFdS.norm(), dFdS2.norm());
 
 
   } else {
@@ -2546,9 +2545,8 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeSensitivities(
   }
   else {
     fsoGetDerivativeOfEffortsAnalytical(isSparse, ioData, X, dXdS, U, dUdS, dFds, dMds, dLdS);//TODO uncomments
-    // fsoGetDerivativeOfEffortsFiniteDifference(ioData, X, dXdS, *this->A, U, dUdS, dFds2, dMds2,dLdS2);
-    // this->com->fprintf(stderr, "Force: dFds = %e, dFds2 = %e\n",dFds.norm(), dFds2.norm());
-    fsoGetDerivativeOfEffortsAnalytical(isSparse, ioData, X, dXdS, U, dUdS, dFds, dMds, dLdS);
+    fsoGetDerivativeOfEffortsFiniteDifference(ioData, X, dXdS, *this->A, U, dUdS, dFds2, dMds2,dLdS2);
+    this->com->fprintf(stderr, "Force: dFds = %e, dFds2 = %e\n",dFds.norm(), dFds2.norm());
   }
 
 
