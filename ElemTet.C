@@ -20,12 +20,126 @@
 //--------------functions in ElemTet class
 //------------------------------------------------------------------------------
 
+//template<int dim>
+//void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
+//                Vec<double> &d2wall, SVec<double,dim> &V,
+//                SVec<double,dim> &R, Vec<GhostPoint<dim>*> *ghostPoints,
+//                LevelSetStructure *LSS)
+//{
+//  // In the case of an embedded simulation, check if the tetrahedra is actually active
+//
+//  bool isTetInactive    = true;
+//  bool isAtTheInterface = false;
+//
+//  //only when at least one node is active or one edge is intersected is the tetrahedra actually active
+//  if(ghostPoints)
+//  {
+//    //loop over all nodes
+//    for(int i=0;i<4;++i)	isTetInactive = isTetInactive && !LSS->isActive(0,nodeNum(i));
+//
+//    //loop over all edges
+//    for(int l=0; l<6; ++l) isAtTheInterface = isAtTheInterface || LSS->edgeIntersectsStructure(0,edgeNum(l));
+//
+//    if(isTetInactive) return;//If the tetrahedra is fully inactive do nothing
+//  }
+//
+//  // Common Partas
+//  double dp1dxj[4][3];
+//  double vol = computeGradientP1Function(X, dp1dxj);
+//
+//  double d2w[4] = {d2wall[nodeNum(0)], d2wall[nodeNum(1)],
+//                   d2wall[nodeNum(2)], d2wall[nodeNum(3)]};
+//  double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+//
+//  double r[3][dim], s[dim], pr[12];
+//
+//  if(ghostPoints && isAtTheInterface)
+//  {
+//    // We don't want to update States associated to ghost points
+//    GhostPoint<dim> *gp;
+//
+//    for(int j=0; j<4; ++j)//loop over all tetrahedra nodes
+//    {
+//      for (int k=0; k<4; ++k) v[k] = V[nodeNum(k)]; //get the fluid state vector of all nodes //TODO this function should probably me moved outside of the j-loop
+//
+//      int idx = nodeNum(j);//get the node ID of the current tetrahedra node
+//
+//      // We add a contribution for active nodes only
+//      if(LSS->isActive(0,idx))//execute loop if the current node j is an active node
+//      {
+//
+//        //loop over all edges of the tetrahedra
+//        for(int e=0; e<6; e++)
+//        {
+//          //execute statement only if the current node j belongs to that edge and the edge is intersected
+//          if((j == edgeEnd(e,0) || j == edgeEnd(e,1)) && LSS->edgeIntersectsStructure(0, edgeNum(e)))
+//          {
+//            // l is set to the id of the node at the other end of the edge
+//            int l = (j == edgeEnd(e,0) ? edgeEnd(e,1) : edgeEnd(e,0));
+//            gp = (*ghostPoints)[nodeNum(l)];//how can I interpret this line?
+//            if (gp) v[l] = gp->getPrimitiveState();
+//          }
+//        }
+//
+//        fet->computeVolumeTerm(dp1dxj, d2w, v, reinterpret_cast<double *>(r),
+//                               s, pr, vol, X, nodeNum(), volume_id);
+//
+//        for (int k=0; k<dim; ++k)//loop over all state variables
+//        {
+//            R[idx][k] += vol * ( (r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +
+//                                  r[2][k] * dp1dxj[j][2]));// - fourth * s[k] );
+//        }
+//      }
+//    }
+//  }
+//  else//this is the non-embedded version; all the states are updated
+//  {
+//    // Loop over all tetrahedra nodes
+//    for (int k=0; k<4; ++k) v[k] = V[nodeNum(k)];
+//
+//    bool porousTermExists =  fet->computeVolumeTerm(dp1dxj, d2w, v, reinterpret_cast<double *>(r),
+//                                                    s, pr, vol, X, nodeNum(), volume_id);
+//
+//    //Loop over all other nodes
+//    for (int j=0; j<4; ++j)
+//    {
+//      int idx = nodeNum(j);
+//
+//      //Loop over all components of the state vector
+//      for (int k=0; k<dim; ++k)
+//      {
+//        R[idx][k] += vol * ( (r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +
+//                              r[2][k] * dp1dxj[j][2]) - fourth * s[k] );
+//      }
+//    }
+//
+//    if (porousTermExists)
+//    {
+//      for (int j=0; j<4; ++j)
+//      {
+//        int idx = nodeNum(j);
+//
+//        for (int k=1; k<4; ++k)  R[idx][k] += pr[3*j+k-1];
+//      }
+//    }
+//  }
+//
+//}
+
+
+
+//TODO VISCOUSDERIV TEMP
 template<int dim>
 void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
                 Vec<double> &d2wall, SVec<double,dim> &V,
                 SVec<double,dim> &R, Vec<GhostPoint<dim>*> *ghostPoints,
                 LevelSetStructure *LSS)
 {
+//  std::cout<<"a";//TODO delete line
+
+    double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+//  double *dv[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+  //getPseudoStates(v,dv,ghostPoints,LSS);
   // In the case of an embedded simulation, check if the tetrahedra is actually active
 
   bool isTetInactive    = true;
@@ -35,7 +149,7 @@ void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
   if(ghostPoints)
   {
     //loop over all nodes
-    for(int i=0;i<4;++i)	isTetInactive = isTetInactive && !LSS->isActive(0,nodeNum(i));
+    for(int i=0;i<4;++i)  isTetInactive = isTetInactive && !LSS->isActive(0,nodeNum(i));
 
     //loop over all edges
     for(int l=0; l<6; ++l) isAtTheInterface = isAtTheInterface || LSS->edgeIntersectsStructure(0,edgeNum(l));
@@ -49,7 +163,7 @@ void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
 
   double d2w[4] = {d2wall[nodeNum(0)], d2wall[nodeNum(1)],
                    d2wall[nodeNum(2)], d2wall[nodeNum(3)]};
-  double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+
 
   double r[3][dim], s[dim], pr[12];
 
@@ -60,7 +174,7 @@ void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
 
     for(int j=0; j<4; ++j)//loop over all tetrahedra nodes
     {
-      for (int k=0; k<4; ++k) v[k] = V[nodeNum(k)]; //get the fluid state vector of all nodes //TODO this function should probably me moved outside of the j-loop
+      //for (int k=0; k<4; ++k) v[k] = V[nodeNum(k)]; //get the fluid state vector of all nodes //TODO this function should probably me moved outside of the j-loop
 
       int idx = nodeNum(j);//get the node ID of the current tetrahedra node
 
@@ -80,22 +194,24 @@ void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
             if (gp) v[l] = gp->getPrimitiveState();
           }
         }
-
+      //}//////////
         fet->computeVolumeTerm(dp1dxj, d2w, v, reinterpret_cast<double *>(r),
                                s, pr, vol, X, nodeNum(), volume_id);
 
         for (int k=0; k<dim; ++k)//loop over all state variables
         {
+//            R[idx][k] += vol * ( (r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +
+//                                  r[2][k] * dp1dxj[j][2]));// - fourth * s[k] );
             R[idx][k] += vol * ( (r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +
-                                  r[2][k] * dp1dxj[j][2]));// - fourth * s[k] );
+                                  r[2][k] * dp1dxj[j][2]) - fourth * s[k] );
         }
-      }
+      }//TODO temp
     }
   }
   else//this is the non-embedded version; all the states are updated
   {
     // Loop over all tetrahedra nodes
-    for (int k=0; k<4; ++k) v[k] = V[nodeNum(k)];
+    //for (int k=0; k<4; ++k) v[k] = V[nodeNum(k)];
 
     bool porousTermExists =  fet->computeVolumeTerm(dp1dxj, d2w, v, reinterpret_cast<double *>(r),
                                                     s, pr, vol, X, nodeNum(), volume_id);
@@ -125,6 +241,7 @@ void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
   }
 
 }
+
 
 
 /****************************************************************************************
@@ -213,6 +330,289 @@ void ElemTet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet,
 
 
 
+////TODO VISCOUSDERIV
+///****************************************************************************************
+// * Derivative of the viscous term in a non-embedded simulation.                         *
+// * This is the non-sparse implementations                                          (MB) *
+// ****************************************************************************************/
+//template<int dim>
+//void ElemTet::computeDerivativeOfGalerkinTermEmb(
+//                FemEquationTerm *fet,
+//                SVec<double,3> &X,   SVec<double,3> &dX,
+//                Vec<double> &d2wall,
+//                SVec<double,dim> &V, SVec<double,dim> &dV,
+//                double dMach,
+//                SVec<double,dim> &dR,
+//                Vec<GhostPoint<dim>*> *ghostPoints,
+//                LevelSetStructure *LSS)
+//{
+//
+//  double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+//  double *dv[4] = {dV[nodeNum(0)], dV[nodeNum(1)], dV[nodeNum(2)], dV[nodeNum(3)]};
+//  getAuxiliaryStates(fet,V,dV,v,dv,ghostPoints,LSS);
+//
+//  //TODO new
+//  bool isTetInactive    = true;
+//  bool isAtTheInterface = false;
+//
+//  //only when at least one node is active or one edge is intersected is the tetrahedra actually active
+//  if(ghostPoints)
+//  {
+//    //loop over all nodes
+//    for(int i=0;i<4;++i)  isTetInactive = isTetInactive && !LSS->isActive(0,nodeNum(i));
+//
+//    //loop over all edges
+//    for(int l=0; l<6; ++l) isAtTheInterface = isAtTheInterface || LSS->edgeIntersectsStructure(0,edgeNum(l));
+//
+//    if(isTetInactive) return;//If the tetrahedra is fully inactive do nothing
+//  }
+//
+//  //common part START
+//  //dp1dxj[i][j] holds the derivative of node i in j direction
+//  double dp1dxj[4][3];
+//  double vol = computeGradientP1Function(X, dp1dxj);
+//
+//  //ddp1dxj[i][j] holds the second derivative of node i in j direction
+//  double ddp1dxj[4][3];
+//  double dvol = computeDerivativeOfGradientP1Function(X, dX, ddp1dxj);
+//
+//  //double ddp1dxj2[4][3];
+//  double diff[4][3];
+//
+////TODO this looks like it is old Yungsoo code that is not being used
+////  double dvol2dNodes[4][3] = {0}, ddp1dxj2dNodes[4][3][4][3] = {0};
+////  computeDerivativeOperatorOfGradientP1Function(X, dvol2dNodes, ddp1dxj2dNodes);
+////
+////  double dvol3(0), ddp1dxj3[4][3] = {0};
+////  for(int i=0; i<4; ++i)//loop over all nodess
+////    for(int j=0; j<3; ++j) {//loop over x,y,z
+////      dvol3 += dvol2dNodes[i][j]*dX[ nodeNum(i) ][j];
+////      for(int k=0; k<4; ++k)
+////        for(int l=0; l<3; ++l) {
+////          ddp1dxj3[i][j] += ddp1dxj2dNodes[i][j][k][l]*dX[ nodeNum(k) ][l];
+////        }
+////    }
+////
+////  for(int i=0; i<4; ++i)
+////    for(int j=0; j<3; ++j) {
+////      diff[i][j] = ddp1dxj[i][j] - ddp1dxj3[i][j];
+////      if(diff[i][j] > 1e-8) {//TODO changed from 1e-12
+////        fprintf(stderr, "%s:%d diff for ddp1dxj in ElemTet::computeDerivativeOfGalerkinTerm is %e\n",__FILE__,__LINE__,diff[i][j]);
+////        exit(-1);
+////      }
+////    }
+//
+//  //Array that holds the distance to the wall for every node
+//  double d2w[4] = {d2wall[nodeNum(0)], d2wall[nodeNum(1)],d2wall[nodeNum(2)], d2wall[nodeNum(3)]};
+//  double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+//  double *dv[4] = {dV[nodeNum(0)], dV[nodeNum(1)], dV[nodeNum(2)], dV[nodeNum(3)]};//TODO at this point dv has faulty values at the ghost nodes
+//
+//
+//
+//
+//
+//  double r[3][dim], s[dim], pr[12];
+//  double dr[3][dim], ds[dim], dpr[12];
+//
+//
+//
+//
+//
+//
+//
+//
+//  //TODO VISCOUSDERIV VERSION1
+//  if(ghostPoints && isAtTheInterface)
+//  {
+//    //std::cout<<"Entered ghostpoint-routine"<<std::endl;
+//    GhostPoint<dim> *gp;
+//
+//    //loop over all tetrahedra nodes
+//    for(int j=0; j<4; ++j)
+//    {
+//      int idx = nodeNum(j);//get the node ID of the current tetrahedra node j
+//
+//      // We add a contribution for active nodes only
+//      if(LSS->isActive(0,idx))//execute loop if the current node j is an active node
+//      {
+//        //std::cout<<"  Entered active levelset"<<std::endl;
+//
+//        //loop over all edges of the tetrahedra
+//        for(int e=0; e<6; e++)
+//        {
+//          //execute statement only if the current node j belongs to that edge and the edge is intersected
+//          if((j == edgeEnd(e,0) || j == edgeEnd(e,1)) && LSS->edgeIntersectsStructure(0, edgeNum(e)))
+//          {
+//            // l is set to the id of the node at the other end of the edge
+//            int l = (j == edgeEnd(e,0) ? edgeEnd(e,1) : edgeEnd(e,0));
+//            gp = (*ghostPoints)[nodeNum(l)];//how can I interpret this line?
+//            if (gp) v[l] = gp->getPrimitiveState();
+//            //if (gp) dv[l] = gp->getDerivativeOfPrimitiveState();
+//            //std::cout<<"    Performed state update"<<std::endl;
+//          }
+//        }
+//
+//        bool porousTermExists =  fet->computeVolumeTerm(
+//                                        dp1dxj,
+//                                        d2w,
+//                                        v,
+//                                        reinterpret_cast<double *>(r),
+//                                        s,
+//                                        pr,
+//                                        vol,
+//                                        X,
+//                                        nodeNum(),
+//                                        volume_id);
+//
+//        fet->computeDerivativeOfVolumeTerm(dp1dxj, ddp1dxj, d2w, v, dv,
+//            dMach, reinterpret_cast<double *>(dr), ds, dpr, dvol, X, nodeNum(), volume_id);
+//
+//        //actual residual derivative computations
+//        //j is the index of the node
+//        //TODO what is dim
+//          for (int k=0; k<dim; ++k){
+//            dR[idx][k] += dvol * ( ( r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +   r[2][k] * dp1dxj[j][2]) - fourth * s[k] )
+//                       + vol   * ( (dr[0][k] * dp1dxj[j][0] + r[0][k] * ddp1dxj[j][0] + dr[1][k] * dp1dxj[j][1] + r[1][k] * ddp1dxj[j][1] +
+//                                    dr[2][k] * dp1dxj[j][2] + r[2][k] * ddp1dxj[j][2]) - fourth * ds[k] );
+//        }
+//
+//        if (porousTermExists) {
+//            for (int k=1; k<4; ++k)
+//              dR[idx][k] += dpr[3*j+k-1];
+//        }
+//
+//
+//      }//end check if node i active //REMARK: if the node is ghost, nothing is done at all
+//
+//    }
+//
+//  }//TODO END VISCOUSDERIV VERSION 1
+//
+////  //TODO BEGIN VISCOUSDERIV VERSION 2 (Dantes version)
+////  Vec3D xWall;
+////  double *Ve[4];
+////  if(ghostPoints && isAtTheInterface)
+////  {
+////    /*  ---------------------------------- IB treatment ---------------------------------- */
+////
+////    GhostPoint<dim> *gp;
+////
+////    for(int i=0; i<4; ++i)
+////    {
+////      int Ni = nodeNum(i);
+////
+////      if(!LSS->isActive(0, Ni)) continue;
+////
+////      for(int j=0; j<4; ++j)
+////      {
+////        int Nj = nodeNum(j);
+////
+////        bool isJGhost = LSS->xWallNode(Nj, xWall);
+////
+////        if(isJGhost)
+////        {
+////        if(!(*ghostPoints)[Nj])
+////        {
+////            fprintf(stderr, "*** Error: missing ghost point\n");
+////            exit(-1);
+////        }
+////
+////        gp = (*ghostPoints)[Nj];
+////
+////          int e = -1;
+////          for(int l=0; l<6; ++l)
+////          {
+////            if( min(i,j) == min(edgeEnd(l,0), edgeEnd(l,1)) &&
+////                 max(i,j) == max(edgeEnd(l,0), edgeEnd(l,1)) )
+////            {
+////              e = l; break;
+////            }
+////          }
+////
+////          int dir = LSS->edgeIntersectsStructure(0, edgeNum(e)) ? -1 : 1;
+////
+////          Ve[j] = gp->getPrimitiveState(dir);
+////        }
+////        else
+////          Ve[j] = V[Nj];
+////      }
+////
+//////      bool withPorousTerm = fet->computeVolumeTerm(dp1dxj, d2w, Ve,
+//////                                    reinterpret_cast<double *>(ff),
+//////                                    S, PR, Vol, X, nodeNum(), volume_id);
+////      bool porousTermExists = fet->computeDerivativeOfVolumeTerm(dp1dxj, ddp1dxj, d2w, v, dv,
+////                                   dMach, reinterpret_cast<double *>(dr), ds, dpr, dvol, X,
+////                                   nodeNum(), volume_id);
+////      //
+////
+////      for(int k=0; k<dim; ++k)
+////      {
+////        dR[Ni][k] += dvol * ( ( r[0][k] * dp1dxj[i][0] + r[1][k] * dp1dxj[i][1] +   r[2][k] * dp1dxj[i][2]) - fourth * s[k] )
+////                   + vol   * ( (dr[0][k] * dp1dxj[i][0] + r[0][k] * ddp1dxj[i][0] + dr[1][k] * dp1dxj[i][1] + r[1][k] * ddp1dxj[i][1] +
+////                                dr[2][k] * dp1dxj[i][2] + r[2][k] * ddp1dxj[i][2]) - fourth * ds[k] );
+////      }
+////
+////
+////      if (porousTermExists) {
+////        for (int j=0; j<4; ++j) {
+////          int idx = nodeNum(j);
+////          for (int k=1; k<4; ++k)
+////            dR[idx][k] += dpr[3*j+k-1];
+////        }
+////      }
+////    }
+////  }//TODO END VISCOUSDERIV VERSION 2
+//  else//non-embedded case
+//  {
+//     //std::cout<<"Entered non-ghostpoint-routine\n"<<std::endl;
+//
+//      bool porousTermExists =  fet->computeVolumeTerm(
+//                                      dp1dxj,
+//                                      d2w,
+//                                      v,
+//                                      reinterpret_cast<double *>(r),
+//                                      s,
+//                                      pr,
+//                                      vol,
+//                                      X,
+//                                      nodeNum(),
+//                                      volume_id);
+//
+//
+//      fet->computeDerivativeOfVolumeTerm(dp1dxj, ddp1dxj, d2w, v, dv, dMach, reinterpret_cast<double *>(dr), ds, dpr, dvol, X, nodeNum(), volume_id);
+//
+//      //actual residual derivative computations
+//      //j is the index of the node
+//      //TODO what is dim
+//      for (int j=0; j<4; ++j) {
+//        int idx = nodeNum(j);
+//        for (int k=0; k<dim; ++k)
+//          dR[idx][k] += dvol * ( ( r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +   r[2][k] * dp1dxj[j][2]) - fourth * s[k] )
+//                     + vol   * ( (dr[0][k] * dp1dxj[j][0] + r[0][k] * ddp1dxj[j][0] + dr[1][k] * dp1dxj[j][1] + r[1][k] * ddp1dxj[j][1] +
+//                                  dr[2][k] * dp1dxj[j][2] + r[2][k] * ddp1dxj[j][2]) - fourth * ds[k] );
+//      }
+//
+//      if (porousTermExists) {
+//        for (int j=0; j<4; ++j) {
+//          int idx = nodeNum(j);
+//          for (int k=1; k<4; ++k)
+//            dR[idx][k] += dpr[3*j+k-1];
+//        }
+//      }
+//    }
+//  }
+
+
+
+
+
+
+
+
+
+
+
+
 //TODO VISCOUSDERIV
 /****************************************************************************************
  * Derivative of the viscous term in a non-embedded simulation.                         *
@@ -229,6 +629,12 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
                 Vec<GhostPoint<dim>*> *ghostPoints,
                 LevelSetStructure *LSS)
 {
+
+  double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+  double *dv[4] = {dV[nodeNum(0)], dV[nodeNum(1)], dV[nodeNum(2)], dV[nodeNum(3)]};
+  getPseudoStates(v,dv,ghostPoints,LSS);
+  //std::cout<<"a"<<std::endl;
+
   //TODO new
   bool isTetInactive    = true;
   bool isAtTheInterface = false;
@@ -282,8 +688,8 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
 
   //Array that holds the distance to the wall for every node
   double d2w[4] = {d2wall[nodeNum(0)], d2wall[nodeNum(1)],d2wall[nodeNum(2)], d2wall[nodeNum(3)]};
-  double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
-  double *dv[4] = {dV[nodeNum(0)], dV[nodeNum(1)], dV[nodeNum(2)], dV[nodeNum(3)]};
+//  double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+//  double *dv[4] = {dV[nodeNum(0)], dV[nodeNum(1)], dV[nodeNum(2)], dV[nodeNum(3)]};//TODO at this point dv has faulty values at the ghost nodes
 
 
 
@@ -292,11 +698,18 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
   double r[3][dim], s[dim], pr[12];
   double dr[3][dim], ds[dim], dpr[12];
 
-  //TODO VISCOUSDERIV
+
+
+
+
+
+
+
+  //TODO VISCOUSDERIV VERSION1
+  //if(ghostPoints && isAtTheInterface)
+  //if(false)//TODO HACK
   if(ghostPoints && isAtTheInterface)
   {
-    GhostPoint<dim> *gp;
-
     //loop over all tetrahedra nodes
     for(int j=0; j<4; ++j)
     {
@@ -305,20 +718,6 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
       // We add a contribution for active nodes only
       if(LSS->isActive(0,idx))//execute loop if the current node j is an active node
       {
-
-        //loop over all edges of the tetrahedra
-        for(int e=0; e<6; e++)
-        {
-          //execute statement only if the current node j belongs to that edge and the edge is intersected
-          if((j == edgeEnd(e,0) || j == edgeEnd(e,1)) && LSS->edgeIntersectsStructure(0, edgeNum(e)))
-          {
-            // l is set to the id of the node at the other end of the edge
-            int l = (j == edgeEnd(e,0) ? edgeEnd(e,1) : edgeEnd(e,0));
-            gp = (*ghostPoints)[nodeNum(l)];//how can I interpret this line?
-            if (gp) v[l] = gp->getPrimitiveState();
-          }
-        }
-
         bool porousTermExists =  fet->computeVolumeTerm(
                                         dp1dxj,
                                         d2w,
@@ -331,7 +730,8 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
                                         nodeNum(),
                                         volume_id);
 
-        fet->computeDerivativeOfVolumeTerm(dp1dxj, ddp1dxj, d2w, v, dv, dMach, reinterpret_cast<double *>(dr), ds, dpr, dvol, X, nodeNum(), volume_id);
+        fet->computeDerivativeOfVolumeTerm(dp1dxj, ddp1dxj, d2w, v, dv,
+            dMach, reinterpret_cast<double *>(dr), ds, dpr, dvol, X, nodeNum(), volume_id);
 
         //actual residual derivative computations
         //j is the index of the node
@@ -348,11 +748,13 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
         }
 
 
-      }//end check if node i active
+      }//end check if node i active //REMARK: if the node is ghost, nothing is done at all
 
     }
 
-  }
+  }//TODO END VISCOUSDERIV VERSION 1
+
+
   else//non-embedded case
   {
 
@@ -389,8 +791,120 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
             dR[idx][k] += dpr[3*j+k-1];
         }
       }
-    }
+    }//Non-embedded case
   }
+
+
+
+
+
+
+
+
+
+//TODO VISCOUSDERIV
+/****************************************************************************************
+ * Derivative of the viscous term in a non-embedded simulation.                         *
+ * This is the non-sparse implementations                                          (MB) *
+ ****************************************************************************************/
+template<int dim>
+void ElemTet::getPseudoStates(
+                double **v, double **dv,
+                Vec<GhostPoint<dim>*> *ghostPoints,
+                LevelSetStructure *LSS)
+{
+  //TODO new
+  bool isTetInactive    = true;
+  bool isAtTheInterface = false;
+
+  //only when at least one node is active or one edge is intersected is the tetrahedra actually active
+  if(ghostPoints)
+  {
+    //loop over all nodes
+    for(int i=0;i<4;++i)  isTetInactive = isTetInactive && !LSS->isActive(0,nodeNum(i));
+
+    //loop over all edges
+    for(int l=0; l<6; ++l) isAtTheInterface = isAtTheInterface || LSS->edgeIntersectsStructure(0,edgeNum(l));
+
+    if(isTetInactive) return;//If the tetrahedra is fully inactive do nothing
+  }
+
+  //Array that holds the distance to the wall for every node
+//  double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+//  double *dv[4] = {dV[nodeNum(0)], dV[nodeNum(1)], dV[nodeNum(2)], dV[nodeNum(3)]};//TODO at this point dv has faulty values at the ghost nodes
+
+//    v[0]  = V[nodeNum(0)];
+//    v[1]  = V[nodeNum(1)];
+//    v[2]  = V[nodeNum(2)];
+//    v[3]  = V[nodeNum(3)];
+//
+//    dv[0] = dV[nodeNum(0)];
+//    dv[1] = dV[nodeNum(1)];
+//    dv[2] = dV[nodeNum(2)];
+//    dv[3] = dV[nodeNum(3)];
+
+
+  //TODO VISCOUSDERIV VERSION1
+  if(ghostPoints && isAtTheInterface)
+  {
+    //std::cout<<"Entered ghostpoint-routine"<<std::endl;
+    GhostPoint<dim> *gp;
+
+    //loop over all tetrahedra nodes
+    for(int j=0; j<4; ++j)
+    {
+      int idx = nodeNum(j);//get the node ID of the current tetrahedra node j
+
+      // We add a contribution for active nodes only
+      if(LSS->isActive(0,idx))//execute loop if the current node j is an active node
+      {
+        //std::cout<<"  Entered active levelset"<<std::endl;
+
+        //loop over all edges of the tetrahedra
+        for(int e=0; e<6; e++)
+        {
+          //execute statement only if the current node j belongs to that edge and the edge is intersected
+          if((j == edgeEnd(e,0) || j == edgeEnd(e,1)) && LSS->edgeIntersectsStructure(0, edgeNum(e)))
+          {
+            // l is set to the id of the node at the other end of the edge
+            int l = (j == edgeEnd(e,0) ? edgeEnd(e,1) : edgeEnd(e,0));
+            gp = (*ghostPoints)[nodeNum(l)];//how can I interpret this line?
+            if (gp) v[l] = gp->getPrimitiveState();
+          }
+        }
+
+      }//end check if node i active
+
+    }
+
+  }//TODO END VISCOUSDERIV VERSION 1
+
+  else//non-embedded case
+  {
+   //Nothing to be done
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -399,130 +913,137 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
 //------------------------------------------------------------------------------
 
 template<int dim>
-void ElemTet::computeGalerkinTerm_e(FemEquationTerm *fet, SVec<double,3> &X,
-												Vec<double> &d2wall, SVec<double,dim> &V,
-												SVec<double,dim> &R, Vec<GhostPoint<dim>*> *ghostPoints,
-												LevelSetStructure *LSS)
+void ElemTet::computeGalerkinTerm_e(
+                FemEquationTerm *fet,
+                SVec<double,3> &X,
+                Vec<double> &d2wall,
+                SVec<double,dim> &V,
+                SVec<double,dim> &R,
+                Vec<GhostPoint<dim>*> *ghostPoints,
+                LevelSetStructure *LSS)
 {
 
-	bool isTetInactive    = true;
-	bool isAtTheInterface = false;
+  bool isTetInactive    = true;
+  bool isAtTheInterface = false;
 
-	if(ghostPoints)
-	{
-		for(int i=0; i<4; ++i)
-		{
-			isTetInactive    = isTetInactive    && !LSS->isActive(0, nodeNum(i));
-			isAtTheInterface = isAtTheInterface || !LSS->isActive(0, nodeNum(i));
-		}
+  if(ghostPoints)//If ghostpoints is a null pointer, then no embedded routines are required
+  {
+    for(int i=0; i<4; ++i)//loop over all tetrahedra nodes
+    { //if at least one node is active, the tetrahedra is regarded as being active
+      isTetInactive    = isTetInactive    && !LSS->isActive(0, nodeNum(i));
+      isAtTheInterface = isAtTheInterface || !LSS->isActive(0, nodeNum(i));
+    }
 
-		if(isTetInactive) return;
-	}
+    if(isTetInactive) return;
+  }
 
-	double dp1dxj[4][3];
-	double Vol = computeGradientP1Function(X, dp1dxj);
+  double dp1dxj[4][3];
+  double Vol = computeGradientP1Function(X, dp1dxj);
 
-	double *Ve[4];
+  double *Ve[4];
 
-	double ff[3][dim], S[dim], PR[12];
+  double ff[3][dim], S[dim], PR[12];
 
-	double dist2wall[4] = {d2wall[nodeNum(0)], d2wall[nodeNum(1)],
-								  d2wall[nodeNum(2)], d2wall[nodeNum(3)]};
+  double dist2wall[4] = {d2wall[nodeNum(0)], d2wall[nodeNum(1)],d2wall[nodeNum(2)], d2wall[nodeNum(3)]};
 
-	Vec3D xWall;
+  Vec3D xWall;
 
-	if(ghostPoints && isAtTheInterface)
-	{
-		/*  ---------------------------------- IB treatment ---------------------------------- */
+  // enter this routine, if the the current tetrahedra is active and intersected by the interface
+  if(ghostPoints && isAtTheInterface)
+  {
+    /*  ---------------------------------- IB treatment ---------------------------------- */
 
-		GhostPoint<dim> *gp;
+    GhostPoint<dim> *gp;
 
-		for(int i=0; i<4; ++i)
-		{
-			int Ni = nodeNum(i);
+    for(int i=0; i<4; ++i)//loop over all tetrahedra nodes
+    {
+      int Ni = nodeNum(i);
 
-			if(!LSS->isActive(0, Ni)) continue;
+      if(!LSS->isActive(0, Ni)) continue; //if the current node is inactive, don't go any further
 
-			for(int j=0; j<4; ++j)
-			{
-				int Nj = nodeNum(j);
+      for(int j=0; j<4; ++j)//loop over all other nodes
+      {
+        int Nj = nodeNum(j);
 
-				bool isJGhost = LSS->xWallNode(Nj, xWall);
+        bool isJGhost = LSS->xWallNode(Nj, xWall);
 
-				if(isJGhost)
-				{
-					if(!(*ghostPoints)[Nj])
-					{
-						fprintf(stderr, "*** Error: missing ghost point\n");
-						exit(-1);
-					}
+        //If this loop is entered, than (i) is active and (j) is ghost
+        if(isJGhost)
+        {
+          if(!(*ghostPoints)[Nj])
+          {
+              fprintf(stderr, "*** Error: missing ghost point\n");
+              exit(-1);
+          }
 
-					gp = (*ghostPoints)[Nj];
+          gp = (*ghostPoints)[Nj];//set Nj as ghostpoint
 
-					int e = -1;
-					for(int l=0; l<6; ++l)
-					{
-						if( min(i,j) == min(edgeEnd(l,0), edgeEnd(l,1)) &&
-							 max(i,j) == max(edgeEnd(l,0), edgeEnd(l,1)) )
-						{
-							e = l; break;
-						}
-					}
+          //the following construct finds the edge that connects i and j
+          int e = -1;
+          for(int l=0; l<6; ++l)//loop over all edges
+          {
+            if( min(i,j) == min(edgeEnd(l,0), edgeEnd(l,1)) &&
+                 max(i,j) == max(edgeEnd(l,0), edgeEnd(l,1)) )
+            {
+              e = l; break;
+            }
+          }
 
-					int dir = LSS->edgeIntersectsStructure(0, edgeNum(e)) ? -1 : 1;
+          //if the edge intersects the structure then dir is set to -1 otherwise to +1
+          int dir = LSS->edgeIntersectsStructure(0, edgeNum(e)) ? -1 : 1;
 
-					Ve[j] = gp->getPrimitiveState(dir);
-				}
-				else
-					Ve[j] = V[Nj];
-			}
+          Ve[j] = gp->getPrimitiveState(dir);
+        }
+        else
+          Ve[j] = V[Nj];
+      }
 
-			bool withPorousTerm = fet->computeVolumeTerm(dp1dxj, dist2wall, Ve,
-																		reinterpret_cast<double *>(ff),
-																		S, PR, Vol, X, nodeNum(), volume_id);
+      bool withPorousTerm = fet->computeVolumeTerm(dp1dxj, dist2wall, Ve,
+                                    reinterpret_cast<double *>(ff),
+                                    S, PR, Vol, X, nodeNum(), volume_id);
 
-			for(int k=0; k<dim; ++k)
-			{
-				R[Ni][k] += Vol*( ff[0][k]*dp1dxj[i][0]
-									 + ff[1][k]*dp1dxj[i][1]
-									 + ff[2][k]*dp1dxj[i][2] - fourth*S[k] );
-			}
+      for(int k=0; k<dim; ++k)
+      {
+        R[Ni][k] += Vol*( ff[0][k]*dp1dxj[i][0]
+                   + ff[1][k]*dp1dxj[i][1]
+                   + ff[2][k]*dp1dxj[i][2] - fourth*S[k] );
+      }
 
-			if(withPorousTerm) for(int k=1; k<4; ++k) R[Ni][k] += PR[3*i+k-1];
-		}
-	}
-	else
-	{
-		/*  ---------------------------------- Same Phase ---------------------------------- */
+      if(withPorousTerm) for(int k=1; k<4; ++k) R[Ni][k] += PR[3*i+k-1];
+    }
+  }
+  else
+  {
+    /*  ---------------------------------- Same Phase ---------------------------------- */
 
-		for(int i=0; i<4; ++i) Ve[i] = V[nodeNum(i)];
+    for(int i=0; i<4; ++i) Ve[i] = V[nodeNum(i)];
 
-		bool withPorousTerm = fet->computeVolumeTerm(dp1dxj, dist2wall, Ve,
-																	reinterpret_cast<double *>(ff),
-																	S, PR, Vol, X, nodeNum(), volume_id);
+    bool withPorousTerm = fet->computeVolumeTerm(dp1dxj, dist2wall, Ve,
+                                  reinterpret_cast<double *>(ff),
+                                  S, PR, Vol, X, nodeNum(), volume_id);
 
-		for(int i=0; i<4; ++i)
-		{
-			int Ni = nodeNum(i);
+    for(int i=0; i<4; ++i)
+    {
+      int Ni = nodeNum(i);
 
-			for (int k=0; k<dim; ++k)
-			{
-				R[Ni][k] += Vol*(  ff[0][k]*dp1dxj[i][0]
-									  + ff[1][k]*dp1dxj[i][1]
-									  + ff[2][k]*dp1dxj[i][2] - fourth*S[k] );
-			}
-		}
+      for (int k=0; k<dim; ++k)
+      {
+        R[Ni][k] += Vol*(  ff[0][k]*dp1dxj[i][0]
+                    + ff[1][k]*dp1dxj[i][1]
+                    + ff[2][k]*dp1dxj[i][2] - fourth*S[k] );
+      }
+    }
 
-		if(withPorousTerm)
-		{
-			for(int i=0; i<4; ++i)
-			{
-				int Ni = nodeNum(i);
+      if(withPorousTerm)
+      {
+      for(int i=0; i<4; ++i)
+      {
+      int Ni = nodeNum(i);
 
-				for(int k=1; k<4; ++k) R[Ni][k] += PR[3*i+k-1];
-			}
-		}
-	}
+      for(int k=1; k<4; ++k) R[Ni][k] += PR[3*i+k-1];
+      }
+    }
+  }
 
 }
 

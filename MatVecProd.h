@@ -242,6 +242,7 @@ public:
                 int (TsDesc<dim>::*checkSolution)(DistSVec<double,dim> &)=NULL);
 
   void apply(DistSVec<double,neq> &, DistSVec<double,neq> &);
+  void applyDebug(DistSVec<double,neq> &, DistSVec<double,neq> &);//TODO DEBUG
   void applyTranspose(DistSVec<double,neq> &, DistSVec<double,neq> &)
   {std::cout<<"*** Error: applyTranspose not implemented for this MatVecProdFD"<<std::endl; exit(-1);}
 

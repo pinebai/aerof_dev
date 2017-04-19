@@ -63,6 +63,13 @@ public:
                      MatVecProdOp *_mvp, KspPrec<neq> *_pc,
                      Communicator *_com);
 
+  template<int neq, class MatVecProdOp>//TODO VISCOUSDERIV
+  KspSolver<DistSVec<double,neq>, MatVecProdOp, KspPrec<neq>, Communicator> *
+  createKrylovSolver2(const DistInfo &info, KspData &kspdata,
+                     MatVecProdOp *_mvp, KspPrec<neq> *_pc,
+                     Communicator *_com);
+
+
   int commonPart(DistSVec<double,dim> &U);
 
   int solveNonLinearSystem(DistSVec<double,dim> &U, int);

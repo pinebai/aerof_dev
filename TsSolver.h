@@ -50,7 +50,7 @@ int TsSolver<ProblemDescriptor>::solve(IoData &ioData)
 {
   std::cout<<__FILE__<<":"<<__LINE__<<std::endl;
   probDesc->printf(0,"\033[96m******************************************\033[00m\n");
-  probDesc->printf(0,"\033[96m*** Standard Solve Routione            ***\033[00m\n");
+  probDesc->printf(0,"\033[96m*** Standard Solve Routine             ***\033[00m\n");
   probDesc->printf(0,"\033[96m******************************************\033[00m\n");
   typename ProblemDescriptor::SolVecType U(probDesc->getVecInfo());
 

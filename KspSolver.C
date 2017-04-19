@@ -350,9 +350,10 @@ disableConvergenceInfo() {
 
 template<class VecType, class MatVecProdOp, class PrecOp, class IoOp, class ScalarT>
 int 
-GmresSolver<VecType,MatVecProdOp,PrecOp,IoOp, ScalarT>::solve(VecType &b, VecType &x)
+GmresSolver<VecType,MatVecProdOp,PrecOp,IoOp, ScalarT>::solve(VecType &b, VecType &x)//This is the solve routine we enter
 {
 
+  std::cout<<"\033[96mFirst version of solve routine enetered\033[00m"<<std::endl;//TODO delete line
   int typePrec = 2;
   //int typePrec = 0;
   double beta, l2res, target, res0;
@@ -988,7 +989,7 @@ int
 GmresSolver<VecType,MatVecProdOp,PrecOp,IoOp, ScalarT>::solve(VecSet<VecType> &b, 
             VecSet<VecType> &x)
 {
-
+  std::cout<<"\033[96mSecond version of solve routine enetered\033[00m"<<std::endl;//TODO delete line
   int typePrec = 2;
 
   double beta, l2res, target;

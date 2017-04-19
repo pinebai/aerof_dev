@@ -38,6 +38,7 @@ void startNavierStokesCoupledSolver(IoData &ioData, GeoSource &geoSource, Domain
   }
   //Sensitivity analysis on a provided steady state solution
   else if (ioData.problem.alltype == ProblemData::_SENSITIVITY_ANALYSIS_) {
+    std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
       FluidShapeOptimizationHandler<dim> fsoh(ioData, geoSource, &domain);
 
 //Ori

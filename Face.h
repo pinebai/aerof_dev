@@ -191,6 +191,10 @@ public:
                                                Vec<double> &, double *, double *, SVec<double,dim> &, 
                                                SVec<double,dim> &, double, SVec<double,dim> &) = 0;
   
+  virtual void computeDerivativeOfGalerkinTermEmb(ElemSet &, FemEquationTerm *, SVec<double,3> &, SVec<double,3> &,
+                                               Vec<double> &, double *, double *, SVec<double,dim> &,
+                                               SVec<double,dim> &, double, SVec<double,dim> &,LevelSetStructure*) = 0;
+
   virtual void computeBCsJacobianWallValues(ElemSet &, FemEquationTerm *, SVec<double,3> &, 
                                             Vec<double> &, double *, double *, SVec<double,dim> &) = 0;
 
@@ -200,8 +204,8 @@ template<class Scalar, int dim, int neq>
 class GenFaceWrapper_Scalar_dim_neq {
 public:
   virtual void computeJacobianGalerkinTerm(ElemSet &, FemEquationTerm *, SVec<double,3> &, 
-					   Vec<double> &, Vec<double> &, double *,
-					   SVec<double,dim> &, GenMat<Scalar,neq> &) = 0;
+                 Vec<double> &, Vec<double> &, double *,
+                 SVec<double,dim> &, GenMat<Scalar,neq> &) = 0;
 };
 
 
@@ -368,6 +372,13 @@ public:
                                        Vec<double> &d2wall, double *Vwall, double *dVwall, SVec<double,dim> &V, 
                                        SVec<double,dim> &dV, double dMach, SVec<double,dim> &dR) {
     t->computeDerivativeOfGalerkinTerm(elems, fet, X, dX, d2wall, Vwall, dVwall, V, dV, dMach, dR);
+  }
+
+
+  void computeDerivativeOfGalerkinTermEmb(ElemSet &elems, FemEquationTerm *fet, SVec<double,3> &X, SVec<double,3> &dX,
+                                       Vec<double> &d2wall, double *Vwall, double *dVwall, SVec<double,dim> &V,
+                                       SVec<double,dim> &dV, double dMach, SVec<double,dim> &dR,LevelSetStructure *LSS) {
+    t->computeDerivativeOfGalerkinTermEmb(elems, fet, X, dX, d2wall, Vwall, dVwall, V, dV, dMach, dR, LSS);
   }
 
   void computeBCsJacobianWallValues(ElemSet &elems, FemEquationTerm *fet, SVec<double,3> &X, Vec<double> &d2wall, 
@@ -926,8 +937,12 @@ public:
   }
 
   template<int dim>
-  void computeDerivativeOfGalerkinTerm(ElemSet &elems, FemEquationTerm *fet, SVec<double,3> &X, SVec<double,3> &dX,
-			       Vec<double> &d2wall, double *Vwall, double *dVwall, SVec<double,dim> &V, SVec<double,dim> &dV, double dMach, SVec<double,dim> &dR) {
+  void computeDerivativeOfGalerkinTerm(
+         ElemSet &elems, FemEquationTerm *fet,
+         SVec<double,3> &X, SVec<double,3> &dX,
+         Vec<double> &d2wall, double *Vwall, double *dVwall,
+         SVec<double,dim> &V, SVec<double,dim> &dV, double dMach,
+         SVec<double,dim> &dR) {
 
     FaceHelper_dim<dim> h;
     char xx[64];
@@ -936,6 +951,25 @@ public:
     wrapper->computeDerivativeOfGalerkinTerm(elems, fet, X, dX, d2wall, Vwall, dVwall, V, dV, dMach, dR);
   }
   
+
+  template<int dim>
+  void computeDerivativeOfGalerkinTermEmb(
+         ElemSet &elems, FemEquationTerm *fet,
+         SVec<double,3> &X, SVec<double,3> &dX,
+         Vec<double> &d2wall, double *Vwall, double *dVwall,
+         SVec<double,dim> &V, SVec<double,dim> &dV, double dMach,
+         SVec<double,dim> &dR,
+         LevelSetStructure *LSS) {
+
+    FaceHelper_dim<dim> h;
+    char xx[64];
+    GenFaceWrapper_dim<dim> *wrapper=
+      (GenFaceWrapper_dim<dim> *)getWrapper_dim(&h, 64, xx);
+    wrapper->computeDerivativeOfGalerkinTermEmb(elems, fet, X, dX, d2wall, Vwall, dVwall, V, dV, dMach, dR, LSS);
+  }
+
+
+
   template<int dim>
   void computeBCsJacobianWallValues(ElemSet &elems, FemEquationTerm *fet, SVec<double,3> &X, Vec<double> &d2wall, 
                                         double *Vwall, double *dVwall, SVec<double,dim> &V) {
@@ -1151,6 +1185,13 @@ public:
   }
 
   template<int dim>
+  void computeDerivativeOfGalerkinTermEmb(ElemSet &elems, FemEquationTerm *fet, SVec<double,3> &X, SVec<double,3> &dX,
+                                       Vec<double> &d2wall, double *Vwall, double *dVwall, SVec<double,dim> &V,
+                                       SVec<double,dim> &dV, double dMach, SVec<double,dim> &dR, LevelSetStructure *LSS) {
+    fprintf(stderr, "Error: undefined function (computeDerivativeOfGalerkinTermEmb) for this face type\n"); exit(1);
+  }
+
+  template<int dim>
   void computeBCsJacobianWallValues(ElemSet &elems, FemEquationTerm *fet, SVec<double,3> &X, Vec<double> &d2wall, 
                                     double *Vwall, double *dVwall, SVec<double,dim> &V) {
     fprintf(stderr, "Error: undefined function (computeBCsJacobianWallValues) for this face type\n"); exit(1);
@@ -1291,6 +1332,13 @@ public:
   void computeDerivativeOfGalerkinTerm(ElemSet &, FemEquationTerm *, BcData<dim> &, GeoState &,
                                        SVec<double,3> &, SVec<double,3> &, SVec<double,dim> &, 
                                        SVec<double,dim> &, double, SVec<double,dim> &);
+
+  template<int dim>
+  void computeDerivativeOfGalerkinTermEmb(ElemSet &, FemEquationTerm *, BcData<dim> &, GeoState &,
+                                       SVec<double,3> &, SVec<double,3> &, SVec<double,dim> &,
+                                       SVec<double,dim> &, double, SVec<double,dim> &, LevelSetStructure *LSS);
+
+
 
   template<int dim>
   void computeBCsJacobianWallValues(ElemSet &, FemEquationTerm *, BcData<dim> &, 

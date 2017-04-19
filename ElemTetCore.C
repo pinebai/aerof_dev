@@ -2193,7 +2193,10 @@ void ElemTet::computeDerivativeTransposeOfGradientP1Function(SVec<double,3> &nod
 // Included (MB)
 // YC: If you modify ElemTet::computeDerivativeOfGradientP1Function, you must modify ElemTet::computeDerivativeTransposeOfGradientP1Function accordingly
 inline
-double ElemTet::computeDerivativeOfGradientP1Function(SVec<double,3> &nodes, SVec<double,3> &dNodes, double dNGrad[4][3])
+double ElemTet::computeDerivativeOfGradientP1Function(
+                  SVec<double,3> &nodes,
+                  SVec<double,3> &dNodes,
+                  double dNGrad[4][3])
 {
 
   double jac[3][3], dJac[3][3];

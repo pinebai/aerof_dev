@@ -934,6 +934,9 @@ public:
     template<class Scalar>
     void writeVectorToFile(const char *, int, Vec<Scalar> &, Scalar *); //<! for non-state vector, Lei Lei, 03 Feb 2016
 
+    template<class Scalar,int dim>//TODO VISCOUSDERIV
+    void writeVectorToFile(const char *, int, SVec<Scalar,dim> &, Vec<GhostPoint<dim>*> *, Scalar *);
+
   template<int dim>
   void assignFreeStreamValues2(SVec<double,dim> &, SVec<double,dim> &,
 			       SVec<double,dim> &, SVec<double,dim> &);
@@ -1274,7 +1277,12 @@ public:
 
   template<int dim>
     void populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<double,3> &X, SVec<double,dim> &U,
-									  NodalGrad<dim, double> &ngrad, VarFcn *varFcn, LevelSetStructure &LSS, bool linRecFSI, Vec<int> &tag);
+           NodalGrad<dim, double> &ngrad, VarFcn *varFcn, LevelSetStructure &LSS, bool linRecFSI, Vec<int> &tag);
+
+  //TODO VISCOUSDERIVS
+  template<int dim>
+    void populateDerivsGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<double,3> &X, SVec<double,3> &dX, SVec<double,dim> &U, SVec<double,dim> &dU,
+           NodalGrad<dim, double> &ngrad, VarFcn *varFcn, LevelSetStructure &LSS, bool linRecFSI, Vec<int> &tag);
 
   template<int dim>
     void populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<double,3> &X, SVec<double,dim> &U,

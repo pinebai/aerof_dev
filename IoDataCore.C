@@ -3311,7 +3311,7 @@ SensitivityAnalysis::SensitivityAnalysis()
 void SensitivityAnalysis::setup(const char *name, ClassAssigner *father)
 {
 
-  ClassAssigner *ca = new ClassAssigner(name, 30, father);
+  ClassAssigner *ca = new ClassAssigner(name, 34, father);
   new ClassToken<SensitivityAnalysis>(ca, "Method",
       this, reinterpret_cast<int SensitivityAnalysis::*>
       (&SensitivityAnalysis::method), 2, "Direct", 0, "Adjoint", 1);
@@ -3348,8 +3348,10 @@ void SensitivityAnalysis::setup(const char *name, ClassAssigner *father)
   new ClassStr<SensitivityAnalysis>(ca, "tempStateDeriv", this, &SensitivityAnalysis::tempStateDeriv);
   new ClassStr<SensitivityAnalysis>(ca, "LinSolveRHS", this, &SensitivityAnalysis::linsolverhs);
   new ClassStr<SensitivityAnalysis>(ca, "dFdS_final", this, &SensitivityAnalysis::dFdS_final);
+  new ClassStr<SensitivityAnalysis>(ca, "dFdS_inviscid", this, &SensitivityAnalysis::dFdS_inviscid);
+  new ClassStr<SensitivityAnalysis>(ca, "dFdS_viscous", this, &SensitivityAnalysis::dFdS_viscous);
   new ClassToken<SensitivityAnalysis>(ca, "NewEmbDerivs", this,  reinterpret_cast<int SensitivityAnalysis::*>(&SensitivityAnalysis::newEmbDerivs), 2, "Off", 0, "On", 1);
-
+  new ClassToken<SensitivityAnalysis>(ca, "DebugOutput",  this, reinterpret_cast<int SensitivityAnalysis::*>(&SensitivityAnalysis::debugOutput), 2, "Off", 0, "On", 1);
   ksp.setup("LinearSolver", ca);
 
 }

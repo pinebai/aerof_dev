@@ -48,6 +48,10 @@ dLoad(NULL),
 dLoadref(NULL),
 Fp(NULL),
 Fm(NULL),
+Fp_viscous(NULL),
+Fm_viscous(NULL),
+Fp_inviscid(NULL),
+Fm_inviscid(NULL),
 Up(NULL),
 Um(NULL),
 outFile(NULL),
@@ -58,7 +62,10 @@ dXdSb(dom->getNodeDistInfo()),
 Xc(dom->getNodeDistInfo()),
 dAdS(dom->getNodeDistInfo()),
 dFdS(dom->getNodeDistInfo()),
+dFdS_inviscid(dom->getNodeDistInfo()),
+dFdS_viscous(dom->getNodeDistInfo()),
 dFdSref(dom->getNodeDistInfo()),
+temp(dom->getNodeDistInfo()),
 dUdS(dom->getNodeDistInfo()),
 dfaU(dom->getNodeDistInfo()),
 dfaX(dom->getNodeDistInfo()),
@@ -109,6 +116,10 @@ dGradP(dom->getNodeDistInfo())
     Am = new DistVec<double>(domain->getNodeDistInfo());
     Fp = new DistSVec<double,dim>(domain->getNodeDistInfo());
     Fm = new DistSVec<double,dim>(domain->getNodeDistInfo());
+    Fp_viscous = new DistSVec<double,dim>(domain->getNodeDistInfo());
+    Fm_viscous = new DistSVec<double,dim>(domain->getNodeDistInfo());
+    Fp_inviscid = new DistSVec<double,dim>(domain->getNodeDistInfo());
+    Fm_inviscid = new DistSVec<double,dim>(domain->getNodeDistInfo());
     Up = new DistSVec<double,dim>(domain->getNodeDistInfo());
     Um = new DistSVec<double,dim>(domain->getNodeDistInfo());
 /*  }
@@ -186,6 +197,8 @@ dGradP(dom->getNodeDistInfo())
 
   dXdS=0.0;
   dFdS=0.0;
+  dFdS_inviscid=0.0;
+  dFdS_viscous=0.0;
   dFdSref=0.0;
   dUdS=0.0;
   dfaU=0.0;
@@ -342,7 +355,7 @@ void FluidShapeOptimizationHandler<dim>::fsoRestartBcFluxs(IoData &ioData)
     // Step 2.1: Reset values in ioData.ref
     //
 
-    ioData.ref.mach     = ioData.bc.inlet.mach;
+    ioData.ref.mach     = ioData.bc.inlet.mach;//TODO is this a problem?
     ioData.ref.density  = ioData.bc.inlet.density;
     ioData.ref.pressure = ioData.bc.inlet.pressure;
     double velocity     = ioData.ref.mach * sqrt(gamma * (ioData.ref.pressure+Pstiff) / ioData.ref.density);
@@ -447,6 +460,10 @@ void FluidShapeOptimizationHandler<dim>::fsoRestartBcFluxs(IoData &ioData)
 
     if (ioData.eqs.type == EquationsData::NAVIER_STOKES)
       this->spaceOp->rstVarFet(ioData);
+    else
+    {
+      this->fprintf(stderr, "\033[91m  DOING AND EULER command--------------------------\033[00m\n");//TODO delete line
+    }
 
     this->spaceOp->rstFluxFcn(ioData);
 
@@ -1213,6 +1230,7 @@ void FluidShapeOptimizationHandler<dim>::fsoSemiAnalytical
   DistSVec<double,dim> &dF
 )
 {
+  this->com->fprintf(stderr,"\033[93m FluidShapeOptimizationHandler<dim>::fsoSemiAnalytical\033[00m ");//TODO delete line
 
   //
   // Error mesage for pointers
@@ -1256,7 +1274,13 @@ void FluidShapeOptimizationHandler<dim>::fsoSemiAnalytical
 
   *Fp = 0.0;
   *Fm = 0.0;
+  *Fp_viscous = 0.0;
+  *Fm_viscous = 0.0;
+  *Fp_inviscid = 0.0;
+  *Fm_inviscid = 0.0;
    dF = 0.0;
+//   dF_viscous = 0.0;
+//   dF_inviscid = 0.0;
   *Xp = 0.0;
   *Xm = 0.0;
   *Ap = 0.0;
@@ -1267,11 +1291,18 @@ void FluidShapeOptimizationHandler<dim>::fsoSemiAnalytical
   //
 
   Xc=X;
-
+  this->com->fprintf(stderr,"GOING TO ADD\n");
   *Xp=X+eps*dXdS;
+//  if (X.norm()!= Xp->norm())
+//    this->com->fprintf(stderr,"Currently not wanted %e\n",X.norm()- Xp->norm()); exit(-1);
+  this->com->fprintf(stderr,"DID TO ADD\n");
+
+  this->output->writeAnyVectorToDisk("results/Xp",1,1,*Xp);
+  this->output->writeAnyVectorToDisk("results/X",1,1,X);
 
   X=*Xp;
 
+  this->com->fprintf(stderr,"DFSPAR[0]: %e  DFSPAR[1]: %e  DFSPAR[2]: %e  \n",DFSPAR[0],DFSPAR[1],DFSPAR[2]);
   xmach=xmachc+eps*DFSPAR[0];
   alprad=alpradc+eps*DFSPAR[1];
   teta=tetac+eps*DFSPAR[2];
@@ -1288,8 +1319,18 @@ void FluidShapeOptimizationHandler<dim>::fsoSemiAnalytical
   this->computeTimeStep(1, &dtLeft, U);
 
   this->spaceOp->computeResidual(*Xp, *Ap, U, *Fp, this->timeState);
-
+  temp= *Fp;
+  this->output->writeAnyVectorToDisk("results/Fp_beforeBC",1,1,temp);
   this->spaceOp->applyBCsToResidual(U, *Fp);
+  temp= *Fp;
+  this->output->writeAnyVectorToDisk("results/Fp_afterBC",1,1,temp);
+
+  if(ioData.sa.debugOutput == SensitivityAnalysis::ON_DEBUGOUTPUT){
+    this->spaceOp->computeInviscidResidual(*Xp, *Ap, U, *Fp_inviscid, this->timeState);
+    this->spaceOp->computeViscousResidual(*Xp, *Ap, U, *Fp_viscous, this->timeState);
+    this->spaceOp->applyBCsToResidual(U, *Fp_inviscid);
+    this->spaceOp->applyBCsToResidual(U, *Fp_viscous);
+  }
 
   //
   // Compute the second flux for the FD approach
@@ -1313,16 +1354,35 @@ void FluidShapeOptimizationHandler<dim>::fsoSemiAnalytical
 
   A=*Am;
 
+
   dtLeft = 0.0;
   this->computeTimeStep(1, &dtLeft, U);
 
   this->spaceOp->computeResidual(*Xm, *Am, U, *Fm, this->timeState);
 
+  temp= *Fm; this->output->writeAnyVectorToDisk("results/Fm_beforeBC",1,1,temp);
   this->spaceOp->applyBCsToResidual(U, *Fm);
+
+  temp= *Fm; this->output->writeAnyVectorToDisk("results/Fm_afterBC",1,1,temp);
+
+  this->output->writeAnyVectorToDisk("results/Xm",1,1,*Xm);
+
+  if(ioData.sa.debugOutput == SensitivityAnalysis::ON_DEBUGOUTPUT){
+    this->spaceOp->computeInviscidResidual(*Xm, *Am, U, *Fm_inviscid, this->timeState);
+    this->spaceOp->computeViscousResidual(*Xm, *Am, U, *Fm_viscous, this->timeState);
+    this->spaceOp->applyBCsToResidual(U, *Fm_inviscid);
+    this->spaceOp->applyBCsToResidual(U, *Fm_viscous);
+  }
+
+
 
   dAdS=1.0/(2.0*eps)*((*Ap)-(*Am));
 
   dF=1.0/(2.0*eps)*((*Fp)-(*Fm));
+  if(ioData.sa.debugOutput == SensitivityAnalysis::ON_DEBUGOUTPUT){
+    dFdS_viscous=1.0/(2.0*eps)*((*Fp_viscous)-(*Fm_viscous));
+    dFdS_inviscid=1.0/(2.0*eps)*((*Fp_inviscid)-(*Fm_inviscid));
+  }
   if((ioData.sa.angleRad == ioData.sa.OFF_ANGLERAD) && (DFSPAR[1] || DFSPAR[2]))
      dF *= perRad2perDeg;
   //
@@ -1411,6 +1471,8 @@ void FluidShapeOptimizationHandler<dim>::fsoAnalytical
   else//non-sparse version
   {
       this->spaceOp->computeDerivativeOfResidual(X, dXdS, A, dAdS, U, DFSPAR[0], Flux, dFdS, this->timeState);
+      this->spaceOp->computeInviscidDerivativeOfResidual(X, dXdS, A, dAdS, U, DFSPAR[0], Flux, dFdS_inviscid, this->timeState);
+      this->spaceOp->computeViscousDerivativeOfResidual(X, dXdS, A, dAdS, U, DFSPAR[0], Flux, dFdS_viscous, this->timeState);
   }
 
   this->spaceOp->applyBCsToDerivativeOfResidual(U, dFdS);
@@ -1459,7 +1521,9 @@ void FluidShapeOptimizationHandler<dim>::fsoSetUpLinearSolver(IoData &ioData, Di
   if (ioData.sa.homotopy == SensitivityAnalysis::ON_HOMOTOPY)
     this->timeState->add_dAW_dt(1, *this->geoState, A, U, FluxFD);
 
+  this->output->writeAnyVectorToDisk("results/FluxFD_withoutBC",1,1,FluxFD);
   this->spaceOp->applyBCsToResidual(U, FluxFD);
+  this->output->writeAnyVectorToDisk("results/FluxFD_withBC",1,1,FluxFD);
 
   mvp->evaluate(0, X, A, U, FluxFD);
 
@@ -1556,6 +1620,7 @@ void FluidShapeOptimizationHandler<dim>::fsoLinearSolver(
   fsoPrintTextOnScreen("Starting LinearSolver");
 
 //  dUdS = 0.0;
+  dFdS = dFdS_inviscid;//TODO HACK
 
   dFdS *= (-1.0);
   if(!isFSI) ksp->setup(0, 1, dFdS);
@@ -1574,6 +1639,22 @@ void FluidShapeOptimizationHandler<dim>::fsoLinearSolver(
   }
 
   dFdS *= (-1.0);
+
+  //TODO DEBUG ROUTINES
+  DistSVec<double,dim> *multresult  = new DistSVec<double,dim>(this->domain->getNodeDistInfo());
+
+
+  DistSVec<double,dim> *onevec  = new DistSVec<double,dim>(this->domain->getNodeDistInfo());
+  *onevec=1.0;
+
+
+  this->mvp->apply(*onevec,*multresult);
+
+
+  this->output->writeAnyVectorToDisk("results/jacobian_colsum",1,1,*multresult);
+  //////////
+
+
 
   fsoPrintTextOnScreen("Finished LinearSolver");
 
@@ -1731,6 +1812,7 @@ void FluidShapeOptimizationHandler<dim>::fsoInitialize(IoData &ioData, DistSVec<
 template<int dim>
 int FluidShapeOptimizationHandler<dim>::fsoHandler(IoData &ioData, DistSVec<double,dim> &U)
 {
+  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
   // xmach      -  Mach number
   // alpha      -  pitch angle
   // teta       -  yaw angle
@@ -2598,8 +2680,15 @@ void FluidShapeOptimizationHandler<dim>::fsoComputeSensitivities(
   if (ioData.sa.dFdS_final != NULL)
 	  this->output->writeAnyVectorToDisk(ioData.sa.dFdS_final,1,1,dFdS);
 
+  if (ioData.sa.dFdS_inviscid != NULL)
+    this->output->writeAnyVectorToDisk(ioData.sa.dFdS_inviscid,1,1,dFdS_inviscid);
+
+  if (ioData.sa.dFdS_viscous != NULL)
+    this->output->writeAnyVectorToDisk(ioData.sa.dFdS_viscous,1,1,dFdS_viscous);
+
   //TODO BUGHUNT
 
+  std::cout<<__FILE__<<":"<<__LINE__<<":"<<step<<std::endl;//TODO delete line
   this->output->writeBinaryDerivativeOfVectorsToDisk(
                 step+1,         //iteration index
                 actvar,         //variable type

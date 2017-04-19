@@ -284,13 +284,27 @@ public:
   }
   
   void computeGalerkinTerm_e(FemEquationTerm *fet, SVec<double,3> &X, 
-									  Vec<double> &d2wall, SVec<double,dim> &V, 
-									  SVec<double,dim> &R, 
-									  Vec<GhostPoint<dim>*> *ghostPoints=0, 
-									  LevelSetStructure *LSS=0) {
-	  t->computeGalerkinTerm_e(fet, X, d2wall, V, R, ghostPoints, LSS);
+         Vec<double> &d2wall, SVec<double,dim> &V,
+         SVec<double,dim> &R,
+         Vec<GhostPoint<dim>*> *ghostPoints=0,
+         LevelSetStructure *LSS=0) {
+
+         t->computeGalerkinTerm_e(fet, X, d2wall, V, R, ghostPoints, LSS);
   }
   
+  //TODO VISCOUSDERIV2
+  void computeDerivativeOfGalerkinTerm_e(
+         FemEquationTerm *fet,
+         SVec<double,3> &dX,
+         Vec<double> &d2wall,
+         SVec<double,dim> &dV,
+         SVec<double,dim> &dR,
+         Vec<GhostPoint<dim>*> *ghostPoints=0,
+         LevelSetStructure *LSS=0) {
+
+         t->computeDerivativeOfGalerkinTerm_e(fet, dX, d2wall, dV, dR, ghostPoints, LSS);
+  }
+
 
   void computeVMSLESTerm(VMSLESTerm *vmst, SVec<double,dim> &VBar,
 			 SVec<double,3> &X, SVec<double,dim> &V,

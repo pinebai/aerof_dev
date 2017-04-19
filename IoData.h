@@ -1877,8 +1877,11 @@ struct SensitivityAnalysis {
   const char* tempStateDeriv;
   const char* linsolverhs;
   const char* dFdS_final;
+  const char* dFdS_inviscid;
+  const char* dFdS_viscous;
 
   enum SensitivityNewEmbDerivs  {OFF_NEWEMBDERIVS  = 0, ON_NEWEMBDERIVS  = 1} newEmbDerivs;
+  enum SensitivityDebugOutput {OFF_DEBUGOUTPUT = 0, ON_DEBUGOUTPUT = 1} debugOutput;
 
   bool densFlag;
   bool pressFlag;

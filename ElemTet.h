@@ -104,8 +104,8 @@ public:
 
   template<int dim>
   void computeGalerkinTerm_e(FemEquationTerm *, SVec<double,3> &, Vec<double> &,
-									  SVec<double,dim> &, SVec<double,dim> &,
-									  Vec<GhostPoint<dim>*> *ghostPoints=0,LevelSetStructure *LSS=0);
+         SVec<double,dim> &, SVec<double,dim> &,
+         Vec<GhostPoint<dim>*> *ghostPoints=0,LevelSetStructure *LSS=0);
 
   template<int dim>
   double* setGhostOccludedValue(int i, SVec<double,3> &X, SVec<double,dim> &V, 
@@ -214,13 +214,20 @@ public:
          SVec<double,dim> &, SVec<double,dim> &, double, SVec<double,dim> &,
          Vec<GhostPoint<dim>*> *ghostPoints,LevelSetStructure *LSS);
 
+  //This function populates the state vector and its derivative with the ghost values if some of the
+  //elements nodes are ghost. This is needed for the FE evaluation of the viscous term.
+  template<int dim>
+  void getPseudoStates(
+         double** , double**,
+         Vec<GhostPoint<dim>*> *ghostPoints,LevelSetStructure *LSS);
+
   template<int dim>
   void computeDerivativeOperatorsOfGalerkinTerm(FemEquationTerm *, SVec<double,3> &, Vec<double> &,
                                                 SVec<double,dim> &, RectangularSparseMat<double,3,dim> &);
   template<int dim>
   void computeDerivativeOfFaceGalerkinTerm(FemEquationTerm *, int [3], int, Vec3D &, Vec3D &,
-			       SVec<double,3> &, SVec<double,3> &, Vec<double> &, double *, double *,
-			       SVec<double,dim> &, SVec<double,dim> &, double, SVec<double,dim> &);
+         SVec<double,3> &,   SVec<double,3> &, Vec<double> &, double *, double *,
+         SVec<double,dim> &, SVec<double,dim> &, double, SVec<double,dim> &);
 
 // Level Set Reinitialization
 

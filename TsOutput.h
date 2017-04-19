@@ -357,6 +357,10 @@ public:
 
   //TODO BUGHUNT
   void writeAnyVectorToDisk(const char* filename,int it,int tag,DistSVec<double,dim> &vec);
+  void writeAnyVectorToDisk(const char* filename,int it,int tag,DistSVec<double,3> &vec);
+
+  void writeAnyVectorToDisk(const char* filename,int it,int tag,DistSVec<double,dim> &vec, DistVec<GhostPoint<dim>*> *ghostPoints);
+
 
 };
 

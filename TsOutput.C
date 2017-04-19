@@ -3623,7 +3623,7 @@ void TsOutput<dim>::writeProbesToDisk(bool lastIt, int it, double t, DistSVec<do
 //TODO BUGHUNT
 
 
-// Included (MB)
+// TODO VISCOUSDERIV
 template<int dim>
 void TsOutput<dim>::writeAnyVectorToDisk(
 		              const char* filename,
@@ -3633,6 +3633,31 @@ void TsOutput<dim>::writeAnyVectorToDisk(
 {
   int    step = it-1;
   domain->writeVectorToFile(filename, step, tag, vec);
+}
+
+// TODO VISCOUSDERIV
+template<int dim>
+void TsOutput<dim>::writeAnyVectorToDisk(
+                  const char* filename,
+                  int it,
+            int tag,
+            DistSVec<double,3> &vec)
+{
+  int    step = it-1;
+  domain->writeVectorToFile(filename, step, tag, vec);
+}
+
+// TODO VISCOUSDERIV
+template<int dim>
+void TsOutput<dim>::writeAnyVectorToDisk(
+                      const char* filename,
+                      int it,
+                      int tag,
+                      DistSVec<double,dim> &vec,
+                      DistVec<GhostPoint<dim>*> *ghostPoints)
+{
+  int    step = it-1;
+  domain->writeVectorToFile(filename, step, (double) tag, vec, ghostPoints);
 }
 
 

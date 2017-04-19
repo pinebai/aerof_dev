@@ -464,9 +464,9 @@ void Face::computeFiniteVolumeTerm(ExactRiemannSolver<dim>& riemann,
 template<int dim>
 inline
 void Face::computeDerivativeOfFiniteVolumeTerm(FluxFcn **fluxFcn, Vec<Vec3D> &normals,
-				      Vec<Vec3D> &dNormals, Vec<double> normalVel, Vec<double> dNormalVel,
-				      SVec<double,dim> &V, double *Ub,
-				      double *dUb, SVec<double,dim> &dFluxes)
+             Vec<Vec3D> &dNormals, Vec<double> normalVel, Vec<double> dNormalVel,
+             SVec<double,dim> &V, double *Ub,
+             double *dUb, SVec<double,dim> &dFluxes)
 {
 
   // UH (07/2012)
@@ -1243,9 +1243,10 @@ void FaceSet::computeFiniteVolumeTerm(ExactRiemannSolver<dim>& riemann,
 
 // Included (MB)
 template<int dim>
-void FaceSet::computeDerivativeOfFiniteVolumeTerm(FluxFcn **fluxFcn, BcData<dim> &bcData,
-				      GeoState &geoState, SVec<double,dim> &V,
-				      SVec<double,dim> &dFluxes)
+void FaceSet::computeDerivativeOfFiniteVolumeTerm(
+                FluxFcn **fluxFcn, BcData<dim> &bcData,
+                GeoState &geoState, SVec<double,dim> &V,
+                SVec<double,dim> &dFluxes)
 {
 
   Vec<Vec3D> &n = geoState.getFaceNormal();
@@ -1584,17 +1585,54 @@ void FaceSet::computeGalerkinTerm(ElemSet &elems, FemEquationTerm *fet,
  * This is the non-sparse implementation                                           (MB) *
  ****************************************************************************************/
 template<int dim>
-void FaceSet::computeDerivativeOfGalerkinTerm(ElemSet &elems, FemEquationTerm *fet, BcData<dim> &bcData,
-				  GeoState &geoState, SVec<double,3> &X, SVec<double,3> &dX,
-				  SVec<double,dim> &V, SVec<double,dim> &dV, double dMach, SVec<double,dim> &dR)
+void FaceSet::computeDerivativeOfGalerkinTerm(
+                ElemSet &elems,       // (INPUT) element set
+                FemEquationTerm *fet, // (INPUT) fem equation term
+                BcData<dim> &bcData,  // (INPUT) boundary condition data
+                GeoState &geoState,   // (INPUT) TODO
+                SVec<double,3> &X,    // (INPUT) mesh position
+                SVec<double,3> &dX,   // (INPUT) derivative of mesh position w.r.t to abstract variable
+                SVec<double,dim> &V,  // (INPUT) fluid state vector
+                SVec<double,dim> &dV, // (INPUT) derivative of fluid state w.r.t to abstract variable
+                double dMach,         // (INPUT) mach derivative flag
+                SVec<double,dim> &dR) // (OUTPUT) residual derivative
 {
 
-  SVec<double,dim> &Vwall = bcData.getFaceStateVector();
+  SVec<double,dim> &Vwall  = bcData.getFaceStateVector();
   SVec<double,dim> &dVwall = bcData.getdFaceStateVector();
   Vec<double> &d2wall = geoState.getDistanceToWall();
 
   for (int i=0; i<numFaces; ++i)
     faces[i]->computeDerivativeOfGalerkinTerm(elems, fet, X, dX, d2wall, Vwall[i], dVwall[i], V, dV, dMach, dR);
+
+}
+
+
+/****************************************************************************************
+ * Computes the derivative of the viscous term for non-embedded simulations.            *
+ * This is the non-sparse implementation                                           (MB) *
+ ****************************************************************************************/
+template<int dim>
+void FaceSet::computeDerivativeOfGalerkinTermEmb(
+                ElemSet &elems,       // (INPUT) element set
+                FemEquationTerm *fet, // (INPUT) fem equation term
+                BcData<dim> &bcData,  // (INPUT) boundary condition data
+                GeoState &geoState,   // (INPUT) TODO
+                SVec<double,3> &X,    // (INPUT) mesh position
+                SVec<double,3> &dX,   // (INPUT) derivative of mesh position w.r.t to abstract variable
+                SVec<double,dim> &V,  // (INPUT) fluid state vector
+                SVec<double,dim> &dV, // (INPUT) derivative of fluid state w.r.t to abstract variable
+                double dMach,         // (INPUT) mach derivative flag
+                SVec<double,dim> &dR,
+                LevelSetStructure *LSS) // (OUTPUT) residual derivative
+{
+
+  SVec<double,dim> &Vwall  = bcData.getFaceStateVector();
+  SVec<double,dim> &dVwall = bcData.getdFaceStateVector();
+  Vec<double> &d2wall = geoState.getDistanceToWall();
+
+  for (int i=0; i<numFaces; ++i)
+    faces[i]->computeDerivativeOfGalerkinTermEmb(elems, fet, X, dX, d2wall, Vwall[i], dVwall[i], V, dV, dMach, dR, LSS);
 
 }
 

@@ -233,22 +233,22 @@ void NavierStokesTerm::computeVelocity(double *V[4], double u[4][3], double ucg[
 inline
 void NavierStokesTerm::computeDerivativeOfVelocity(double *dV[4], double du[4][3], double ducg[3])
 {
+//du[nodeIndex][component] = dV[nodeIndex][statevectorcomponent]
+  du[0][0] = dV[0][1];//first  Velocity component of node 0
+  du[0][1] = dV[0][2];//second Velocity component of node 0
+  du[0][2] = dV[0][3];//third  Velocity component of node 0
 
-  du[0][0] = dV[0][1];
-  du[0][1] = dV[0][2];
-  du[0][2] = dV[0][3];
+  du[1][0] = dV[1][1];//first  Velocity component of node 1
+  du[1][1] = dV[1][2];//second Velocity component of node 1
+  du[1][2] = dV[1][3];//third  Velocity component of node 1
 
-  du[1][0] = dV[1][1];
-  du[1][1] = dV[1][2];
-  du[1][2] = dV[1][3];
+  du[2][0] = dV[2][1];//first  Velocity component of node 2
+  du[2][1] = dV[2][2];//second Velocity component of node 2
+  du[2][2] = dV[2][3];//third  Velocity component of node 2
 
-  du[2][0] = dV[2][1];
-  du[2][1] = dV[2][2];
-  du[2][2] = dV[2][3];
-
-  du[3][0] = dV[3][1];
-  du[3][1] = dV[3][2];
-  du[3][2] = dV[3][3];
+  du[3][0] = dV[3][1];//first  Velocity component of node 3
+  du[3][1] = dV[3][2];//second Velocity component of node 3
+  du[3][2] = dV[3][3];//third  Velocity component of node 3
 
   ducg[0] = fourth * (du[0][0] + du[1][0] + du[2][0] + du[3][0]);
   ducg[1] = fourth * (du[0][1] + du[1][1] + du[2][1] + du[3][1]);
@@ -783,9 +783,9 @@ void NavierStokesTerm::computeDerivativeOfVolumeTermNS(
                        double lambda, double dlambda,    // (INPUT) (INPUT)
                        double kappa, double dkappa,      // (INPUT) (INPUT)
                        double u[3], double du[3],        // (INPUT) (INPUT)
-					             double dudxj[3][3], double ddudxj[3][3],  // (INPUT) (INPUT)
-					             double dTdxj[3], double ddTdxj[3],// (INPUT) (INPUT)
-					             double (*dr)[dim])                // (OUTPUT)
+                        double dudxj[3][3], double ddudxj[3][3],  // (INPUT) (INPUT)
+                       double dTdxj[3], double ddTdxj[3],// (INPUT) (INPUT)
+                       double (*dr)[dim])                // (OUTPUT)
 {
 
   double tij[3][3];

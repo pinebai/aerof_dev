@@ -22,9 +22,12 @@
 //------------------------------------------------------------------------------
 
 template<int dim>
-void ElemSet::computeTimeStep(FemEquationTerm *fet, SVec<double,3> &X, 
-										SVec<double,dim> &V, Vec<double> &idtv, 
-										LevelSetStructure *LSS)
+void ElemSet::computeTimeStep(
+                FemEquationTerm *fet,
+                SVec<double,3> &X,
+                SVec<double,dim> &V,
+                Vec<double> &idtv,
+                LevelSetStructure *LSS)
 {
   int *nodeNumber,numberOfNodes;
   double Vmid[dim],oneOnDofs;
@@ -174,7 +177,8 @@ void ElemSet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet,
  * This is the non-sparse implementation                                           (MB) *
  ****************************************************************************************/
 template<int dim>
-void ElemSet::computeDerivativeOfGalerkinTermEmb(FemEquationTerm *fet,
+void ElemSet::computeDerivativeOfGalerkinTermEmb(
+                FemEquationTerm *fet,
                 GeoState &geoState,
                 SVec<double,3> &X,
                 SVec<double,3> &dX,

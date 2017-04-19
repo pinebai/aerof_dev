@@ -2015,10 +2015,10 @@ void DistBcDataSA<dim>::computeNodeValue(DistSVec<double,3> &X)
       double (*t)[2] = tmp->subData(iSub);
       double (*unode)[dim] = this->Unode.subData(iSub);
       for (int i=0; i<this->Unode.subSize(iSub); ++i) {
-	    if (t[i][0] != 0.0) {
-	      double w = 1.0 / t[i][0];
-	      unode[i][5] = w * t[i][1];
-	    }
+        if (t[i][0] != 0.0) {
+          double w = 1.0 / t[i][0];
+          unode[i][5] = w * t[i][1];
+        }
       }
     }
   }

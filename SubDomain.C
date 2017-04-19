@@ -1523,22 +1523,22 @@ void SubDomain::computeDerivativeOperatorsOfFiniteVolumeTerm(Vec<double> &irey, 
 
 template<int dim>
 void SubDomain::computeDerivativeOfFiniteVolumeTerm(FluxFcn** fluxFcn, RecFcn* recFcn,
-						    BcData<dim>& bcData, GeoState& geoState,
-						    SVec<double,3>& X, LevelSetStructure &LSS,
-						    bool linRecAtInterface, bool viscSecOrder,
-						    Vec<int> &fluidId,
-						    ExactRiemannSolver<dim>& riemann,
-						    int Nriemann,
-						    NodalGrad<dim>& ngrad, EdgeGrad<dim>* egrad,
-						    double dMach,
-						    SVec<double,dim>& V,
-						    SVec<double,dim>& dFluxes)
+                  BcData<dim>& bcData, GeoState& geoState,
+                  SVec<double,3>& X, LevelSetStructure &LSS,
+                  bool linRecAtInterface, bool viscSecOrder,
+                  Vec<int> &fluidId,
+                  ExactRiemannSolver<dim>& riemann,
+                  int Nriemann,
+                  NodalGrad<dim>& ngrad, EdgeGrad<dim>* egrad,
+                  double dMach,
+                  SVec<double,dim>& V,
+                  SVec<double,dim>& dFluxes)
 {
 
 
   edges.computeDerivativeOfFiniteVolumeTerm(fluxFcn, recFcn, geoState, X, LSS, 
-					    linRecAtInterface, fluidId, riemann,
-					    Nriemann, ngrad, egrad, dMach, V, dFluxes);
+          linRecAtInterface, fluidId, riemann,
+          Nriemann, ngrad, egrad, dMach, V, dFluxes);
 
   faces.computeDerivativeOfFiniteVolumeTerm(fluxFcn, bcData, geoState, V, dFluxes);
 
@@ -2037,8 +2037,10 @@ void SubDomain::computeGalerkinTerm(FemEquationTerm *fet, BcData<dim> &bcData,
                   bool externalSI)
 {
 
+  //std::cout<<"Subdomain "<<this->globSubNum<<" has "<<elems.size()<<" elems"<<std::endl;//TODO delete line
   elems.computeGalerkinTerm(fet, geoState, X, V, R,ghostPoints, LSS, externalSI);
 
+  //std::cout<<"Subdomain "<<this->globSubNum<<" has "<<faces.size()<<" faces"<<std::endl;//TODO delete line
   faces.computeGalerkinTerm(elems, fet, bcData, geoState, X, V, R,LSS);
 
 }
@@ -2082,7 +2084,7 @@ void SubDomain::computeDerivativeOfGalerkinTermEmb(
                   LevelSetStructure *LSS)
 {
   elems.computeDerivativeOfGalerkinTermEmb(fet, geoState, X, dX, V, dV, dMach, dR, ghostPoints, LSS);
-  //faces.computeDerivativeOfGalerkinTermEmb(elems, fet, bcData, geoState, X, dX, V, dV, dMach, dR, LSS);
+  faces.computeDerivativeOfGalerkinTermEmb(elems, fet, bcData, geoState, X, dX, V, dV, dMach, dR, LSS);
 }
 
 
@@ -2100,7 +2102,7 @@ void SubDomain::computeDerivativeOfGalerkinTerm(
                   double dMach,
                   SVec<double,dim> &dR)
 {
-
+  std::cout<<"*** ERROR: Make sure the commenting out below is correct"<<std::endl; exit(-1);
   dViscousFluxdX->apply(dX,dR);
 //  faces.computeDerivativeOfGalerkinTerm(elems, fet, bcData, geoState, X, dX, V, dV, dMach, dR2); // for Turbulent flow
 }
@@ -3933,7 +3935,7 @@ void SubDomain::computeH2(FluxFcn **fluxFcn, RecFcn *recFcn, BcData<dim> &bcData
  #pragma ivdep
    for (i=0; i<numNodes; ++i)
      if (nodeFlag[i])
-       DenseMatrixOp<Scalar,dim,dim*dim>::applyAndAddToVector(a, i, p.v, i, prod.v, i);
+       DenseMatrixOp<Scalar,dim,dim*dim>::applyAndAddToVector(a, i, p.v, i, prod.v, i);//diagonal part
 
  #pragma ivdep
    for (l=0; l<numEdges; ++l) {
@@ -3943,8 +3945,8 @@ void SubDomain::computeH2(FluxFcn **fluxFcn, RecFcn *recFcn, BcData<dim> &bcData
        i = edgePtr[l][0];
        j = edgePtr[l][1];
 
-       DenseMatrixOp<Scalar,dim,dim*dim>::applyAndAddToVector(a, numNodes + 2*l, p.v, j, prod.v, i);
-       DenseMatrixOp<Scalar,dim,dim*dim>::applyAndAddToVector(a, numNodes + 2*l + 1, p.v, i, prod.v, j);
+       DenseMatrixOp<Scalar,dim,dim*dim>::applyAndAddToVector(a, numNodes + 2*l, p.v, j, prod.v, i); //pRipUj
+       DenseMatrixOp<Scalar,dim,dim*dim>::applyAndAddToVector(a, numNodes + 2*l + 1, p.v, i, prod.v, j);// pRjpUi
 
      }
 
@@ -4012,7 +4014,7 @@ void SubDomain::computeMatVecProdH1transpose(bool *nodeFlag, GenMat<Scalar,dim> 
    Scalar (*a)[dim*dim] = A.data();
 
    prod = 0.0;
-
+   ghostProd = 0.0;
  #pragma ivdep
    for (i=0; i<numNodes; ++i)
      if (nodeFlag[i])
@@ -4454,7 +4456,7 @@ void SubDomain::addDiagonalInMatVecProdH2transpose(Vec<double> &ctrlVol, GenMat<
 
    if (bcMap.size() > 0)  {
      std::cout << "****Not sure about what to do *****\n";
-     exit(-1);
+     //exit(-1);//TODO TEMP
    }
 
    for (l=0; l<numEdges; ++l) {
@@ -5849,6 +5851,140 @@ void SubDomain::writeVectorToFile(const char *prefix, int no,
         delete [] data;
 
 }
+
+
+//TODO VISCOUSDERIV
+template<class Scalar,int dim>
+void SubDomain::writeVectorToFile(
+                  const char *prefix, int no,
+                  SVec<Scalar,dim> &U,
+                  Vec<GhostPoint<dim>*> *ghostPoints,
+                  Scalar* scale)
+{
+  char name[MAXLINE];
+  sprintf(name, "%s%s", prefix, suffix);
+#ifdef SYNCHRO_WRITE
+  BinFileHandler file(name, "ws+");
+#else
+  BinFileHandler file(name, "w+");
+#endif
+
+  BinFileHandler::OffType unit = dim * sizeof(Scalar);
+  BinFileHandler::OffType pos = 3*sizeof(int) +
+    no*(sizeof(double) + numClusNodes*unit) + sizeof(double);
+
+  Scalar (*data)[dim];
+  if (scale) {
+    data = new Scalar[U.size()][dim];
+    Scalar* v = reinterpret_cast<Scalar*>(data);
+    Scalar* u = reinterpret_cast<Scalar*>(U.data());
+
+    for(int nodeID = 0; nodeID<U.size(); nodeID++){
+      GhostPoint<dim> *gp;
+      //gp = (*ghostPoints)[nodeID];
+      gp = NULL;//TODO HACK
+      if(gp)//if gp is a ghost point, overwrite u with the ghost state
+        u=gp->getState();
+      for (int varID=0; varID<dim; varID++){
+         int vecID=nodeID*dim+varID;
+         v[vecID] = (*scale) * u[vecID];
+      }
+    }
+  }else {
+    data = new Scalar[U.size()][dim];
+    Scalar* v = reinterpret_cast<Scalar*>(data);
+    Scalar* u = reinterpret_cast<Scalar*>(U.data());
+
+    for(int nodeID = 0; nodeID<U.size(); nodeID++){
+      GhostPoint<dim> *gp;
+      gp = (*ghostPoints)[nodeID];
+      if(gp)//if gp is a ghost point, overwrite u with the ghost state
+        u=gp->getState();
+      for (int varID=0; varID<dim; varID++){
+         int vecID=nodeID*dim+varID;
+         v[vecID] = 1.0 * u[vecID];
+      }
+    }
+
+  }
+
+  int count = 0;
+  for (int i=0; i<numNodeRanges; ++i) {
+    if (nodeRanges[i][2]) {
+      file.seek(pos + nodeRanges[i][1]*unit);
+      file.write(reinterpret_cast<Scalar *>(data + count), nodeRanges[i][0]*dim);
+    }
+    count += nodeRanges[i][0];
+  }
+
+  if (true)
+    delete [] data;
+
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+//{
+//  //double* getState();
+//
+//    char name[MAXLINE];
+//    sprintf(name, "%s%s", prefix, suffix);
+//#ifdef SYNCHRO_WRITE
+//    BinFileHandler file(name, "ws+");
+//#else
+//    BinFileHandler file(name, "w+");
+//#endif
+//
+//    BinFileHandler::OffType unit =  sizeof(Scalar);
+//    BinFileHandler::OffType pos = 3*sizeof(int) +
+//                                  no*(sizeof(double) + numClusNodes*unit) + sizeof(double);
+//
+//    Scalar *data;
+//    if (scale) {
+//        data = new Scalar[U.size()];
+//        Scalar* v = data;
+//        Scalar* u = U.data();
+//        for (int i=0; i<U.size(); ++i){//loop over all subdomain nodes
+//            //check if node i is a ghost node
+//            if((*ghostPoints)[i]==NULL){//current node is an active node
+//              v[i] = (*scale) * u[i];
+//            }
+//            else{//current node is a ghost node
+//              GhostPoint<dim> *gp;
+//              gp = (*ghostPoints)[i];
+//              v[i] = (*scale)* gp->getState();
+//            }
+//
+//        }
+//    }else{
+//
+//      data = new Scalar[U.size()];
+//      Scalar* v = data;
+//      Scalar* u = U.data();
+//      for (int i=0; i<U.size(); ++i){//loop over all subdomain nodes
+//          //check if node i is a ghost node
+//          if((*ghostPoints)[i]==NULL){//current node is an active node
+//            v[i] = 1.0 * u[i];
+//          }
+//          else{//current node is a ghost node
+//            GhostPoint<dim> *gp;
+//            gp = (*ghostPoints)[i];
+//            v[i] = 1.0* gp->getState();
+//          }
+//
+//      }
+//    }
+//
+//    int count = 0;
+//    for (int i=0; i<numNodeRanges; ++i) {
+//        if (nodeRanges[i][2]) {
+//            file.seek(pos + nodeRanges[i][1]*unit);
+//            file.write(data + count, nodeRanges[i][0]);
+//        }
+//        count += nodeRanges[i][0];
+//    }
+//
+//    delete [] data;
+//
+//}
 
 //------------------------------------------------------------------------------
 
@@ -7802,9 +7938,15 @@ void SubDomain::extrapolatePhiV(LevelSetStructure &LSS, SVec<double,dimLS> &PhiV
 //------------------------------------------------------------------------------
 
 template<int dim>
-void SubDomain::populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<double,3> &X, 
-												SVec<double,dim> &U, NodalGrad<dim, double> &ngrad, 
-												VarFcn *varFcn,LevelSetStructure &LSS,bool linRecFSI,Vec<int> &tag)
+void SubDomain::populateGhostPoints(
+                  Vec<GhostPoint<dim>*> &ghostPoints,
+                  SVec<double,3> &X,
+                  SVec<double,dim> &U,
+                  NodalGrad<dim, double> &ngrad,
+                  VarFcn *varFcn,
+                  LevelSetStructure &LSS,
+                  bool linRecFSI,
+                  Vec<int> &tag)
 {
 
   int i, j, k;
@@ -7818,31 +7960,31 @@ void SubDomain::populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<dou
   Vj = new double[dim];
   weights = new double[dim];
 
-  for (int l=0; l<edges.size(); l++) {
+  for (int l=0; l<edges.size(); l++) {//loop over all edges
     if(!edgeFlag[l]) continue; //not a master edge
-    i = edgePtr[l][0];
-    j = edgePtr[l][1];
-    if(LSS.edgeIntersectsStructure(0.0,l)) { // at interface
+    i = edgePtr[l][0];//node i
+    j = edgePtr[l][1];//node j
+    if(LSS.edgeIntersectsStructure(0.0,l)) { // case where (i)-(j) intersects the structure
       int tagI = tag[i];
       int tagJ = tag[j];
       bool iIsActive = LSS.isActive(0.0,i);
       bool jIsActive = LSS.isActive(0.0,j);
 
-      if(iIsActive) {
+      if(iIsActive) {//case where (i) is an active node
         LevelSetResult resij = LSS.getLevelSetDataAtEdgeCenter(0.0, l, true);
         varFcn->conservativeToPrimitive(U[i],Vi,tagI);
 
-// Initialize all variables and weights
+         // Initialize all variables and weights
         for (int k=0; k<dim; ++k) {
           Vj[k] = Vi[k];
-	  weights[k] = 1.0;
+          weights[k] = 1.0;
         }
 
-// Replace fourth variable with temperature
+        // Replace fourth variable with temperature
         double T = varFcn->computeTemperature(Vi,tagI);
         Vj[4] = T;
 
-// Determine intersection alpha 
+        // Determine intersection alpha
         if (!linRecFSI) { //first order
           alpha = 0.5;
         }
@@ -7851,43 +7993,43 @@ void SubDomain::populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<dou
           if (alpha > 0.5) alpha = 0.5; // Set limit for stability 
         }
 
-// Update velocity
+        // Update velocity
         for (int k=1; k<4; ++k) {
-	  Vj[k] = ((resij.normVel)[k-1] - alpha*Vi[k])/(1.0-alpha);
+          Vj[k] = ((resij.normVel)[k-1] - alpha*Vi[k])/(1.0-alpha);
           weights[k] = (1.0-alpha)*(1.0-alpha);
         }
 
-	if (dim==6) {  // One Equation Turbulent Model
-	  Vj[5] = 0.0;//-alpha*Vi[5]/(1.0-alpha);
-          weights[5] = 1.0;//(1.0-alpha)*(1.0-alpha);
-	}
-	else if (dim==7) { // Two Equations Turbulent Model
-	  Vj[5] = -alpha*Vi[5]/(1.0-alpha);
-	  Vj[6] = -alpha*Vi[6]/(1.0-alpha);
-          weights[5] = (1.0-alpha)*(1.0-alpha);
-          weights[6] = (1.0-alpha)*(1.0-alpha);
-	}
+        if (dim==6) {  // One Equation Turbulent Model
+          Vj[5] = 0.0;//-alpha*Vi[5]/(1.0-alpha);
+                weights[5] = 1.0;//(1.0-alpha)*(1.0-alpha);
+        }
+        else if (dim==7) { // Two Equations Turbulent Model
+          Vj[5] = -alpha*Vi[5]/(1.0-alpha);
+          Vj[6] = -alpha*Vi[6]/(1.0-alpha);
+                weights[5] = (1.0-alpha)*(1.0-alpha);
+                weights[6] = (1.0-alpha)*(1.0-alpha);
+        }
 
         if(!ghostPoints[j]) // GP has not been created
         {ghostPoints[j]=new GhostPoint<dim>(varFcn);}
 
         ghostPoints[j]->addNeighbour(Vj,weights,tagI);
       }
-      if(jIsActive) {
+      if(jIsActive) { //case where j is an active node
         LevelSetResult resji = LSS.getLevelSetDataAtEdgeCenter(0.0, l, false);
         varFcn->conservativeToPrimitive(U[j],Vj,tagJ);
 
-// Initialize all variables and weights
+        // Initialize all variables and weights
         for (int k=0; k<dim; ++k) {
           Vi[k] = Vj[k];
-	  weights[k] = 1.0;
+          weights[k] = 1.0;
         }
 
-// Replace fourth variable with temperature
+        // Replace fourth variable with temperature
         double T = varFcn->computeTemperature(Vj,tagJ);
         Vi[4] = T;
 
-// Determine intersection alpha 
+        // Determine intersection alpha
         if (!linRecFSI) { //first order
           alpha = 0.5;
         }
@@ -7896,22 +8038,22 @@ void SubDomain::populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<dou
           if (alpha > 0.5) alpha = 0.5; // Set limit for stability 
         }
 
-// Update velocity
+        // Update velocity
         for (int k=1; k<4; ++k) {
-	  Vi[k] = ((resji.normVel)[k-1] - alpha*Vj[k])/(1.0-alpha);
-          weights[k] = (1.0-alpha)*(1.0-alpha);
+            Vi[k] = ((resji.normVel)[k-1] - alpha*Vj[k])/(1.0-alpha);
+            weights[k] = (1.0-alpha)*(1.0-alpha);
         }
 
-	if (dim==6) {  // One Equation Turbulent Model
-	  Vi[5] = 0.0;//-alpha*Vj[5]/(1.0-alpha);
-          weights[5] = 1.0;//(1.0-alpha)*(1.0-alpha);
-	}
-	else if (dim==7) { // Two Equations Turbulent Model
-	  Vi[5] = -alpha*Vj[5]/(1.0-alpha);
-	  Vi[6] = -alpha*Vj[6]/(1.0-alpha);
-          weights[5] = (1.0-alpha)*(1.0-alpha);
-          weights[6] = (1.0-alpha)*(1.0-alpha);
-	}
+        if (dim==6) {  // One Equation Turbulent Model
+          Vi[5] = 0.0;//-alpha*Vj[5]/(1.0-alpha);
+                weights[5] = 1.0;//(1.0-alpha)*(1.0-alpha);
+        }
+        else if (dim==7) { // Two Equations Turbulent Model
+          Vi[5] = -alpha*Vj[5]/(1.0-alpha);
+          Vi[6] = -alpha*Vj[6]/(1.0-alpha);
+                weights[5] = (1.0-alpha)*(1.0-alpha);
+                weights[6] = (1.0-alpha)*(1.0-alpha);
+        }
 
         if(!ghostPoints[i]) // GP has not been created
         {ghostPoints[i]=new GhostPoint<dim>(varFcn);}
@@ -7926,17 +8068,156 @@ void SubDomain::populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<dou
 
 }
 
+
+
+//------------------------------------------------------------------------------
+
+template<int dim>
+void SubDomain::populateDerivsGhostPoints(
+                  Vec<GhostPoint<dim>*> &ghostPoints,
+                  SVec<double,3> &X,
+                  SVec<double,3> &dX,
+                  SVec<double,dim> &U,
+                  SVec<double,dim> &dU,
+                  NodalGrad<dim, double> &ngrad,
+                  VarFcn *varFcn,
+                  LevelSetStructure &LSS,
+                  bool linRecFSI,
+                  Vec<int> &tag)
+{
+  std::cout<<"ERROR this function still needs to be implemented correctly"<<std::endl; exit(-1);
+
+  int i, j, k;
+  double alpha;
+
+  bool* edgeFlag = edges.getMasterFlag();
+  int (*edgePtr)[2] = edges.getPtr();
+
+  double *Vi,*Vj,*weights;
+  Vi = new double[dim];
+  Vj = new double[dim];
+  weights = new double[dim];
+
+  for (int l=0; l<edges.size(); l++) {//loop over all edges
+    if(!edgeFlag[l]) continue; //not a master edge
+    i = edgePtr[l][0];//node i
+    j = edgePtr[l][1];//node j
+    if(LSS.edgeIntersectsStructure(0.0,l)) { // case where (i)-(j) intersects the structure
+      int tagI = tag[i];
+      int tagJ = tag[j];
+      bool iIsActive = LSS.isActive(0.0,i);
+      bool jIsActive = LSS.isActive(0.0,j);
+
+      if(iIsActive) {//case where (i) is an active node
+        LevelSetResult resij = LSS.getLevelSetDataAtEdgeCenter(0.0, l, true);
+        varFcn->conservativeToPrimitive(U[i],Vi,tagI);
+
+         // Initialize all variables and weights
+        for (int k=0; k<dim; ++k) {
+          Vj[k] = Vi[k];
+          weights[k] = 1.0;
+        }
+
+        // Replace fourth variable with temperature
+        double T = varFcn->computeTemperature(Vi,tagI);
+        Vj[4] = T;
+
+        // Determine intersection alpha
+        if (!linRecFSI) { //first order
+          alpha = 0.5;
+        }
+        else {
+          alpha = resij.alpha;
+          if (alpha > 0.5) alpha = 0.5; // Set limit for stability
+        }
+
+        // Update velocity
+        for (int k=1; k<4; ++k) {
+          Vj[k] = ((resij.normVel)[k-1] - alpha*Vi[k])/(1.0-alpha);
+          weights[k] = (1.0-alpha)*(1.0-alpha);
+        }
+
+        if (dim==6) {  // One Equation Turbulent Model
+          Vj[5] = 0.0;//-alpha*Vi[5]/(1.0-alpha);
+                weights[5] = 1.0;//(1.0-alpha)*(1.0-alpha);
+        }
+        else if (dim==7) { // Two Equations Turbulent Model
+          Vj[5] = -alpha*Vi[5]/(1.0-alpha);
+          Vj[6] = -alpha*Vi[6]/(1.0-alpha);
+                weights[5] = (1.0-alpha)*(1.0-alpha);
+                weights[6] = (1.0-alpha)*(1.0-alpha);
+        }
+
+        if(!ghostPoints[j]) // GP has not been created
+        {ghostPoints[j]=new GhostPoint<dim>(varFcn);}
+
+        ghostPoints[j]->addNeighbour(Vj,weights,tagI);
+      }
+      if(jIsActive) { //case where j is an active node
+        LevelSetResult resji = LSS.getLevelSetDataAtEdgeCenter(0.0, l, false);
+        varFcn->conservativeToPrimitive(U[j],Vj,tagJ);
+
+        // Initialize all variables and weights
+        for (int k=0; k<dim; ++k) {
+          Vi[k] = Vj[k];
+          weights[k] = 1.0;
+        }
+
+        // Replace fourth variable with temperature
+        double T = varFcn->computeTemperature(Vj,tagJ);
+        Vi[4] = T;
+
+        // Determine intersection alpha
+        if (!linRecFSI) { //first order
+          alpha = 0.5;
+        }
+        else {
+          alpha = resji.alpha;
+          if (alpha > 0.5) alpha = 0.5; // Set limit for stability
+        }
+
+        // Update velocity
+        for (int k=1; k<4; ++k) {
+            Vi[k] = ((resji.normVel)[k-1] - alpha*Vj[k])/(1.0-alpha);
+            weights[k] = (1.0-alpha)*(1.0-alpha);
+        }
+
+        if (dim==6) {  // One Equation Turbulent Model
+          Vi[5] = 0.0;//-alpha*Vj[5]/(1.0-alpha);
+                weights[5] = 1.0;//(1.0-alpha)*(1.0-alpha);
+        }
+        else if (dim==7) { // Two Equations Turbulent Model
+          Vi[5] = -alpha*Vj[5]/(1.0-alpha);
+          Vi[6] = -alpha*Vj[6]/(1.0-alpha);
+                weights[5] = (1.0-alpha)*(1.0-alpha);
+                weights[6] = (1.0-alpha)*(1.0-alpha);
+        }
+
+        if(!ghostPoints[i]) // GP has not been created
+        {ghostPoints[i]=new GhostPoint<dim>(varFcn);}
+
+        ghostPoints[i]->addNeighbour(Vi,weights,tagJ);
+      }
+    }
+  }
+  delete[] Vi;
+  delete[] Vj;
+  delete[] weights;
+
+}
+
+
 //------------------------------------------------------------------------------
 
 template<int dim>
 void SubDomain::reduceGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<double,3> &X)
-{	
-	bool isOK;
+{
+  bool isOK;
   for (int i=0; i<nodes.size(); i++)
       if(ghostPoints[i]) {
-			//std::cout << X[i][0] << " "<< X[i][1] << " "<< X[i][2] << " ";
-	  ghostPoints[i]->reduce();
-	}
+      //std::cout << X[i][0] << " "<< X[i][1] << " "<< X[i][2] << " ";
+    ghostPoints[i]->reduce();
+  }
     } 
 
 //------------------------------------------------------------------------------

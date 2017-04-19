@@ -163,7 +163,8 @@ bool FemEquationTermNS::computeDerivativeOfVolumeTerm(
                           double dp1dxj[4][3],  // (INPUT) first derivatives of the shape-functions
                           double ddp1dxj[4][3], // (INPUT) second derivatives of the shape functions
                           double d2w[4],        // (INPUT) distances to wall for all tetrahedra nodes
-                          double *V[4], double *dV[4], // (INPUT) state vector and state vector derivative with respect to abstract variable
+                          double *V[4],
+                          double *dV[4],        // (INPUT) state vector and state vector derivative with respect to abstract variable
                           double dMach,         // (INPUT) flag for mach derivative
                           double *dr,           // (OUTPUT)
                           double *dS,           // (OUTPUT)
@@ -173,6 +174,15 @@ bool FemEquationTermNS::computeDerivativeOfVolumeTerm(
                           int nodeNum[4],       // (INPUT) node IDs
                           int material_id)      // (INPUT) material ID
 {
+//  std::cout<<"FemEquationTermNS::computeDerivativeOfVolumeTerm 0: "<<dV[0][0]<<" "<<dV[0][1]<<" "<<dV[0][2]<<std::endl;
+//  std::cout<<"FemEquationTermNS::computeDerivativeOfVolumeTerm 1: "<<dV[1][0]<<" "<<dV[1][1]<<" "<<dV[1][2]<<std::endl;
+//  std::cout<<"FemEquationTermNS::computeDerivativeOfVolumeTerm 2: "<<dV[2][0]<<" "<<dV[2][1]<<" "<<dV[2][2]<<std::endl;
+//  std::cout<<"FemEquationTermNS::computeDerivativeOfVolumeTerm 3: "<<dV[3][0]<<" "<<dV[3][1]<<" "<<dV[3][2]<<std::endl;
+
+  if (dV[0][0]+dV[0][1]+dV[0][2]+
+      dV[1][0]+dV[1][1]+dV[1][2]+
+      dV[2][0]+dV[2][1]+dV[2][2]+
+      dV[3][0]+dV[3][1]+dV[3][2] != 0.0) std::cout<<" !!! Non-zero dV found"<<std::endl;
 
   bool porousmedia = false; 
 
@@ -181,6 +191,10 @@ bool FemEquationTermNS::computeDerivativeOfVolumeTerm(
 
   double du[4][3], ducg[3];
   computeDerivativeOfVelocity(dV, du, ducg);
+  if (du[0][0]+du[0][1]+du[0][2]+
+      du[1][0]+du[1][1]+du[1][2]+
+      du[2][0]+du[2][1]+du[2][2]+
+      du[3][0]+du[3][1]+du[3][2] != 0.0) std::cout<<" !!! Non-zero du found"<<std::endl;
 
   double T[4], Tcg;
   computeTemperature(V, T, Tcg);
@@ -1916,9 +1930,19 @@ bool FemEquationTermDES::computeVolumeTerm(double dp1dxj[4][3], double d2w[4],
 //------------------------------------------------------------------------------
 
 // Included (MB)
-bool FemEquationTermDES::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], double ddp1dxj[4][3], double d2w[4],
-					  double *V[4], double *dV[4], double dMach, double *dr, double *dS, double *dPR, double dtetVol, SVec<double,3> &X,
-                                          int nodeNum[4], int material_id)
+bool FemEquationTermDES::computeDerivativeOfVolumeTerm(
+                           double dp1dxj[4][3],
+                           double ddp1dxj[4][3],
+                           double d2w[4],
+                           double *V[4],
+                           double *dV[4],
+                           double dMach,
+                           double *dr,
+                           double *dS,
+                           double *dPR,
+                           double dtetVol,
+                           SVec<double,3> &X,
+                           int nodeNum[4], int material_id)
 {
 
   bool porousmedia = false;

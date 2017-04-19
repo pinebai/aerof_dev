@@ -2,6 +2,7 @@
 #define _EMB_FLUID_SHAPE_OPTIMIZATION_HANDLER_H_
 
 #include <ImplicitEmbeddedCoupledTsDesc.h>
+#include <ImplicitCoupledTsDesc.h>//TODO HACK
 #include <string>
 
 #define Deg2Rad         0.01745329251994329576923
@@ -19,6 +20,7 @@ template<int dim, int neq>       class MatVecProd;
 template<int dim, class Scalar2> class KspPrec;
 template<class Scalar, int dim>  class DistSVec;
 template<int dim>                class ImplicitEmbeddedCoupledTsDesc;
+template<int dim>                class ImplicitCoupledTsDesc;//TODO HACK
 
 /*
  #ifndef _KSPSLVR_TMPL_
@@ -38,6 +40,12 @@ private:
   MatVecProd<dim,dim> *dRdX;
   KspPrec<dim> *pc;
   KspSolver<DistEmbeddedVec<double,dim>, MatVecProd<dim,dim>, KspPrec<dim>, Communicator> *ksp;
+
+  //FSOH variables////////////////////////////////////
+  MatVecProd<dim,dim> *mvp2;
+  KspPrec<dim> *pc2;
+  KspSolver<DistSVec<double,dim>, MatVecProd<dim,dim>, KspPrec<dim>, Communicator> *ksp2;
+  /////////////////////////////////////////////////////
   double steadyTol;
 
 private:
@@ -63,6 +71,9 @@ private:
 
   DistSVec<double,dim> dFdS;
 
+  DistSVec<double,dim> dFdS_inviscid;
+  DistSVec<double,dim> dFdS_viscous;
+
 DistSVec<double,dim> dFdS_debug;   
 DistSVec<double,dim> difference;
 
@@ -77,13 +88,24 @@ DistSVec<double,dim> difference;
   DistSVec<double,3> *Lm;
 
   DistVec<double> *A_;
-  /* DistVec<double> *Ap; */
-  /* DistVec<double> *Am; */
+  DistVec<double> *Ap;
+  DistVec<double> *Am;
+
+  //DistSVec<double,3> Xc;
+//  DistSVec<double,3> *Xp;
+//  DistSVec<double,3> *Xm;
 
   DistSVec<double,dim> Flux;
   DistSVec<double,dim> FluxFD;
   DistSVec<double,dim> *Fp;
   DistSVec<double,dim> *Fm;
+
+
+  //TODO VISCOUSDERIV DEBUG
+  DistSVec<double,dim> *Fp_inviscid;
+  DistSVec<double,dim> *Fm_inviscid;
+  DistSVec<double,dim> *Fp_viscous;
+  DistSVec<double,dim> *Fm_viscous;
 
   DistSVec<double,dim> *Up;
   DistSVec<double,dim> *Um;
@@ -131,7 +153,10 @@ public:
 			    DistSVec<double,dim> &,
 			    DistSVec<double,dim> &);
 
+  void fsoSetUpLinearSolver2(IoData &, DistSVec<double,3> &, DistVec<double> &, DistSVec<double,dim> &, DistSVec<double,dim> &);
+
   void fsoRestartBcFluxs(IoData &);
+  void fsoRestartBcFluxsOLD(IoData &);
 
   void fso_on_sensitivityMesh(bool isSparse,IoData &,  DistSVec<double,dim> &);
   void fso_on_sensitivityMach(bool isSparse,IoData &,  DistSVec<double,dim> &);
@@ -142,13 +167,16 @@ public:
 					      DistSVec<double,3> &, 
 					      DistVec<double> &, 
 					      DistSVec<double,dim> &, 
-					      bool=false);
+					      bool=true);
 
   void fsoSemiAnalytical(IoData &, 
 			 DistSVec<double,3> &,
 			 DistVec<double> &,
 			 DistSVec<double,dim> &,
 			 DistSVec<double,dim> &);
+
+  //TODO VISCOUSDERIV DEBUG
+  void fsoSemiAnalytical2(IoData &, DistSVec<double,3> &, DistVec<double> &, DistSVec<double,dim> &, DistSVec<double,dim> &);
 
   void fsoAnalytical(IoData &, 
 		     DistSVec<double,3> &,
@@ -160,6 +188,9 @@ public:
 		       DistSVec<double,dim> &, 
 		       DistSVec<double,dim> &,
 		       bool);
+
+  //TODO VISCOUSDERIV DEBUG
+  void fsoLinearSolver2(IoData &, DistSVec<double,dim> &, DistSVec<double,dim> &, bool=false);
 
   void fsoComputeSensitivities(bool isSparse,IoData &,
 			       const char *, 

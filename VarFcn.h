@@ -189,6 +189,7 @@ public:
     check(tag); varFcn[tag]->computeTemperatureHessian(V,Trr,Trp,Tpp);
   }
   void getV4FromTemperature(double *V, double T, int tag=0) const{check(tag); varFcn[tag]->getV4FromTemperature(V,T); }
+  void getdV4FromdTemperature(double *V, double T, int tag=0) const{check(tag); varFcn[tag]->getdV4FromdTemperature(V,T); }//TODO VISCOUSDERIV
   double computeRhoEnergy(double *V, int tag=0)   const{check(tag); return varFcn[tag]->computeRhoEnergy(V); }
   //this function computes the internal energy (=rho*e-0.5*rho*u^2)
   double computeRhoEpsilon(double *V, int tag=0)  const{ check(tag); return varFcn[tag]->computeRhoEpsilon(V); }
@@ -206,7 +207,7 @@ public:
   double getTurbulentKineticEnergy(double *V, int tag=0)   const{check(tag); return varFcn[tag]->getTurbulentKineticEnergy(V); }
   double getTurbulentDissipationRate(double *V, int tag=0) const{check(tag); return varFcn[tag]->getTurbulentDissipationRate(V); }
 
-  void rstVar(IoData &iod) { assert(numPhases==1); varFcn[0]->rstVar(iod); }
+  void rstVar(IoData &iod) { /*assert(numPhases==1);*/ varFcn[0]->rstVar(iod); }
   Vec3D getDerivativeOfVelocity(double *dV, int tag=0) { check(tag); return varFcn[tag]->getDerivativeOfVelocity(dV); }
   double computeDerivativeOfTemperature(double *V, double *dV, int tag=0) { check(tag); return varFcn[tag]->computeDerivativeOfTemperature(V,dV); }
   void computeDerivativeOperatorsOfTemperature(double *V, double *dTdV, int tag=0) { check(tag); varFcn[tag]->computeDerivativeOperatorsOfTemperature(V,dTdV); }

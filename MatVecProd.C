@@ -37,7 +37,7 @@ MatVecProdFD<dim, neq>::MatVecProdFD
 {
 
   com = domain->getCommunicator();
-
+  this->com->fprintf(stderr,"\033[93mFD Matvec created\033[00m\n");
   if (ts)
     timeState = new DistTimeState<dim>(*ts, false, ioData);
   else
@@ -68,7 +68,6 @@ MatVecProdFD<dim, neq>::MatVecProdFD
 template<int dim, int neq>
 MatVecProdFD<dim, neq>::~MatVecProdFD()
 { 
-
   if (spaceOp) delete spaceOp;
   if (timeState) delete timeState;
   recFcnCon = 0; // deleted by spaceOp
@@ -87,23 +86,31 @@ void MatVecProdFD<dim, neq>::attachHH(DistEmbeddedVec<double,dim>& v) {
 //------------------------------------------------------------------------------
 
 template<int dim, int neq>
-void MatVecProdFD<dim, neq>::evaluate(int it, DistSVec<double,3> &x, DistVec<double> &cv,
-				 DistSVec<double,dim> &q, DistSVec<double,dim> &f)
+void MatVecProdFD<dim, neq>::evaluate(
+                               int it,
+                               DistSVec<double,3> &x,   //Mesh Positions
+                               DistVec<double> &cv,     //Vector of cell volumes
+                               DistSVec<double,dim> &q, //State Vector solution
+                               DistSVec<double,dim> &f) //Fluid Residual
 {
-	// ****
+  // ****
   X = &x;
   ctrlVol = &cv;
   Qeps = q;
 
 	if(recFcnCon && !this->isFSI) 
 	{
+	  std::cout<<"\033[96mmvp-> evaluate does something\033[00m"<<std::endl;//TODO delete line
     spaceOp->computeResidual(*X, *ctrlVol, Qeps, Feps, timeState);
 
 		if (timeState) timeState->add_dAW_dt(it, *geoState, *ctrlVol, Qeps, Feps);
 
     spaceOp->applyBCsToResidual(Qeps, Feps);
   }
-	else Feps = f;
+	else{
+	  std::cout<<"\033[96mmvp-> evaluate does nothing\033[00m"<<std::endl;//TODO delete line
+	  Feps = f;
+	}
 
 	if(timeState && iod->ts.dualtimestepping == TsData::ON) 
 	{
@@ -644,7 +651,7 @@ void MatVecProdFD<dim, neq>::applyWeightedRestrict(DistSVec<double,neq> &p,
 }
 
 //--------------------------------------------------
-
+//Computes prod=J*p
 template<int dim, int neq>
 void MatVecProdFD<dim,neq>::apply(DistEmbeddedVec<double,neq> & p, DistEmbeddedVec<double,neq> & prod) 
 {
@@ -656,23 +663,27 @@ void MatVecProdFD<dim,neq>::apply(DistEmbeddedVec<double,neq> & p, DistEmbeddedV
 
   Qepstmp.pad(Qeps);
   
-	if(p.hasHHBoundaryTerm()) 
+	if(p.hasHHBoundaryTerm()) //TODO this is differencet compared to the standard apply function
 	{
     *hhEps = *hhVal + eps*p.hh();
     *spaceOp->getDistBcData()->getBoundaryStateHH() = *hhEps;
   }
 
-  if (!this->isFSI)
+  if (!this->isFSI){
     spaceOp->computeResidual(*X, *ctrlVol, Qeps, Feps, timeState);
-  else
+    std::cout<<__LINE__<<__FILE__<<std::endl; exit(-1);
+  }
+
+  else//FSI case
 	  spaceOp->computeResidual(*X, *ctrlVol, Qeps, 
-										*(this->fsi.Wtemp), *(this->fsi.Wtemp), *(this->fsi.Wtemp), this->fsi.LSS, 
-										this->fsi.linRecAtInterface, this->fsi.viscSecOrder, 
-										*(this->fsi.fluidId), Feps, this->fsi.riemann, 
-										this->fsi.Nriemann, 0, this->fsi.ghostPoints);
+              *(this->fsi.Wtemp), *(this->fsi.Wtemp), *(this->fsi.Wtemp), this->fsi.LSS,
+              this->fsi.linRecAtInterface, this->fsi.viscSecOrder,
+              *(this->fsi.fluidId), Feps, this->fsi.riemann,
+              this->fsi.Nriemann, 0, this->fsi.ghostPoints);
 
 	if(p.hasHHBoundaryTerm()) 
 	{
+	  this->com->fprintf(stderr,"!!! p.hasHHBoundaryTerm() == true !!\n");//TODO delete line
     *hhEps = 0.0;
 
 		spaceOp->getDomain()->computeHHBoundaryTermResidual(*spaceOp->getDistBcData(),Qeps,*hhEps, spaceOp->getVarFcn());
@@ -710,9 +721,9 @@ void MatVecProdFD<dim,neq>::apply(DistEmbeddedVec<double,neq> & p, DistEmbeddedV
   
 		if(!this->isFSI)	spaceOp->computeResidual(*X, *ctrlVol, Qeps, Feps, timeState);
 		else              spaceOp->computeResidual(*X,*ctrlVol, Qeps, *(this->fsi.Wtemp), *(this->fsi.Wtemp),*(this->fsi.Wtemp),
-																 this->fsi.LSS, this->fsi.linRecAtInterface, 
-																 this->fsi.viscSecOrder, *(this->fsi.fluidId),
-                               Feps, this->fsi.riemann, this->fsi.Nriemann, 0, this->fsi.ghostPoints);
+                        this->fsi.LSS, this->fsi.linRecAtInterface,
+                        this->fsi.viscSecOrder, *(this->fsi.fluidId),
+                        Feps, this->fsi.riemann, this->fsi.Nriemann, 0, this->fsi.ghostPoints);
  
 		if(timeState) 
 		{
@@ -949,7 +960,7 @@ MatVecProdH1<dim,Scalar,neq>::MatVecProdH1(DistTimeState<dim> *ts, SpaceOperator
 					   Domain *domain) : 
   DistMat<Scalar,neq>(domain), timeState(ts), spaceOp(spo)
 {
-
+  this->com->fprintf(stderr,"\033[93mH1 Matvec created\033[00m\n");//TODO delete line
 #ifdef _OPENMP 
   this->numLocSub = DistMat<Scalar,neq>::numLocSub; //BUG omp
 #endif
@@ -981,7 +992,7 @@ MatVecProdH1<dim,Scalar,neq>::MatVecProdH1(DistTimeState<dim> *ts, SpaceOperator
                                            Domain *domain, IoData &ioData) :
   DistMat<Scalar,neq>(domain), timeState(ts), spaceOp(spo)
 {
-
+  this->com->fprintf(stderr,"\033[93mH1 Matvec created\033[00m\n");
 #ifdef _OPENMP
   this->numLocSub = DistMat<Scalar,neq>::numLocSub; //BUG omp
 #endif
@@ -1072,8 +1083,12 @@ void MatVecProdH1<dim,Scalar,neq>::evaluateHH(DistVec<double> &hhterm,
 }
 
 template<int dim, class Scalar, int neq>
-void MatVecProdH1<dim,Scalar,neq>::evaluate(int it, DistSVec<double,3> &X, DistVec<double> &ctrlVol, 
-					    DistSVec<double,dim> &Q, DistSVec<double,dim> &F)
+void MatVecProdH1<dim,Scalar,neq>::evaluate(
+                                     int it,
+                                     DistSVec<double,3> &X,//Mesh Positions
+                                     DistVec<double> &ctrlVol,//Vector of cell volumes
+                                     DistSVec<double,dim> &Q,//State Vector solution
+                                     DistSVec<double,dim> &F)//Fluid Residual
 {
 
   if (!this->isFSI)
@@ -1409,7 +1424,7 @@ MatVecProdH2<dim,Scalar,neq>::MatVecProdH2
       RFD = new MatVecProdFD<dim,neq>(ioData.ts.implicit, ts, gs, spo, domain, ioData);
     }
   }
-
+  this->com->fprintf(stderr,"\033[93mH2 Matvec created\033[00m\n");//TODO delete line
 }
 
 //------------------------------------------------------------------------------
@@ -3009,4 +3024,54 @@ void MatVecProd_dRdX<dim,Scalar,neq>::constructOperators(Vec3D &x0,
   spaceOp->computeDerivativeOperators(x0, X, ctrlVol, U, dMach, R, Pin, timeState, postOp, dRdXop);
 }
 
+
+
+
+
+//------------------------------------------------------------------------------
+template<int dim, int neq>
+void MatVecProdFD<dim, neq>::applyDebug(DistSVec<double,neq> &p, DistSVec<double,neq> &prod)
+{
+// Original
+
+
+  //#define MVP_CHECK_ONE_EQ 5
+#if MVP_CHECK_ONE_EQ
+  int numLocSub = p.numLocSub();
+#pragma omp parallel for
+  for (int iSub=0; iSub<numLocSub; ++iSub) {
+    double (*qeps)[dim] = Qeps.subData(iSub);
+    double (*q)[dim] = Q->subData(iSub);
+    double (*lp)[dim] = p.subData(iSub);
+    for (int i=0; i<p.subSize(iSub); ++i) {
+      for (int j=0; j<dim; ++j)
+  qeps[i][j] = q[i][j];
+      qeps[i][MVP_CHECK_ONE_EQ] = q[i][MVP_CHECK_ONE_EQ] + eps * lp[i][MVP_CHECK_ONE_EQ];
+    }
+  }
+#else
+  Qepstmp = Q + eps * p;
+  Qepstmp.pad(Qeps);
+#endif
+
+  if(Phi)
+    spaceOp->computeResidual(*X, *ctrlVol, Qeps, *Phi, Feps, riemann, 0);
+  else
+    spaceOp->computeResidual(*X, *ctrlVol, Qeps, Feps, timeState);
+
+
+  if (timeState) {
+    timeState->add_dAW_dt(-1, *geoState, *ctrlVol, Qeps, Feps);
+    if (iod->ts.dualtimestepping == TsData::ON)
+        timeState->add_dAW_dtau(-1, *geoState, *ctrlVol, Qeps, Feps);
+  }
+
+  spaceOp->applyBCsToResidual(Qeps, Feps);
+
+  Feps.strip(Fepstmp);
+
+  prod = (1.0/eps) * (Fepstmp - F);
+
+
+}
 

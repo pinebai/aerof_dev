@@ -145,6 +145,33 @@ ImplicitEmbeddedTsDesc<dim>::createKrylovSolver(
   
 }
 
+//------------------------------------------------------------------------------
+//TODO VISCOUSDERIV
+template<int dim>
+template<int neq, class MatVecProdOp>
+KspSolver<DistSVec<double,neq>, MatVecProdOp, KspPrec<neq>, Communicator> *
+ImplicitEmbeddedTsDesc<dim>::createKrylovSolver2(
+                               const DistInfo &info, KspData &kspdata,
+                               MatVecProdOp *_mvp, KspPrec<neq> *_pc,
+                               Communicator *_com)
+{
+
+  KspSolver<DistSVec<double,neq>, MatVecProdOp, KspPrec<neq>, Communicator> *_ksp = 0;
+
+  if (kspdata.type == KspData::RICHARDSON)
+    _ksp = new RichardsonSolver<DistSVec<double,neq>, MatVecProdOp,
+                 KspPrec<neq>, Communicator>(info, kspdata, _mvp, _pc, _com);
+  else if (kspdata.type == KspData::CG)
+    _ksp = new CgSolver<DistSVec<double,neq>, MatVecProdOp,
+                 KspPrec<neq>, Communicator>(info, kspdata, _mvp, _pc, _com);
+  else if (kspdata.type == KspData::GMRES)
+    _ksp = new GmresSolver<DistSVec<double,neq>, MatVecProdOp,
+                 KspPrec<neq>, Communicator>(info, kspdata, _mvp, _pc, _com);
+
+  return _ksp;
+
+}
+
 template<int dim>
 int ImplicitEmbeddedTsDesc<dim>::commonPart(DistSVec<double,dim> &U)
 {

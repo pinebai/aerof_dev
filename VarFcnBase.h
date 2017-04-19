@@ -144,6 +144,9 @@ public:
   virtual void getV4FromTemperature(double *V, double T) const{
     fprintf(stderr, "*** Error:  getV4FromTemperature Function not defined\n");
     exit(1); }
+  virtual void getdV4FromdTemperature(double *V, double T) const{
+    fprintf(stderr, "*** Error:  getdV4FromdTemperature Function not defined\n");
+    exit(1); }
   virtual double computeRhoEnergy(double *V)   const{
     fprintf(stderr, "*** Error:  computeRhoEnergy Function not defined\n");
     exit(1); }

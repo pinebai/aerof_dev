@@ -503,9 +503,16 @@ public:
 
   template<int dim>
   void populateGhostPoints(DistVec<GhostPoint<dim>*> *ghostPoints, DistSVec<double,3> &X, 
-									DistSVec<double,dim> &U, DistNodalGrad<dim, double> *ngrad, VarFcn *varFcn,
-									DistLevelSetStructure *distLSS,bool linRecAtInterface, DistVec<int> &tag, 
-									bool externalSI=false, FemEquationTerm *fet = 0);
+         DistSVec<double,dim> &U, DistNodalGrad<dim, double> *ngrad, VarFcn *varFcn,
+         DistLevelSetStructure *distLSS,bool linRecAtInterface, DistVec<int> &tag,
+         bool externalSI=false, FemEquationTerm *fet = 0);
+
+
+  template<int dim>
+  void populateDerivsGhostPoints(DistVec<GhostPoint<dim>*> *ghostPoints, DistSVec<double,3> &X, DistSVec<double,3> &dX,
+         DistSVec<double,dim> &U, DistSVec<double,dim> &dU, DistNodalGrad<dim, double> *ngrad, VarFcn *varFcn,
+         DistLevelSetStructure *distLSS,bool linRecAtInterface, DistVec<int> &tag,
+         bool externalSI=false, FemEquationTerm *fet = 0);
 
   template<int dim, class Scalar, int neq>
   void populateGhostJacobian(DistVec<GhostPoint<dim>*> *ghostPoints,DistSVec<double,dim> &U,FluxFcn** fluxFcn, VarFcn *varFcn,DistLevelSetStructure *distLSS,DistVec<int> &tag, DistMat<Scalar,neq>& A);
@@ -996,6 +1003,9 @@ public:
 
 	template<class Scalar>
 	void writeVectorToFile(const char *, int, double, DistVec<Scalar> &, Scalar* = 0); //<! for non-state vector, Lei Lei, 03 Feb 2016
+
+  template<class Scalar, int dim>//TODO VISCOUSDERIV
+  void writeVectorToFile(const char *, int, double, DistSVec<Scalar,dim> &, DistVec<GhostPoint<dim>*> *ghostPoints, Scalar* = 0);
 
   template<class Scalar, int dim>
   void scaleSolution(DistSVec<Scalar,dim> &, RefVal*);

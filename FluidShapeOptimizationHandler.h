@@ -96,8 +96,15 @@ private:
   DistSVec<double,dim> FluxFD;
   DistSVec<double,dim> *Fp;
   DistSVec<double,dim> *Fm;
+  DistSVec<double,dim> *Fp_inviscid;
+  DistSVec<double,dim> *Fm_inviscid;
+  DistSVec<double,dim> *Fp_viscous;
+  DistSVec<double,dim> *Fm_viscous;
   DistSVec<double,dim> dFdS;
+  DistSVec<double,dim> dFdS_viscous;
+  DistSVec<double,dim> dFdS_inviscid;
   DistSVec<double,dim> dFdSref;
+  DistSVec<double,dim> temp;
   DistSVec<double,dim> *Up;
   DistSVec<double,dim> *Um;
   DistSVec<double,dim> dUdS;

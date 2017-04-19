@@ -26,10 +26,10 @@ using std::min;
 template<int dim>
 inline
 void FaceTria::computeForce(ElemSet &elems,
-			    PostFcn *postFcn, SVec<double,3> &X, 
-			    Vec<double> &d2wall, double *Vwall, SVec<double,dim> &V, 
-			    double *pin, Vec3D &Fi0, Vec3D &Fi1, Vec3D &Fi2, Vec3D &Fv, 
-			    double* gradP[3], int hydro)
+                 PostFcn *postFcn, SVec<double,3> &X,
+                 Vec<double> &d2wall, double *Vwall, SVec<double,dim> &V,
+                 double *pin, Vec3D &Fi0, Vec3D &Fi1, Vec3D &Fi2, Vec3D &Fv,
+                 double* gradP[3], int hydro)
 {
 
   Vec3D n;
@@ -1662,9 +1662,15 @@ void FaceTria::computeScalarQuantity(PostFcn::ScalarType stype, ElemSet& elems,
 
 template<int dim>
 //inline
-void FaceTria::computeGalerkinTerm(ElemSet &elems, FemEquationTerm *fet, 
-				   SVec<double,3> &X, Vec<double> &d2wall, double *Vwall,
-				   SVec<double,dim> &V, SVec<double,dim> &R,LevelSetStructure *LSS)
+void FaceTria::computeGalerkinTerm(
+       ElemSet &elems,
+       FemEquationTerm *fet,
+       SVec<double,3> &X,
+       Vec<double> &d2wall,
+       double *Vwall,
+       SVec<double,dim> &V,
+       SVec<double,dim> &R,
+       LevelSetStructure *LSS)
 { 
   // In the case of an embedded simulation, check if the face is actually active
   bool isFaceInactive=true;
@@ -1703,9 +1709,17 @@ void FaceTria::computeGalerkinTerm(ElemSet &elems, FemEquationTerm *fet,
 // Included (MB)
 template<int dim>
 //inline
-void FaceTria::computeDerivativeOfGalerkinTerm(ElemSet &elems, FemEquationTerm *fet, SVec<double,3> &X, SVec<double,3> &dX,
-			       Vec<double> &d2wall, double *Vwall, double *dVwall,
-			       SVec<double,dim> &V, SVec<double,dim> &dV, double dMach, SVec<double,dim> &dR)
+void FaceTria::computeDerivativeOfGalerkinTerm(
+                 ElemSet &elems, FemEquationTerm *fet,
+                 SVec<double,3> &X,    // (INPUT) mesh position
+                 SVec<double,3> &dX,   // (INPUT) derivative of mesh position
+                 Vec<double> &d2wall,  // (INPUT) distance to wall
+                 double *Vwall,        // (INPUT) wall velocity
+                 double *dVwall,       // (INPUT) derivative of wall velocity
+                 SVec<double,dim> &V,  // (INPUT) state vector
+                 SVec<double,dim> &dV, // (INPUT) derivative of state vector
+                 double dMach,         // (INPUT) mach number derivative flag
+                 SVec<double,dim> &dR) // (OUTPUT) derivative of residual
 {
 
   // UH (07/2012) 
@@ -1731,10 +1745,67 @@ void FaceTria::computeDerivativeOfGalerkinTerm(ElemSet &elems, FemEquationTerm *
 
     for (int l=0; l<3; ++l)
       for (int k=0; k<dim; ++k)
-	dR[ nodeNum(l) ][k] -= third * dr[k];
+  dR[ nodeNum(l) ][k] -= third * dr[k];
   }
-
 }
+
+
+
+
+//TODO VISCOUSDERIV
+template<int dim>
+void FaceTria::computeDerivativeOfGalerkinTermEmb(
+                 ElemSet &elems, FemEquationTerm *fet,
+                 SVec<double,3> &X,    // (INPUT) mesh position
+                 SVec<double,3> &dX,   // (INPUT) derivative of mesh position
+                 Vec<double> &d2wall,  // (INPUT) distance to wall
+                 double *Vwall,        // (INPUT) wall velocity
+                 double *dVwall,       // (INPUT) derivative of wall velocity
+                 SVec<double,dim> &V,  // (INPUT) state vector
+                 SVec<double,dim> &dV, // (INPUT) derivative of state vector
+                 double dMach,         // (INPUT) mach number derivative flag
+                 SVec<double,dim> &dR, // (OUTPUT) derivative of residual
+                 LevelSetStructure *LSS) //(INPUT) levelset
+{
+
+  //TODO check if that is really everything that is required
+  // In the case of an embedded simulation, check if the face is actually active
+  bool isFaceInactive=true;
+  if(LSS)
+    {
+      for(int i=0;i<3;++i)  isFaceInactive    = (isFaceInactive && !(LSS->isActive(0,nodeNum(i))));
+      if(isFaceInactive) return;
+    }
+
+  // UH (07/2012)
+  // This test keeps only some faces
+  // with a code in {BC_ADIABATIC_WALL_*, BC_ISOTHERMAL_WALL_*}
+  if (!fet->doesFaceTermExist(code)) return;
+
+  Vec3D n;
+  Vec3D dn;
+
+  computeNormalAndDerivative(X, dX, n, dn);
+
+
+  if (fet->doesFaceNeedGradientP1Function())
+    elems[elemNum].computeDerivativeOfFaceGalerkinTerm(fet, nodeNum(), code, n, dn, X, dX, d2wall, Vwall, dVwall, V, dV, dMach, dR);
+  else {
+    double d2w[3] = {d2wall[nodeNum(0)], d2wall[nodeNum(1)], d2wall[nodeNum(2)]};
+    double *v[3] = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)]};
+    double *dv[3] = {dV[nodeNum(0)], dV[nodeNum(1)], dV[nodeNum(2)]};
+
+    double dr[dim];
+    fet->computeDerivativeOfSurfaceTerm(code, n, dn, d2w, Vwall, dVwall, v, dv, dMach, dr);
+
+    for (int l=0; l<3; ++l)
+      for (int k=0; k<dim; ++k)
+  dR[ nodeNum(l) ][k] -= third * dr[k];
+  }
+}
+
+
+
 
 //------------------------------------------------------------------------------
 

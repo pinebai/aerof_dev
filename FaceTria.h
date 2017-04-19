@@ -247,6 +247,12 @@ public:
                                        Vec<double> &, double *, double *, SVec<double,dim> &, 
                                        SVec<double,dim> &, double, SVec<double,dim> &);
   
+  //TODO VISCOUSDERIV it is not neccessary to have a seperate function here.
+  template<int dim>
+  void computeDerivativeOfGalerkinTermEmb(ElemSet &, FemEquationTerm *, SVec<double,3> &, SVec<double,3> &,
+                                       Vec<double> &, double *, double *, SVec<double,dim> &,
+                                       SVec<double,dim> &, double, SVec<double,dim> &, LevelSetStructure*);
+
   template<int dim>
   void computeBCsJacobianWallValues(ElemSet &, FemEquationTerm *, SVec<double,3> &, 
 				    Vec<double> &, double *, double *,

@@ -21,8 +21,11 @@ class GhostPoint{
 
  public:
   double* Vg;	// Sum of weighted states (rho,u,v,w,T) at the ghost-point. 
-  		// After population, it is set to the state at the ghost-point.
+              // After population, it is set to the state at the ghost-point.
+  double* dVg; // Sum of weighted derivatives of states (rho,u,v,w,T) at the ghost-point.
+              // After population, it is set to the state at the ghost-point. //TODO VISCOUSDERIV
   double *V;    // Stores the final primitive states
+  double *dV;    // Stores the final derivative of the primitive states//TODO VISCOUSDERIV
   double* Ws; 	// Sum of the weights 
   int ng; 	// Number of neighbours in the fluid.
   		// After all GP have been populated, ng=0.
@@ -33,6 +36,7 @@ class GhostPoint{
   int ghostTag2;
 
   double* V_tmp;
+  double* dV_tmp;//TODO VISCOUSDERIV
 	  
 
 //  ~GhostPoint();
@@ -44,19 +48,24 @@ GhostPoint(VarFcn *vf) : varFcn(vf)
 
     ng = 0;
 	Vg = new double[2*dim];
+	dVg = new double[2*dim];//TODO VISCOUSDERIV
 	V  = new double[2*dim];
+	dV  = new double[2*dim];//TODO VISCOUSDERIV
 	Ws = new double[2*dim];
 
 	for(int i=0; i<2*dim; ++i) 
 	{
       Vg[i] = 0.0;
+      dVg[i] = 0.0;//TODO VISCOUSDERIV
       V[i]  = 0.0;
+      dV[i]  = 0.0;//TODO VISCOUSDERIV
       Ws[i] = 0.0;
     }
     ghostTag = -2; // Inactive nodes tag
 	ghostTag2 = -2;
 	
 	V_tmp = new double[dim];
+	dV_tmp = new double[dim];//TODO VISCOUSDERIV
 
   }
 //=============================================================================
@@ -67,11 +76,13 @@ GhostPoint<dim> & operator=(const GhostPoint<dim> &GP)
     varFcn = GP.varFcn;
     Vg = GP.Vg;
     V  = GP.V;
+    dVg = GP.dVg;//TODO VISCOUSDERIV
+    dV  = GP.dV;//TODO VISCOUSDERIV
     Ws = GP.Ws;
     ng = GP.ng;
     ghostTag = GP.ghostTag;
-	ghostTag2 = GP.ghostTag2;
-	
+    ghostTag2 = GP.ghostTag2;
+
     return *this;
   }
 //=============================================================================
@@ -87,6 +98,7 @@ GhostPoint<dim> & operator+=(const GhostPoint<dim> &GP)
         exit(-1);
       }
     Vg += GP.Vg;
+    dVg += GP.dVg;//TODO VISCOUSDERIV
     Ws += GP.Ws;
     ng += GP.ng;
     return *this;
@@ -97,64 +109,130 @@ void addNeighbour(double *Vi, double *Wi, int tag)
 {
 
 // We want to satisfy interface condition in least squares manner 
-	for(int i=0; i<dim; ++i) 
-	{
+  for(int i=0; i<dim; ++i)
+  {
       Vg[i] += Wi[i]*Vi[i];
       Ws[i] += Wi[i];
     }
 
     // Tag check
     if(ghostTag < 0) 
-	 {
+   {
       ghostTag = tag;
     }
     else if(ghostTag != tag) 
-	 {
+   {
       fprintf(stderr,"We have a ghost node here with two active neighbours having different tags\n");
       fprintf(stderr,"ghostTag: %i, neighbourTag: %i",ghostTag,tag);
       exit(-1);
     }
 
     ng++;
+}
 
-  }
+//TODO VISCOUSDERIV
+void addNeighbourEmb(double *Vi, double *dVi, double *Wi, int tag)
+{
+
+// We want to satisfy interface condition in least squares manner
+  for(int i=0; i<dim; ++i)
+  {
+      Vg[i] += Wi[i]*Vi[i];
+      dVg[i] += Wi[i]*dVi[i];
+      Ws[i] += Wi[i];
+    }
+
+    // Tag check
+    if(ghostTag < 0)
+   {
+      ghostTag = tag;
+    }
+    else if(ghostTag != tag)
+   {
+      fprintf(stderr,"We have a ghost node here with two active neighbours having different tags\n");
+      fprintf(stderr,"ghostTag: %i, neighbourTag: %i",ghostTag,tag);
+      exit(-1);
+    }
+
+    ng++;
+}
 
 //=============================================================================
 
-void addNeighbour(bool w1, double *Vi_1, int fId1, 
-						bool w2, double *Vi_2, int fId2, 
-						double *Wi) 
+void addNeighbour(
+       bool w1, double *Vi_1, int fId1,
+       bool w2, double *Vi_2, int fId2,
+       double *Wi)
 {
 
-	if(!w1 && !w2) return;
+  if(!w1 && !w2) return;
 
-	ghostTag = fId1; // tmp
+  ghostTag = fId1; // tmp
 
-	if(w1)
-	{
-		for(int i=0; i<dim; ++i) 
-		{
-			Vg[i] += Wi[i]*Vi_1[i];
-			Ws[i] += Wi[i];
-		}
+  if(w1)
+  {
+    for(int i=0; i<dim; ++i) {
+      Vg[i] += Wi[i]*Vi_1[i];
+      Ws[i] += Wi[i];
+    }
 
-		ghostTag = fId1;
-	}
+    ghostTag = fId1;
+  }
 
-	if(w2) 
-	{
-		for(int i=0; i<dim; ++i) 
-		{
-			Vg[i+dim] += Wi[i]*Vi_2[i];
-			Ws[i+dim] += Wi[i];
-		}
+  if(w2)
+  {
+    for(int i=0; i<dim; ++i)
+    {
+      Vg[i+dim] += Wi[i]*Vi_2[i];
+      Ws[i+dim] += Wi[i];
+    }
 
-		ghostTag2 = fId2;
-	}
+    ghostTag2 = fId2;
+  }
    
-	ng++;
+  ng++;
 
 }
+
+
+
+void addNeighbourEmb(
+       bool w1, double *Vi_1, double *dVi_1, int fId1,
+       bool w2, double *Vi_2, double *dVi_2, int fId2,
+       double *Wi)
+{
+
+  if(!w1 && !w2) return;
+
+  ghostTag = fId1; // tmp
+
+  if(w1)
+  {
+    for(int i=0; i<dim; ++i) {
+      Vg[i] += Wi[i]*Vi_1[i];
+      dVg[i] += Wi[i]*dVi_1[i];
+      Ws[i] += Wi[i];
+    }
+
+    ghostTag = fId1;
+  }
+
+  if(w2)
+  {
+    for(int i=0; i<dim; ++i)
+    {
+      Vg[i+dim] += Wi[i]*Vi_2[i];
+      dVg[i+dim] += Wi[i]*dVi_2[i];
+      Ws[i+dim] += Wi[i];
+    }
+
+    ghostTag2 = fId2;
+  }
+
+  ng++;
+
+}
+
 
 //=============================================================================
 
@@ -162,43 +240,57 @@ void addNeighbour(bool w1, double *Vi_1, int fId1,
   {
     return Vg;    
   }
+
+  //TODO VISCOUSDERIV
+  double* getDerivState()
+  {
+    return dVg;
+  }
 //=============================================================================
 
   double* getPrimitiveState()
   {
 
-	for(int k=0; k<dim; k++) V_tmp[k] = V[k];
+  for(int k=0; k<dim; k++) V_tmp[k] = V[k];
 
-	return V_tmp;
+  return V_tmp;
 
-}
+  }
+
+  //TODO VISCOUSDERIV
+  double* getDerivativeOfPrimitiveState()
+  {
+    for(int k=0; k<dim; k++) dV_tmp[k] = dV[k];
+    return dV_tmp;
+  }
+
 //=============================================================================
 
 double* getPrimitiveState(int dir)
 {
-	
-	if(dir > 0)
-	{
-		if(Ws[0] <= 0)
-		{
-			fprintf(stderr, " *** Error: in getting ghost point: dir = %d, w = %f\n", dir, Ws[0]);
-			exit(-1);
-		}
 
-		for(int k=0; k<dim; k++) V_tmp[k] = V[k];
-	}
-	else
-	{
-		if(Ws[dim] <= 0)
-		{
-			fprintf(stderr, " *** Error: in getting ghost point: dir = %d, w = %f\n", dir, Ws[dim]);
-			exit(-1);
-		}
+  if(dir > 0)
+  {
+    if(Ws[0] <= 0)
+    {
+      fprintf(stderr, " *** Error: in getting ghost point: dir = %d, w = %f\n", dir, Ws[0]);
+      exit(-1);
+    }
 
-		for(int k=0; k<dim; k++) V_tmp[k] = V[k+dim];
-	}
+    for(int k=0; k<dim; k++) V_tmp[k] = V[k];
+  }
+  else
+  {
+    if(Ws[dim] <= 0)
+    {
+      fprintf(stderr, " *** Error: in getting ghost point: dir = %d, w = %f\n", dir, Ws[dim]);
+      exit(-1);
+    }
 
-	return V_tmp;
+    for(int k=0; k<dim; k++) V_tmp[k] = V[k+dim];
+  }
+
+  return V_tmp;
 
 }
 
@@ -216,8 +308,8 @@ bool getStatus()
   }
 //=============================================================================
 
-  void reduce()
-  {
+void reduce()
+{
 
 	/*
 	bool valid = true;
@@ -240,43 +332,57 @@ bool getStatus()
 	varFcn->getV4FromTemperature(V, Vg[4], ghostTag);
 	*/
 
-	bool s1 = (Ws[0] > 0)   ? true : false;
-	bool s2 = (Ws[dim] > 0) ? true : false;
-	//std::cout << " " << std::boolalpha << s1 << " " << s2 << "\n";
+  bool s1 = (Ws[0] > 0)   ? true : false;
+  bool s2 = (Ws[dim] > 0) ? true : false;
+  //std::cout << " " << std::boolalpha << s1 << " " << s2 << "\n";
 
-	if(Ws[0] > 0)
-	{
-		for(int i=0; i<dim; ++i) 
-		{
+  if(Ws[0] > 0)
+  {
+    for(int i=0; i<dim; ++i)
+    {
       Vg[i] /= Ws[i];
+      dVg[i] /= Ws[i];
       Ws[i] = 1.0;
     }
 
-		for(int i=0; i<dim; ++i) V_tmp[i] = Vg[i];
+    for(int i=0; i<dim; ++i) V_tmp[i] = Vg[i];
+    for(int i=0; i<dim; ++i) dV_tmp[i] = dVg[i];//TODO VISCOUSDERIV
 
-		double T = Vg[4];
-		varFcn->getV4FromTemperature(V_tmp, T, ghostTag);
+    double T = Vg[4];
+    varFcn->getV4FromTemperature(V_tmp, T, ghostTag);
 
-		for(int i=0; i<dim; ++i) V[i] = V_tmp[i];
+    //TODO VISCOUSDERIV
+    double dT = dVg[4];
+    ///varFcn->getdV4FromdTemperature(dV_tmp, dT, ghostTag);
+
+    for(int i=0; i<dim; ++i) V[i] = V_tmp[i];
+
+    for(int i=0; i<dim; ++i) dV[i] = dV_tmp[i];//TODO VISCOUSDERIV
   }
 
-	// ------------------
+  // ------------------
 
-	if(Ws[dim] > 0)
-	{
-		for(int i=0; i<dim; ++i) 
-		{
-			Vg[i+dim] /= Ws[i+dim]; 
-			Ws[i+dim] = 1.0;
-		}
+  if(Ws[dim] > 0)
+  {
+    for(int i=0; i<dim; ++i)
+    {
+      Vg[i+dim] /= Ws[i+dim];
+      dVg[i+dim] /= Ws[i+dim];//TODO VISCOUSDERIV
+      Ws[i+dim] = 1.0;
+    }
 
-		for(int i=0; i<dim; ++i) V_tmp[i] = Vg[i+dim];
+    for(int i=0; i<dim; ++i) V_tmp[i] = Vg[i+dim];
 
-		double T = Vg[4+dim];
-		//varFcn->getV4FromTemperature(V_tmp, T, ghostTag2);
-		varFcn->getV4FromTemperature(V_tmp, T, ghostTag);
+    double T = Vg[4+dim];
+    double dT = dVg[4+dim];//TODO VISCOUSDERIV
+    //varFcn->getV4FromTemperature(V_tmp, T, ghostTag2);
+    varFcn->getV4FromTemperature(V_tmp, T, ghostTag);
 
-		for(int i=0; i<dim; ++i) V[i+dim] = V_tmp[i];
+    ///varFcn->getdV4FromdTemperature(dV_tmp, dT, ghostTag);//TODO VISCOUSDERIV
+
+    for(int i=0; i<dim; ++i) V[i+dim] = V_tmp[i];
+
+    for(int i=0; i<dim; ++i) dV[i+dim] = dV_tmp[i];//TODO VISCOUSDERIV
 	}
 
 }
@@ -286,23 +392,53 @@ bool getStatus()
 void set(double *Vf, int tag)
 {
 
-	for(int i=0; i<dim; ++i) V_tmp[i] = Vf[i];
+  for(int i=0; i<dim; ++i) V_tmp[i] = Vf[i];
 
-	double T = Vf[4];
-	varFcn->getV4FromTemperature(V_tmp, Vf[4], tag);
+  double T = Vf[4];
+  varFcn->getV4FromTemperature(V_tmp, Vf[4], tag);
 
-	for(int i=0; i<dim; ++i) 
-	{
-		V[i]     = V_tmp[i];
-		V[i+dim] = V_tmp[i];
+  for(int i=0; i<dim; ++i)
+  {
+    V[i]     = V_tmp[i];
+    V[i+dim] = V_tmp[i];
 
-		Ws[i]     = 1.0;
-		Ws[i+dim] = 1.0;
-	}
+    Ws[i]     = 1.0;
+    Ws[i+dim] = 1.0;
+  }
 
-	ghostTag  = tag;
-	ghostTag2 = tag;
-	
+  ghostTag  = tag;
+  ghostTag2 = tag;
+
+}
+
+
+void set(double *Vf, double *dVf, int tag)//TODO VISCOUSDERIV
+{
+
+  for(int i=0; i<dim; ++i) V_tmp[i] = Vf[i];
+  for(int i=0; i<dim; ++i) dV_tmp[i] = dVf[i];
+
+  double T = Vf[4];
+  varFcn->getV4FromTemperature(V_tmp, Vf[4], tag);
+
+  double dT = dVf[4];
+  ///varFcn->getdV4FromdTemperature(dV_tmp, dVf[4], tag);
+
+  for(int i=0; i<dim; ++i)
+  {
+    V[i]     = V_tmp[i];
+    V[i+dim] = V_tmp[i];
+
+    dV[i]     = dV_tmp[i];
+    dV[i+dim] = dV_tmp[i];
+
+    Ws[i]     = 1.0;
+    Ws[i+dim] = 1.0;
+  }
+
+  ghostTag  = tag;
+  ghostTag2 = tag;
+
 }
 
 //=============================================================================
@@ -310,6 +446,8 @@ void set(double *Vf, int tag)
   ~GhostPoint() {
     delete [] Vg;
     delete [] V;
+    delete [] dVg;//TODO VISCOUSDERIV
+    delete [] dV; //TODO VISCOUSDERIV
     delete [] Ws;
 	delete [] V_tmp;
   }
