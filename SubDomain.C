@@ -5858,9 +5858,46 @@ template<class Scalar,int dim>
 void SubDomain::writeVectorToFile(
                   const char *prefix, int no,
                   SVec<Scalar,dim> &U,
+                  LevelSetStructure *LSS,
                   Vec<GhostPoint<dim>*> *ghostPoints,
                   Scalar* scale)
 {
+
+  std::set<int> relevantGhosts;
+  bool* edgeFlag = edges.getMasterFlag();
+  int (*edgePtr)[2] = edges.getPtr();
+  int i;
+  int j;
+  for (int l=0; l<edges.size(); l++) {//loop over all edges
+      if(!edgeFlag[l]) continue; //not a master edge ??? what is a master edge
+      i = edgePtr[l][0];//node i
+      j = edgePtr[l][1];//node j
+      if(LSS->edgeIntersectsStructure(0.0,l)) { // case where (i)-(j) intersects the structure
+        bool iIsActive = LSS->isActive(0.0,i);
+        bool jIsActive = LSS->isActive(0.0,j);
+
+        if(iIsActive) {//case where (i) is an active node
+
+          if(!(*ghostPoints)[j]) // GP has not been created
+          {std::cout<<"GHOST POINT MISSING!"<<std::endl; exit(-1);}
+          else
+          {std::cout<<j<<std::endl; relevantGhosts.insert(j);}
+
+        }
+        if(jIsActive) { //case where j is an active node
+
+          if(!(*ghostPoints)[i]) // GP has not been created
+          {std::cout<<"GHOST POINT MISSING!"<<std::endl; exit(-1);}
+          else
+          {std::cout<<i<<std::endl; relevantGhosts.insert(i);}
+
+        }
+      }
+    }
+  std::set<int>::iterator iter;
+  for(iter=relevantGhosts.begin(); iter!=relevantGhosts.end();++iter){std::cout<<*iter<<" -"<<std::endl;};
+
+
   char name[MAXLINE];
   sprintf(name, "%s%s", prefix, suffix);
 #ifdef SYNCHRO_WRITE
@@ -5875,38 +5912,58 @@ void SubDomain::writeVectorToFile(
 
   Scalar (*data)[dim];
   if (scale) {
+    std::cout<<"!!! scale currently not wanted"<<std::endl; exit(-1); //TODO delete line
     data = new Scalar[U.size()][dim];
     Scalar* v = reinterpret_cast<Scalar*>(data);
     Scalar* u = reinterpret_cast<Scalar*>(U.data());
 
     for(int nodeID = 0; nodeID<U.size(); nodeID++){
-      GhostPoint<dim> *gp;
-      //gp = (*ghostPoints)[nodeID];
-      gp = NULL;//TODO HACK
-      if(gp)//if gp is a ghost point, overwrite u with the ghost state
-        u=gp->getState();
+      GhostPoint<dim> *gp = (*ghostPoints)[64];//TODO
+//      gp = NULL;//TODO HACK
+//      if(gp) u=gp->getState();//if gp is a ghost point, overwrite u with the ghost state
+      if(LSS->isActive(0,nodeID)==false ) {u=gp->getState();};
+
       for (int varID=0; varID<dim; varID++){
          int vecID=nodeID*dim+varID;
          v[vecID] = (*scale) * u[vecID];
       }
     }
   }else {
-    data = new Scalar[U.size()][dim];
-    Scalar* v = reinterpret_cast<Scalar*>(data);
+    data = new Scalar[U.size()][dim];//2D vector
+    Scalar* v = reinterpret_cast<Scalar*>(data);//empty 1D vector of appropiate size
     Scalar* u = reinterpret_cast<Scalar*>(U.data());
 
-    for(int nodeID = 0; nodeID<U.size(); nodeID++){
-      GhostPoint<dim> *gp;
-      gp = (*ghostPoints)[nodeID];
-      if(gp)//if gp is a ghost point, overwrite u with the ghost state
-        u=gp->getState();
-      for (int varID=0; varID<dim; varID++){
-         int vecID=nodeID*dim+varID;
-         v[vecID] = 1.0 * u[vecID];
+    for(int nodeID = 0; nodeID<this->nodes.size(); nodeID++){
+      std::cout<<"NODE ID: "<<nodeID<<std::endl;//TODO delete line
+
+//      gp = NULL;//TODO HACK ///////////////////////////////we never do the ghost routine now
+//      if(gp){u=gp->getState();}//if gp is a ghost point, overwrite u with the ghost state
+//      if(LSS->isActive(0,nodeID)==false ){
+      if(relevantGhosts.count(nodeID)!=0){
+        GhostPoint<dim> *gp = (*ghostPoints)[nodeID];
+        std::cout<<"  before:     "<<u[0]<<" "<<u[1]<<" "<<u[2]<<" "<<u[3]<<" "<<u[4]<<" "<<u[5]<<" "<<u[6]<<" "<<u[7]<<" "<<u[8]<<std::endl;
+        double *ghoststate=gp->getState();//This step someow also affects other nodes !!!!!!!!!!!!!!!!!!
+        std::cout<<"  after:      "<<ghoststate[0]<<" "<<ghoststate[1]<<" "<<ghoststate[2]<<" "<<ghoststate[3]<<" "<<ghoststate[4]<<std::endl;
+        std::cout<<"\033[92m  IS GHOST: \033[00m"<<std::endl;
+        for (int varID=0; varID<dim; varID++){
+           int vecID=nodeID*dim+varID;
+           v[vecID] = 1.0 * ghoststate[varID];
+        }
       }
+      else {
+        std::cout<<"  IS NOT GHOST: "<<std::endl;
+        for (int varID=0; varID<dim; varID++){
+           int vecID=nodeID*dim+varID;
+           v[vecID] = 1.0 * u[vecID];
+        }
+
+      }//TODO delete line
+
+
     }
 
   }
+
 
   int count = 0;
   for (int i=0; i<numNodeRanges; ++i) {
@@ -8216,8 +8273,8 @@ void SubDomain::reduceGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<doubl
   for (int i=0; i<nodes.size(); i++)
       if(ghostPoints[i]) {
       //std::cout << X[i][0] << " "<< X[i][1] << " "<< X[i][2] << " ";
-    ghostPoints[i]->reduce();
-  }
+          ghostPoints[i]->reduce();
+      }
     } 
 
 //------------------------------------------------------------------------------

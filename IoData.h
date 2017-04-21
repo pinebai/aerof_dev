@@ -290,6 +290,7 @@ struct TransientData {
   const char *dSpatialres;
   const char *dSpatialresnorm;
   const char *dSolutions;
+  const char *populatedState;
   const char *dDensity;
   const char *dMach;
   const char *dPressure;

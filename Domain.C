@@ -4176,6 +4176,7 @@ void Domain::writeVectorToFile(
                int step,
                double tag,
                DistSVec<Scalar,dim> &U,
+               DistLevelSetStructure *distLSS,
                DistVec<GhostPoint<dim>*> *ghostPoints,
                Scalar* scale)
 {
@@ -4194,7 +4195,7 @@ void Domain::writeVectorToFile(
 
 #pragma omp parallel for
   for (iSub = 0; iSub < numLocSub; ++iSub)
-    subDomain[iSub]->writeVectorToFile(prefix, step, U(iSub), ghostPoints->operator[](iSub), scale);
+    subDomain[iSub]->writeVectorToFile(prefix, step, U(iSub),&(distLSS->operator()(iSub)), ghostPoints->operator[](iSub), scale);
 
 #pragma omp parallel for
   for (iSub = 0; iSub < numLocSub; ++iSub)

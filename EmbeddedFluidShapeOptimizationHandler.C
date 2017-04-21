@@ -892,7 +892,12 @@ int EmbeddedFluidShapeOptimizationHandler<dim>::fsoHandler(IoData &ioData, DistS
   // teta       -  yaw angle
   // DFSPAR(1)  -  Mach number differential
   // DFSPAR(2)  -  angle of attack differential
-  // DFSPAR(3)  -  yaw angle differential
+  // DFSPAR(3)  -  yaw angle differential\
+
+  //Debugging
+  std::cout<<"YOU HAVE REACHED EMBEDDED FSO HANDLER. PRESS ANY KEY TO CONTINUE!"<<std::endl;
+  char a;
+  std::cin>>a;
 
   double MyLocalTimer = -this->timer->getTime();
 
@@ -1094,7 +1099,7 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoComputeDerivativesOfFluxAndS
   }
 
   //TODO VISCOUSDERIV
-  this->output->writeAnyVectorToDisk("results/populated_state",1,1,U,this->ghostPoints);
+  this->output->writeAnyVectorToDisk("results/populated_state",1,1,U,this->distLSS,this->ghostPoints);
 
   fsoLinearSolver(ioData, dFdS, dUdS, isFSI);
 

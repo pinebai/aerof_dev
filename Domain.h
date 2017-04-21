@@ -1005,7 +1005,7 @@ public:
 	void writeVectorToFile(const char *, int, double, DistVec<Scalar> &, Scalar* = 0); //<! for non-state vector, Lei Lei, 03 Feb 2016
 
   template<class Scalar, int dim>//TODO VISCOUSDERIV
-  void writeVectorToFile(const char *, int, double, DistSVec<Scalar,dim> &, DistVec<GhostPoint<dim>*> *ghostPoints, Scalar* = 0);
+  void writeVectorToFile(const char *, int, double, DistSVec<Scalar,dim> &, DistLevelSetStructure *distLSS, DistVec<GhostPoint<dim>*> *ghostPoints, Scalar* = 0);
 
   template<class Scalar, int dim>
   void scaleSolution(DistSVec<Scalar,dim> &, RefVal*);

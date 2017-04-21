@@ -98,6 +98,7 @@ private:
   char *embeddedsurfaceCp;
   char *embeddedsurfaceCf;
   char *cputiming;
+  char *populatedState;
   char *stateVectors;
     char *stateMaskVectors; //<! for embdded ROM, Lei lei, 02/01/2016
   char *residualVectors;
@@ -359,7 +360,7 @@ public:
   void writeAnyVectorToDisk(const char* filename,int it,int tag,DistSVec<double,dim> &vec);
   void writeAnyVectorToDisk(const char* filename,int it,int tag,DistSVec<double,3> &vec);
 
-  void writeAnyVectorToDisk(const char* filename,int it,int tag,DistSVec<double,dim> &vec, DistVec<GhostPoint<dim>*> *ghostPoints);
+  void writeAnyVectorToDisk(const char* filename,int it,int tag,DistSVec<double,dim> &vec,DistLevelSetStructure *distLSS, DistVec<GhostPoint<dim>*> *ghostPoints);
 
 
 };

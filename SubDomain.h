@@ -935,7 +935,7 @@ public:
     void writeVectorToFile(const char *, int, Vec<Scalar> &, Scalar *); //<! for non-state vector, Lei Lei, 03 Feb 2016
 
     template<class Scalar,int dim>//TODO VISCOUSDERIV
-    void writeVectorToFile(const char *, int, SVec<Scalar,dim> &, Vec<GhostPoint<dim>*> *, Scalar *);
+    void writeVectorToFile(const char *, int, SVec<Scalar,dim> &, LevelSetStructure *LSS, Vec<GhostPoint<dim>*> *, Scalar *);
 
   template<int dim>
   void assignFreeStreamValues2(SVec<double,dim> &, SVec<double,dim> &,

@@ -870,7 +870,6 @@ void EmbeddedTsDesc<dim>::outputToDisk(IoData &ioData, bool* lastIt, int it, int
       }
       this->domain->getCommunicator()->fprintf(stdout,"Linf error (total): %e\n", tot_error);
 
-  
     }
 
   }

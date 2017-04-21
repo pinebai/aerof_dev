@@ -66,6 +66,7 @@ embeddedsurface(NULL),
 embeddedsurfaceCp(NULL),
 embeddedsurfaceCf(NULL),
 cputiming(NULL),
+populatedState(NULL),
 stateVectors(NULL),
 stateMaskVectors(NULL),
 residualVectors(NULL),
@@ -675,6 +676,12 @@ fpHeatFluxes(NULL)
     sprintf(embeddedsurfaceCf, "%s%s%s", iod.output.transient.prefix, "emb_", iod.output.transient.sfric);
   }  else
     embeddedsurfaceCf = 0;
+
+  //TODO VISCOUSDERIV
+  if (iod.output.transient.populatedState!=NULL) {
+    populatedState = new char[sp + strlen(iod.output.transient.populatedState)];
+    sprintf(populatedState, "%s%s",iod.output.transient.prefix, iod.output.transient.populatedState);
+  }
 
   it0 = iod.restart.iteration;
   //std::cout << "it0 = " << it0 << std::endl;
@@ -3050,7 +3057,7 @@ void TsOutput<dim>::writeBinaryVectorsToDisk(bool lastIt,
 					     int it,
 					     double t,
 					     DistSVec<double,3> &X,
-                                             DistVec<double> &A,
+               DistVec<double> &A,
 					     DistSVec<double,dim> &U,
 					     DistTimeState<dim> *timeState)
 {
@@ -3459,8 +3466,8 @@ void TsOutput<dim>::writeBinaryVectorsToDisk(bool lastIt, int it, double t, Dist
                                              DistVec<double> &A, DistSVec<double,dim> &U,
                                              DistTimeState<dim> *timeState,
                                              DistVec<int> &fluidId, DistSVec<double,dim> *Wextij,
-															DistLevelSetStructure *distLSS,
-					     DistVec<GhostPoint<dim>*> *ghostPoints)
+                                             DistLevelSetStructure *distLSS,
+                                             DistVec<GhostPoint<dim>*> *ghostPoints)
 {
 
   if (toWrite(it,lastIt,t)) {
@@ -3474,6 +3481,9 @@ void TsOutput<dim>::writeBinaryVectorsToDisk(bool lastIt, int it, double t, Dist
 
     if (dSolutions)
       domain->writeVectorToFile(dSolutions, step, tag, U);
+
+    if (populatedState!=NULL)//write the state vector, includeing the populated valuse
+      this->writeAnyVectorToDisk(populatedState,1,1,U,distLSS,ghostPoints);
 
     int i;
     for (i=0; i<PostFcn::SSIZE; ++i) {
@@ -3654,10 +3664,11 @@ void TsOutput<dim>::writeAnyVectorToDisk(
                       int it,
                       int tag,
                       DistSVec<double,dim> &vec,
+                      DistLevelSetStructure *distLSS,
                       DistVec<GhostPoint<dim>*> *ghostPoints)
 {
   int    step = it-1;
-  domain->writeVectorToFile(filename, step, (double) tag, vec, ghostPoints);
+  domain->writeVectorToFile(filename, step, (double) tag, vec, distLSS, ghostPoints);
 }
 
 

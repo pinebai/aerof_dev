@@ -477,7 +477,7 @@ void TransientData::setup(const char *name, ClassAssigner *father)
 {
 
 // Modified (MB)
-  ClassAssigner *ca = new ClassAssigner(name, 102, father);
+  ClassAssigner *ca = new ClassAssigner(name, 103, father);
 
   new ClassStr<TransientData>(ca, "Prefix", this, &TransientData::prefix);
 
@@ -568,6 +568,7 @@ void TransientData::setup(const char *name, ClassAssigner *father)
   // Gappy POD offline
   // Gappy POD snapshots
 // Included (MB)
+  new ClassStr<TransientData>(ca, "PopulatedState", this, &TransientData::populatedState);
   new ClassStr<TransientData>(ca, "VelocityNorm", this, &TransientData::velocitynorm);
   new ClassStr<TransientData>(ca, "SpatialResidualSensitivity", this, &TransientData::dSpatialres);
   new ClassStr<TransientData>(ca, "SpatialResidualNormSensitivity", this, &TransientData::dSpatialresnorm);
