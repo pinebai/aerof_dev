@@ -51,7 +51,9 @@ public:
   ConstantViscoFcn(IoData &iod):ViscoFcn(iod) { bulkViscosity = iod.eqs.viscosityModel.bulkViscosity;}
   ~ConstantViscoFcn() {}
 
-  double compute_mu(double T) { return 1.0; }
+  double compute_mu(double T) {
+    //std::cout<<"compute_mu Constant"<<std::endl;
+    return 1.0;}
   double compute_lambda(double T, double mu) { return bulkViscosity - twothird*mu; }
 
 // Included (MB)
@@ -96,6 +98,7 @@ public:
 
   double compute_mu(double Tadim)
   {
+    //std::cout<<"compute_mu Sutherland"<<std::endl;
     double T = alpha * Tadim;
     return T * sqrt(T) * (1.0 + Ts) / (T + Ts); 
   }
@@ -161,7 +164,9 @@ public:
   }
   ~PrandtlViscoFcn() {}
 
-  double compute_mu(double Tadim) { return alpha * Tadim; }
+  double compute_mu(double Tadim) {
+    //std::cout<<"compute_mu Prandtl"<<std::endl
+    return alpha * Tadim; }
   double compute_lambda(double Tadim, double mu) { return -twothird*mu;}
 
 // Included (MB)

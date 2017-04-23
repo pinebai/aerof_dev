@@ -33,6 +33,8 @@
 #include <MvpMatrix.h>
 #include <SparseMatrix.h>
 #include <MatVecProd.h>
+
+//#include "Dev/devtools.C"
 //------------------------------------------------------------------------------
 
 template<int dim>
@@ -2060,7 +2062,14 @@ void SpaceOperator<dim>::computeResidual(DistSVec<double,3> &X, DistVec<double> 
                            DistExactRiemannSolver<dim> *riemann, int Nriemann,
                            int it, DistVec<GhostPoint<dim>*> *ghostPoints,  bool compatF3D)
 {
-  //this->com->fprintf(stderr,"----SpaceOperator<dim>::computeResidual V3\n");//TODO delete line; this is the one the FD uses
+  //TODO delete line; this is the one the Steady State uses
+//  this->com->fprintf(stderr,"--------------------------SpaceOperator<dim>::computeResidual V3\n");
+//  std::cout<<"Norm of U                : "<<U.norm()<<std::endl;//TODO delete line
+//  std::cout<<"Norm of X                : "<<X.norm()<<std::endl;//TODO delete line
+//  std::cout<<"Norm of fluidId          : "<<fluidId.norm()<<std::endl;//TODO delete line
+//  std::cout<<"viscSecOrder             : "<<viscSecOrder<<std::endl;//TODO delete line
+//  std::cout<<"-----------------------------------------------"<<std::endl<<std::endl;//TODO delete line
+//  std::cout<<"Residual norm at beginning: "<<R.norm()<<std::endl;//TODO delete line
   R = 0.0;
 	Wext = 0.0;
 
@@ -2081,6 +2090,8 @@ void SpaceOperator<dim>::computeResidual(DistSVec<double,3> &X, DistVec<double> 
   if (fet)
     this->populateGhostPoints(ghostPoints,X,U,varFcn,distLSS,viscSecOrder,fluidId);
 
+
+
   if (egrad)
     egrad->compute(geoState->getConfig(), X);
 
@@ -2098,10 +2109,10 @@ void SpaceOperator<dim>::computeResidual(DistSVec<double,3> &X, DistVec<double> 
 		dles->compute(ctrlVol, *bcData, X, *V, R, ghostPoints, distLSS, externalSI);
 
   if (fet) {
-      //this->com->fprintf(stderr,"----------------------------------------Spaceoperator.C::2101\n");
       domain->computeGalerkinTerm(fet, *bcData, *geoState, X, *V, R, ghostPoints, distLSS, externalSI);
       bcData->computeNodeValue(X);
   }
+  std::cout<<"Residual norm after FET   : "<<R.norm()<<std::endl;//TODO delete line
 
   if (volForce)
     domain->computeVolumicForceTerm(volForce, ctrlVol, *V, R);
@@ -2113,6 +2124,10 @@ void SpaceOperator<dim>::computeResidual(DistSVec<double,3> &X, DistVec<double> 
             *geoState, X, *V, Wstarij, Wstarji, Wext,
             distLSS, linRecAtInterface, fluidId, Nriemann,
             *ngrad, egrad, R, it, failsafe, rshift, externalSI);
+
+	std::cout<<"Residual norm after FV    : "<<R.norm()<<std::endl;//TODO delete line
+	//Dev::Error(this->com,"Exit",true);
+	//exit(-1);
 
   if(compatF3D)
   {

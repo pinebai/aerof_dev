@@ -5880,16 +5880,12 @@ void SubDomain::writeVectorToFile(
 
           if(!(*ghostPoints)[j]) // GP has not been created
           {std::cout<<"GHOST POINT MISSING!"<<std::endl; exit(-1);}
-          else
-          {std::cout<<j<<std::endl; relevantGhosts.insert(j);}
 
         }
         if(jIsActive) { //case where j is an active node
 
           if(!(*ghostPoints)[i]) // GP has not been created
           {std::cout<<"GHOST POINT MISSING!"<<std::endl; exit(-1);}
-          else
-          {std::cout<<i<<std::endl; relevantGhosts.insert(i);}
 
         }
       }
@@ -5919,8 +5915,7 @@ void SubDomain::writeVectorToFile(
 
     for(int nodeID = 0; nodeID<U.size(); nodeID++){
       GhostPoint<dim> *gp = (*ghostPoints)[64];//TODO
-//      gp = NULL;//TODO HACK
-//      if(gp) u=gp->getState();//if gp is a ghost point, overwrite u with the ghost state
+
       if(LSS->isActive(0,nodeID)==false ) {u=gp->getState();};
 
       for (int varID=0; varID<dim; varID++){
@@ -5934,30 +5929,22 @@ void SubDomain::writeVectorToFile(
     Scalar* u = reinterpret_cast<Scalar*>(U.data());
 
     for(int nodeID = 0; nodeID<this->nodes.size(); nodeID++){
-      std::cout<<"NODE ID: "<<nodeID<<std::endl;//TODO delete line
 
-//      gp = NULL;//TODO HACK ///////////////////////////////we never do the ghost routine now
-//      if(gp){u=gp->getState();}//if gp is a ghost point, overwrite u with the ghost state
-//      if(LSS->isActive(0,nodeID)==false ){
       if(relevantGhosts.count(nodeID)!=0){
         GhostPoint<dim> *gp = (*ghostPoints)[nodeID];
-        std::cout<<"  before:     "<<u[0]<<" "<<u[1]<<" "<<u[2]<<" "<<u[3]<<" "<<u[4]<<" "<<u[5]<<" "<<u[6]<<" "<<u[7]<<" "<<u[8]<<std::endl;
-        double *ghoststate=gp->getState();//This step someow also affects other nodes !!!!!!!!!!!!!!!!!!
-        std::cout<<"  after:      "<<ghoststate[0]<<" "<<ghoststate[1]<<" "<<ghoststate[2]<<" "<<ghoststate[3]<<" "<<ghoststate[4]<<std::endl;
-        std::cout<<"\033[92m  IS GHOST: \033[00m"<<std::endl;
+        double *ghoststate=gp->getState();
         for (int varID=0; varID<dim; varID++){
            int vecID=nodeID*dim+varID;
            v[vecID] = 1.0 * ghoststate[varID];
         }
       }
       else {
-        std::cout<<"  IS NOT GHOST: "<<std::endl;
         for (int varID=0; varID<dim; varID++){
            int vecID=nodeID*dim+varID;
            v[vecID] = 1.0 * u[vecID];
         }
 
-      }//TODO delete line
+      }
 
 
     }
@@ -8411,7 +8398,10 @@ void SubDomain::populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<dou
 
 		if(wRcn) 
 		{
-			if(!ghostPoints[i]) ghostPoints[i] = new GhostPoint<dim>(varFcn);
+			if(!ghostPoints[i]){
+			  ghostPoints[i] = new GhostPoint<dim>(varFcn);
+			  std::cout<<"Created Ghost at "<<i<<std::endl;//TODO delete line
+			}
 
 			bool dummy = LSS.vWallNode(i, vWall);
 

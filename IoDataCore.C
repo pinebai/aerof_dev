@@ -7188,6 +7188,10 @@ int IoData::checkInputValuesDimensional(map<int,SurfaceData*>& surfaceMap)
           }
           viscosity = eqs.viscosityModel.dynamicViscosity;
         }
+        std::cout<<"IoDataCore setting rey_mu:  velocity   ="<<velocity<<std::endl;
+        std::cout<<"IoDataCore setting rey_mu:  ref.length ="<<ref.length<<std::endl;
+        std::cout<<"IoDataCore setting rey_mu:  ref.density="<<ref.density<<std::endl;
+        std::cout<<"IoDataCore setting rey_mu:  viscosity  ="<<viscosity<<std::endl;
         ref.reynolds_mu = velocity * ref.length * ref.density / viscosity;
       }
 

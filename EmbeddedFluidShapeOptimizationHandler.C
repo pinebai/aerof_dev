@@ -495,7 +495,7 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoRestartBcFluxsOLD(IoData &io
     double viscosity = ioData.eqs.viscosityModel.sutherlandConstant * sqrt(ioData.ref.temperature) /
                        (1.0 + ioData.eqs.viscosityModel.sutherlandReferenceTemperature/ioData.ref.temperature);
 
-    ioData.ref.reynolds_mu = velocity * ioData.ref.length * ioData.ref.density / viscosity;
+    ioData.ref.reynolds_mu = velocity * ioData.ref.length * ioData.ref.density / viscosity;//This error is close
 
     double dvelocitydMach = sqrt(gamma * ioData.ref.pressure / ioData.ref.density);
     ioData.ref.dRe_mudMach = dvelocitydMach * ioData.ref.length * ioData.ref.density / viscosity;
@@ -625,7 +625,7 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoRestartBcFluxsOLD(IoData &io
 
 }
 
-
+//Why would I need that function? Primarily for the FD Sensitivity, since there, the inflow parameter might change
 template<int dim>
 void EmbeddedFluidShapeOptimizationHandler<dim>::fsoRestartBcFluxs(IoData &ioData)
 {
@@ -735,8 +735,23 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoRestartBcFluxs(IoData &ioDat
     ioData.ref.pressure = ioData.bc.inlet.pressure;
     double velocity     = ioData.ref.mach * sqrt(gamma * (ioData.ref.pressure+Pstiff) / ioData.ref.density);
     ioData.ref.temperature = (ioData.ref.pressure + gamma*Pstiff)/ (ioData.ref.density * R);
-    double viscosity = ioData.eqs.viscosityModel.sutherlandConstant * sqrt(ioData.ref.temperature) /
-      (1.0 + ioData.eqs.viscosityModel.sutherlandReferenceTemperature/ioData.ref.temperature);
+
+    double viscosity = 0.0;
+    if(ioData.eqs.viscosityModel.type == ViscosityModelData::CONSTANT) {
+      viscosity = ioData.eqs.viscosityModel.dynamicViscosity;
+    }
+    else{
+      this->com->fprintf(stderr,"Sutherland Viscosity model currently not supported in SensitivityAnalysis");
+      viscosity = ioData.eqs.viscosityModel.sutherlandConstant * sqrt(ioData.ref.temperature) /
+        (1.0 + ioData.eqs.viscosityModel.sutherlandReferenceTemperature/ioData.ref.temperature);
+    }
+
+
+    //TODO this is the culprit
+    std::cout<<"EFSOH setting rey_mu:  velocity   ="<<velocity<<std::endl;
+    std::cout<<"EFSOH setting rey_mu:  ref.length ="<<ioData.ref.length<<std::endl;
+    std::cout<<"EFSOH setting rey_mu:  ref.density="<<ioData.ref.density<<std::endl;
+    std::cout<<"EFSOH setting rey_mu:  viscosity  ="<<viscosity<<std::endl;
     ioData.ref.reynolds_mu = velocity * ioData.ref.length * ioData.ref.density / viscosity;
 
     double dvelocitydMach = sqrt(gamma * ioData.ref.pressure / ioData.ref.density);
@@ -895,9 +910,9 @@ int EmbeddedFluidShapeOptimizationHandler<dim>::fsoHandler(IoData &ioData, DistS
   // DFSPAR(3)  -  yaw angle differential\
 
   //Debugging
-  std::cout<<"YOU HAVE REACHED EMBEDDED FSO HANDLER. PRESS ANY KEY TO CONTINUE!"<<std::endl;
-  char a;
-  std::cin>>a;
+//  std::cout<<"YOU HAVE REACHED EMBEDDED FSO HANDLER. PRESS ANY KEY TO CONTINUE!"<<std::endl;
+//  char a;
+//  std::cin>>a;
 
   double MyLocalTimer = -this->timer->getTime();
 
@@ -1419,6 +1434,8 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoLinearSolver(
   //this->embeddedU.ghost() += this->embeddeddQ.ghost();//TODO what did this line do?
 
   dFdS *= (-1.0);
+
+  this->output->writeAnyVectorToDisk("./results/dUdS_immediate",1,1,dUdS);//TODO delete line
 
 
   //TODO DEBUG ROUTINES//////////////////////////////////////////////////////////////////////////////////////

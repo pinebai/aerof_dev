@@ -107,7 +107,7 @@ void ElemSet::computeGalerkinTerm(FemEquationTerm *fet, GeoState &geoState,
     }
     else
     {
-      for (int iElem=0; iElem<numSampledElems; ++iElem)
+      for (int iElem=0; iElem<numSampledElems; ++iElem)//TODO print the R norm or each element and see how it develops
       elems[ iElem ]->computeGalerkinTerm(fet, X, d2wall, V, R, ghostPoints,LSS);
     }
   }

@@ -198,6 +198,10 @@ void ElemTet::computeGalerkinTerm(FemEquationTerm *fet, SVec<double,3> &X,
         fet->computeVolumeTerm(dp1dxj, d2w, v, reinterpret_cast<double *>(r),
                                s, pr, vol, X, nodeNum(), volume_id);
 
+//        std::cout<<"r0 "<<r[0][0]<<" "<<r[0][1]<<" "<<r[0][2]<<" "<<r[0][3]<<" "<<r[0][4]<<" "<<std::endl;
+//        std::cout<<"r1 "<<r[1][0]<<" "<<r[1][1]<<" "<<r[1][2]<<" "<<r[1][3]<<" "<<r[1][4]<<" "<<std::endl;
+//        std::cout<<"r2 "<<r[2][0]<<" "<<r[2][1]<<" "<<r[2][2]<<" "<<r[2][3]<<" "<<r[2][4]<<"\n"<<std::endl;
+
         for (int k=0; k<dim; ++k)//loop over all state variables
         {
 //            R[idx][k] += vol * ( (r[0][k] * dp1dxj[j][0] + r[1][k] * dp1dxj[j][1] +

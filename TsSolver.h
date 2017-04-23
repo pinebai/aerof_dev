@@ -151,6 +151,18 @@ int TsSolver<ProblemDescriptor>::fsaSolve(IoData &ioData)
   typename ProblemDescriptor::SolVecType *UPrev = new typename ProblemDescriptor::SolVecType(probDesc->getVecInfo());
   (*UPrev) = 0.0;
 
+//////////////////////////////////////////////////
+  double dt, dts;
+  int it = probDesc->getInitialIteration();
+  double t = probDesc->getInitialTime();
+  std::cout<<"it "<<it<<"   t"<<t<<std::endl;//TODO delete line
+  // setup solution output files
+  probDesc->setupOutputToDisk(ioData, &lastIt, it, t, U);
+  /** for embedded method: send force (if it>0) and receive disp (from Struct). */
+  dts = probDesc->computePositionVector(&lastIt, it, t, U); // [F] receive displacement from structure ...
+  //////////////////////////////////////////////////
+
+
   probDesc->computeDistanceToWall(ioData);
 
   probDesc->computeMeshMetrics();//redundant, since this is already done in fsoInitialize

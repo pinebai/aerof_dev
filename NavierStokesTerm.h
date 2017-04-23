@@ -108,8 +108,12 @@ public:
 inline
 NavierStokesTerm::NavierStokesTerm(IoData &iod, VarFcn *vf) : varFcn(vf)
 {
-
+ std::cout<<"----NavierStokesTerm::NavierStokesTerm(IoData &iod, VarFcn *vf) : varFcn(vf)---"<<std::endl;//TODO delete line
 // Included (MB)
+
+ std::cout<<"iod.ref.reynolds_mu:  "<<iod.ref.reynolds_mu<<std::endl;//TODO delete line
+ std::cout<<"iod.ref.dRe_mudMach:  "<<iod.ref.dRe_mudMach<<std::endl;//TODO delete line
+
   reynoldsNS = iod.ref.reynolds_mu;
   reynolds_muNS = iod.ref.reynolds_mu;
   dRedMachNS = iod.ref.dRe_mudMach;
@@ -117,6 +121,7 @@ NavierStokesTerm::NavierStokesTerm(IoData &iod, VarFcn *vf) : varFcn(vf)
 
   ooreynolds = 1.0/iod.ref.reynolds_mu;
   ooreynolds_mu = 1.0/iod.ref.reynolds_mu;
+  //std::cout<<"\033[93mooreynolds_mu:  \033[00m"<<ooreynolds_mu<<std::endl;//TODO delete line
 
   viscoFcn = 0;
   thermalCondFcn = 0;
@@ -159,6 +164,7 @@ void NavierStokesTerm::rstVarNS(IoData &iod, Communicator *com)
   dRe_mudMachNS = iod.ref.dRe_mudMach;
   ooreynolds = 1.0 / iod.ref.reynolds_mu;
   ooreynolds_mu = 1.0 / iod.ref.reynolds_mu;
+  std::cout<<"\033[93mooreynolds_mu after restartNS:  \033[00m"<<ooreynolds_mu<<std::endl;//TODO delete line
   viscoFcn->rstVar(iod);
   thermalCondFcn->rstVar(iod);
 
@@ -177,6 +183,7 @@ void NavierStokesTerm::rstVar(IoData &iod, Communicator *com)
   dRe_mudMachNS = iod.ref.dRe_mudMach;
   ooreynolds = 1.0 / iod.ref.reynolds_mu;
   ooreynolds_mu = 1.0 / iod.ref.reynolds_mu;
+  std::cout<<"\033[93mooreynolds_mu after restart:  \033[00m"<<ooreynolds_mu<<std::endl;//TODO delete line
   viscoFcn->rstVar(iod);
   thermalCondFcn->rstVar(iod);
 
@@ -696,12 +703,21 @@ void NavierStokesTerm::computeVolumeTermNS(
                          double dTdxj[3],    // (INPUT) spatial temperature derivative
                          double (*r)[dim])   // (OUTPUT) viscous volume term
 {
+//  std::cout<<"mu               "<<mu<<std::endl;
+//  std::cout<<"lambda           "<<lambda<<std::endl;
+//  std::cout<<"dudxj[0],        "<<dudxj[0][0]<<" "<<dudxj[0][1]<<" "<<dudxj[0][2]<<" "<<std::endl;
+//  std::cout<<"dudxj[1],        "<<dudxj[1][0]<<" "<<dudxj[1][1]<<" "<<dudxj[1][2]<<" "<<std::endl;
+//  std::cout<<"dudxj[2],        "<<dudxj[2][0]<<" "<<dudxj[2][1]<<" "<<dudxj[2][2]<<" "<<std::endl;
 
   double tij[3][3];
   computeStressTensor(mu, lambda, dudxj, tij);
+//  std::cout<<"tij[0],        "<<tij[0][0]<<" "<<tij[0][1]<<" "<<tij[0][2]<<" "<<std::endl;
+//  std::cout<<"tij[1],        "<<tij[1][0]<<" "<<tij[1][1]<<" "<<tij[1][2]<<" "<<std::endl;
+//  std::cout<<"tij[2],        "<<tij[2][0]<<" "<<tij[2][1]<<" "<<tij[2][2]<<" "<<std::endl;
 
   double qj[3];
   computeHeatFluxVector(kappa, dTdxj, qj);
+//  std::cout<<"qj    ,        "<<qj[0]<<" "<<qj[1]<<" "<<qj[2]<<" "<<std::endl;
 
   r[0][0] = 0.0;
   r[0][1] = tij[0][0];

@@ -21,6 +21,7 @@ void startNavierStokesEmbeddedCoupledSolver(IoData &ioData, GeoSource &geoSource
 
   //Combined calculations of Steady state and sensitivities
   if (ioData.problem.alltype == ProblemData::_SHAPE_OPTIMIZATION_) {
+    std::cout<<__FILE__<<":"<<__LINE__<<std::endl;  exit(-1);//TODO delete line
     EmbeddedFluidShapeOptimizationHandler<dim> fsoh(ioData, geoSource, &domain);
     TsSolver<EmbeddedFluidShapeOptimizationHandler<dim> > tsSolver(&fsoh);
     tsSolver.fsoSolve(ioData);
