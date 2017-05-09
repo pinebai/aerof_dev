@@ -263,6 +263,7 @@ void ElemTet::computeDerivativeOfGalerkinTerm(FemEquationTerm *fet,
                double dMach,
                SVec<double,dim> &dR)
 {
+  std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line
 
   //dp1dxj[i][j] holds the derivative of node i in j direction
   double dp1dxj[4][3];
@@ -633,10 +634,20 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
                 Vec<GhostPoint<dim>*> *ghostPoints,
                 LevelSetStructure *LSS)
 {
+//  std::cout<<"activity:      "<<LSS->isActive(0,nodeNum(0))<<" "<<LSS->isActive(0,nodeNum(1))<<" "<<LSS->isActive(0,nodeNum(2))<<" "<<LSS->isActive(0,nodeNum(3))<<" "<<std::endl;//TODO delete line
+//  std::cout<<"Ori xi States: "<<" "<<V[nodeNum(0)][5]<<" "<<V[nodeNum(1)][5]<<" "<<V[nodeNum(2)][5]<<" "<<V[nodeNum(3)][5]<<" "<<std::endl;//TODO delete line
+//  std::cout<<"Ori dens States: "<<" "<<V[nodeNum(0)][0]<<" "<<V[nodeNum(1)][0]<<" "<<V[nodeNum(2)][0]<<" "<<V[nodeNum(3)][0]<<" "<<std::endl;//TODO delete line
+
 
   double *v[4]  = {V[nodeNum(0)], V[nodeNum(1)], V[nodeNum(2)], V[nodeNum(3)]};
+//  double v[4][dim];
+//  for (int j=0; j<4; ++j)
+//    for (int i=0; i<dim; ++i)
+//      v[j][i]= V[nodeNum(j)][i];
+
   double *dv[4] = {dV[nodeNum(0)], dV[nodeNum(1)], dV[nodeNum(2)], dV[nodeNum(3)]};
   getPseudoStates(v,dv,ghostPoints,LSS);
+
   //std::cout<<"a"<<std::endl;
 
   //TODO new
@@ -654,6 +665,9 @@ void ElemTet::computeDerivativeOfGalerkinTermEmb(
 
     if(isTetInactive) return;//If the tetrahedra is fully inactive do nothing
   }
+
+//  std::cout<<"Pseudo xi States:   "<<isAtTheInterface<<" "<<v[0][5]<<" "<<v[1][5]<<" "<<v[2][5]<<" "<<v[3][5]<<" "<<std::endl;//TODO delete line
+//  std::cout<<"Pseudo dens States: "<<isAtTheInterface<<" "<<v[0][0]<<" "<<v[1][0]<<" "<<v[2][0]<<" "<<v[3][0]<<" \n"<<std::endl;//TODO delete line
 
   //common part START
   //dp1dxj[i][j] holds the derivative of node i in j direction

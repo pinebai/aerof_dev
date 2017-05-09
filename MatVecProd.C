@@ -100,7 +100,7 @@ void MatVecProdFD<dim, neq>::evaluate(
 
 	if(recFcnCon && !this->isFSI) 
 	{
-	  std::cout<<"\033[96mmvp-> evaluate does something\033[00m"<<std::endl;//TODO delete line
+	  //std::cout<<"\033[96mmvp-> evaluate does something\033[00m"<<std::endl;//TODO delete line
     spaceOp->computeResidual(*X, *ctrlVol, Qeps, Feps, timeState);
 
 		if (timeState) timeState->add_dAW_dt(it, *geoState, *ctrlVol, Qeps, Feps);
@@ -108,7 +108,7 @@ void MatVecProdFD<dim, neq>::evaluate(
     spaceOp->applyBCsToResidual(Qeps, Feps);
   }
 	else{
-	  std::cout<<"\033[96mmvp-> evaluate does nothing\033[00m"<<std::endl;//TODO delete line
+	  //std::cout<<"\033[96mmvp-> evaluate does nothing\033[00m"<<std::endl;//TODO delete line
 	  Feps = f;
 	}
 

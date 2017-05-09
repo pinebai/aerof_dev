@@ -360,10 +360,19 @@ void FluidShapeOptimizationHandler<dim>::fsoRestartBcFluxs(IoData &ioData)
     ioData.ref.pressure = ioData.bc.inlet.pressure;
     double velocity     = ioData.ref.mach * sqrt(gamma * (ioData.ref.pressure+Pstiff) / ioData.ref.density);
     ioData.ref.temperature = (ioData.ref.pressure + gamma*Pstiff)/ (ioData.ref.density * R);
-    double viscosity = ioData.eqs.viscosityModel.sutherlandConstant * sqrt(ioData.ref.temperature) /
-      (1.0 + ioData.eqs.viscosityModel.sutherlandReferenceTemperature/ioData.ref.temperature);
-    ioData.ref.reynolds_mu = velocity * ioData.ref.length * ioData.ref.density / viscosity;
 
+
+    double viscosity = 0.0;
+    if(ioData.eqs.viscosityModel.type == ViscosityModelData::CONSTANT) {
+      viscosity = ioData.eqs.viscosityModel.dynamicViscosity;
+    }
+    else{
+      this->com->fprintf(stderr,"Sutherland Viscosity model currently not supported in SensitivityAnalysis");
+      viscosity = ioData.eqs.viscosityModel.sutherlandConstant * sqrt(ioData.ref.temperature) /
+        (1.0 + ioData.eqs.viscosityModel.sutherlandReferenceTemperature/ioData.ref.temperature);
+    }
+
+    ioData.ref.reynolds_mu = velocity * ioData.ref.length * ioData.ref.density / viscosity;
     double dvelocitydMach = sqrt(gamma * ioData.ref.pressure / ioData.ref.density);
     ioData.ref.dRe_mudMach = dvelocitydMach * ioData.ref.length * ioData.ref.density / viscosity;
 
@@ -1620,7 +1629,6 @@ void FluidShapeOptimizationHandler<dim>::fsoLinearSolver(
   fsoPrintTextOnScreen("Starting LinearSolver");
 
 //  dUdS = 0.0;
-  dFdS = dFdS_inviscid;//TODO HACK
 
   dFdS *= (-1.0);
   if(!isFSI) ksp->setup(0, 1, dFdS);
@@ -1648,10 +1656,10 @@ void FluidShapeOptimizationHandler<dim>::fsoLinearSolver(
   *onevec=1.0;
 
 
-  this->mvp->apply(*onevec,*multresult);
+  //this->mvp->apply(*onevec,*multresult);
 
 
-  this->output->writeAnyVectorToDisk("results/jacobian_colsum",1,1,*multresult);
+  //this->output->writeAnyVectorToDisk("results/jacobian_colsum",1,1,*multresult);
   //////////
 
 

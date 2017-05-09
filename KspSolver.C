@@ -353,7 +353,6 @@ int
 GmresSolver<VecType,MatVecProdOp,PrecOp,IoOp, ScalarT>::solve(VecType &b, VecType &x)//This is the solve routine we enter
 {
 
-  std::cout<<"\033[96mFirst version of solve routine enetered\033[00m"<<std::endl;//TODO delete line
   int typePrec = 2;
   //int typePrec = 0;
   double beta, l2res, target, res0;

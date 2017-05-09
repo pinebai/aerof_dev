@@ -1407,7 +1407,7 @@ void SpaceOperator<dim>::computeDerivativeOfResidualEmb(
       domain->computeDerivativeOfGalerkinTermEmb(fet, *bcData, *geoState, X, dX, *V, *dV, dMach, dR,ghostPoints, distLSS);
       this->com->fprintf(stderr, "\033[92m***** Residual derivative after the Galerkin routine: %13.16e\033[00m\n",dR.norm());
     }
-    bcData->computeNodeValue(X);
+    bcData->computeNodeValue(X);//TODO do I really need this one? I dont think so...
     bcData->computeDerivativeOfNodeValue(X, dX);
   }
 
@@ -1439,7 +1439,7 @@ void SpaceOperator<dim>::computeDerivativeOfResidualEmb(
   if (volForce)
     {
     this->com->fprintf(stderr, "\033[93m***** volForce derivative not yet implemented for embedded simulations\033[00m");
-    //exit(-1);
+    exit(-1);
 //      domain->computeVolumicForceTerm(volForce, ctrlVol, *V, R);
 //      domain->computeDerivativeOfVolumicForceTerm(volForce, ctrlVol, dCtrlVol, *V, *dV, dR);
     }
@@ -1447,7 +1447,7 @@ void SpaceOperator<dim>::computeDerivativeOfResidualEmb(
   //TODO dvms term newly added
     if(dvms) {
       this->com->fprintf(stderr, "\033[93m***** dvms derivative not yet implemented for embedded simulations\033[00m");
-      //exit(-1);
+      exit(-1);
 //      dvms->compute(fluxFcn, recFcn, fet, geoState->getConfig(), ctrlVol, *bcData, *geoState, timeState, X, U, *V, R, failsafe, rshift);
 //      dvms->computeDerivative(fluxFcn, recFcn, fet, geoState->getConfig(), ctrlVol, *bcData, *geoState, timeState, X, U, *V, R, failsafe, rshift);
     }
@@ -2112,7 +2112,7 @@ void SpaceOperator<dim>::computeResidual(DistSVec<double,3> &X, DistVec<double> 
       domain->computeGalerkinTerm(fet, *bcData, *geoState, X, *V, R, ghostPoints, distLSS, externalSI);
       bcData->computeNodeValue(X);
   }
-  std::cout<<"Residual norm after FET   : "<<R.norm()<<std::endl;//TODO delete line
+  //std::cout<<"Residual norm after FET   : "<<R.norm()<<std::endl;//TODO delete line
 
   if (volForce)
     domain->computeVolumicForceTerm(volForce, ctrlVol, *V, R);
@@ -2125,7 +2125,7 @@ void SpaceOperator<dim>::computeResidual(DistSVec<double,3> &X, DistVec<double> 
             distLSS, linRecAtInterface, fluidId, Nriemann,
             *ngrad, egrad, R, it, failsafe, rshift, externalSI);
 
-	std::cout<<"Residual norm after FV    : "<<R.norm()<<std::endl;//TODO delete line
+	//std::cout<<"Residual norm after FV    : "<<R.norm()<<std::endl;//TODO delete line
 	//Dev::Error(this->com,"Exit",true);
 	//exit(-1);
 
@@ -2785,7 +2785,7 @@ void SpaceOperator<dim>::computeJacobian(
                            DistSVec<double,dim> &U, DistMat<Scalar,neq> &A,
                            DistTimeState<dim> *timeState)
 {
-std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line; this is used for ALE
+//std::cout<<__FILE__<<":"<<__LINE__<<std::endl;//TODO delete line; this is used for ALE
 #ifdef DOUBLE_CHECK
   varFcn->conservativeToPrimitive(U, *V);
 #endif
@@ -2929,7 +2929,7 @@ void SpaceOperator<dim>::computeJacobian(DistSVec<double,3> &X, DistVec<double> 
                                          DistMat<Scalar,neq>& A,
                                          DistTimeState<dim>* timeState)
 {
-  std::cout<<"SpaceOperator<dim>::computeJacobian"<<std::endl;//TODO delete line; this is the one
+  //  std::cout<<"SpaceOperator<dim>::computeJacobian"<<std::endl;//TODO delete line; this is the one
   A = 0.0;
 
 //TODO VISCOUSDERIV this function should differentiate according to the desciptor case
@@ -2955,7 +2955,7 @@ void SpaceOperator<dim>::computeJacobian(DistSVec<double,3> &X, DistVec<double> 
 
 	if (fet)
 	{
-	  this->com->fprintf(stderr,"\033[96m  FET triggered SpaceOperator<dim>::computeJacobian\n\033[00m");
+	  //this->com->fprintf(stderr,"\033[96m  FET triggered SpaceOperator<dim>::computeJacobian\n\033[00m");
     this->populateGhostPoints(ghostPoints,X,U,varFcn,distLSS,false,fluidId);//TODO delete line
     varFcn->conservativeToPrimitive(U, *V, distLSS, &fluidId);
 		domain->computeJacobianGalerkinTerm(fet, *bcData, *geoState, X, ctrlVol, *V, A, ghostPoints, distLSS, externalSI);

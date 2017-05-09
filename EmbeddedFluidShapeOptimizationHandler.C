@@ -1114,7 +1114,7 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoComputeDerivativesOfFluxAndS
   }
 
   //TODO VISCOUSDERIV
-  this->output->writeAnyVectorToDisk("results/populated_state",1,1,U,this->distLSS,this->ghostPoints);
+  //this->output->writeAnyVectorToDisk("results/populated_state",1,1,U,this->distLSS,this->ghostPoints);
 
   fsoLinearSolver(ioData, dFdS, dUdS, isFSI);
 
@@ -1135,6 +1135,7 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoAnalytical
   // Computing the derivatives of the boundary fluxes
   dXdS = 0.0;
   this->bcData->initializeSA(ioData, X, dXdS, DFSPAR[0], DFSPAR[1], DFSPAR[2]);
+  std::cout<<"dXdS after initializeSA(): "<<dXdS.norm()<<std::endl;//TODO delete line
  
   // Computing the partial derivative of the flux with respect to the variables
   // Question: who stores the mesh derivative information here? DistLSS?
@@ -1155,6 +1156,7 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoAnalytical
                                                this->nodeTag, this->riemann, this->riemannNormal,
                                                this->ghostPoints, DFSPAR[0],
                                                Flux, dFdS_inviscid, this->timeState);
+    std::cout<<"Norm of inviscid Residual: "<<dFdS_inviscid.norm()<<std::endl;
 
     //TODO VISCOUSDERIV DEBUG
     this->spaceOp->computeViscousDerivativeOfResidualEmb(X, dXdS, A, dAdS, U,
@@ -1163,6 +1165,7 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoAnalytical
                                                this->nodeTag, this->riemann, this->riemannNormal,
                                                this->ghostPoints, DFSPAR[0],
                                                Flux, dFdS_viscous, this->timeState);
+    std::cout<<"Norm of viscous Residual: "<<dFdS_viscous.norm()<<std::endl;
   }
 
   this->spaceOp->applyBCsToDerivativeOfResidual(U, dFdS);
@@ -1248,7 +1251,7 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoSemiAnalytical
   // Plus
   //---------------------------------------------------------------------
   if(ioData.sa.sensMesh  == SensitivityAnalysis::ON_SENSITIVITYMESH){
-    this->com->fprintf(stderr,"Currently mesh-sensitivity not wanted for embedded"); exit(-1); //TODO delete line
+    //this->com->fprintf(stderr,"Currently mesh-sensitivity not wanted for embedded"); exit(-1); //TODO delete line
     this->distLSS->updateXb(eps);
     this->distLSS->initialize(this->domain, X, this->geoState->getXn(), ioData, &pb_dummy, &this->nodeTag);
   }
@@ -1466,6 +1469,9 @@ void EmbeddedFluidShapeOptimizationHandler<dim>::fsoLinearSolver(
   *multresult=0.0;
   *multresult=multresultE->real();
   this->output->writeAnyVectorToDisk("results/solver_check",1,1,*multresult);
+
+  this->output->writeAnyVectorToDisk("results/dFdS_inviscid",1,1,dFdS_inviscid);
+  this->output->writeAnyVectorToDisk("results/dFdS_viscous",1,1,dFdS_viscous);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

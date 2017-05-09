@@ -501,9 +501,9 @@ void PostOperator<dim>::computeForceAndMoment(Vec3D &x0, DistSVec<double,3> &X,
 template<int dim>
 void PostOperator<dim>::computeForceAndMoment(DistExactRiemannSolver<dim> &riemann,
                                               Vec3D &x0, DistSVec<double,3> &X,
-					      DistSVec<double,dim> &U,
+					                                    DistSVec<double,dim> &U,
                                               DistVec<int> *fluidId, Vec3D *Fi,
-					      Vec3D *Mi, Vec3D *Fv, Vec3D *Mv, int hydro,
+					                                    Vec3D *Mi, Vec3D *Fv, Vec3D *Mv, int hydro,
                                               VecSet< DistSVec<double,3> > *mX, Vec<double> *genCF)
 {
 

@@ -231,28 +231,29 @@ public:
     return 1.0/( 2.0*sqrt(gam * (V[4]+Pstiff) / V[0]) ) * gam * ( (dV[4]+dPstiff*dMach) * V[0] - (V[4]+Pstiff) * dV[0] ) / ( V[0] * V[0] );
   }
   double computeDerivativeOfTotalPressure(double machr, double dmachr, double* V, double* dV, double dMach) const {
-//    double mach = computeMachNumber(V);
-//    double dmach = computeDerivativeOfMachNumber(V, dV, dMach);
-//    double opmach = 1.0 + 0.5*gam1*mach*mach;
-//    double dopmach = gam1*mach*dmach;
-//    return dV[4]*pow(opmach, gam*invgam1) + (V[4]+Pstiff)*gam*invgam1*pow(opmach, (gam*invgam1-1))*dopmach;
+//TODO original
+    double mach = computeMachNumber(V);
+    double dmach = computeDerivativeOfMachNumber(V, dV, dMach);
+    double opmach = 1.0 + 0.5*gam1*mach*mach;
+    double dopmach = gam1*mach*dmach;
+    return dV[4]*pow(opmach, gam*invgam1) + (V[4]+Pstiff)*gam*invgam1*pow(opmach, (gam*invgam1-1))*dopmach;
 
 	  //TODO BUGHUNT
-      double dens=V[0]; double vx=V[1]; double vy=V[2]; double vz=V[3]; double press=V[4];
-      double mach = computeMachNumber(V);
-      double dmach = computeDerivativeOfMachNumber(V, dV, dMach);
-      double bterm = 1+(gam-1)*0.5*mach*mach;
-      double pdtotpressBYdens=(press*gam*mach*mach)/(2*dens)*pow(bterm,1/(gam-1));
-      double pdtotpressBYvx  = dens*vx*pow(bterm,1/(gam-1));
-      double pdtotpressBYvy  = dens*vy*pow(bterm,1/(gam-1));
-      double pdtotpressBYvz  = dens*vz*pow(bterm,1/(gam-1));
-      double pdtotpressBYpress = pow(bterm,gam/(gam-1))*(1-gam*mach*mach*0.5*pow(bterm,1/(gam-1)) );
-
-      return pdtotpressBYdens  * dV[0] +
-             pdtotpressBYvx    * dV[1] +
-             pdtotpressBYvy    * dV[2] +
-             pdtotpressBYvz    * dV[3] +
-             pdtotpressBYpress * dV[4];
+//      double dens=V[0]; double vx=V[1]; double vy=V[2]; double vz=V[3]; double press=V[4];
+//      double mach = computeMachNumber(V);
+//      double dmach = computeDerivativeOfMachNumber(V, dV, dMach);
+//      double bterm = 1+(gam-1)*0.5*mach*mach;
+//      double pdtotpressBYdens=(press*gam*mach*mach)/(2*dens)*pow(bterm,1/(gam-1));
+//      double pdtotpressBYvx  = dens*vx*pow(bterm,1/(gam-1));
+//      double pdtotpressBYvy  = dens*vy*pow(bterm,1/(gam-1));
+//      double pdtotpressBYvz  = dens*vz*pow(bterm,1/(gam-1));
+//      double pdtotpressBYpress = pow(bterm,gam/(gam-1))*(1-gam*mach*mach*0.5*pow(bterm,1/(gam-1)) );
+//
+//      return pdtotpressBYdens  * dV[0] +
+//             pdtotpressBYvx    * dV[1] +
+//             pdtotpressBYvy    * dV[2] +
+//             pdtotpressBYvz    * dV[3] +
+//             pdtotpressBYpress * dV[4];
   }
   void rstVar(IoData &iod) {
     dPstiff = iod.eqs.fluidModel.gasModel.pressureConstant/iod.bc.inlet.pressure*(-2.0 / (gam * iod.bc.inlet.mach * iod.bc.inlet.mach * iod.bc.inlet.mach));

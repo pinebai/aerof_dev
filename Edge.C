@@ -1491,10 +1491,17 @@ void EdgeSet::computeTransposeDerivativeOfFiniteVolumeTerm(
  * This is the non-sparse implementation                                           (MB) *
  ****************************************************************************************/
 template<int dim>
-void EdgeSet::computeDerivativeOfFiniteVolumeTerm(Vec<double> &irey, Vec<double> &dIrey, FluxFcn** fluxFcn, RecFcn* recFcn,
-                                        ElemSet& elems, GeoState& geoState, SVec<double,3>& X, SVec<double,3>& dX,
-                                        SVec<double,dim>& V, SVec<double,dim>& dV, NodalGrad<dim>& ngrad,
-                                        EdgeGrad<dim>* egrad, double dMach, SVec<double,dim>& dFluxes)
+void EdgeSet::computeDerivativeOfFiniteVolumeTerm(
+                Vec<double> &irey, Vec<double> &dIrey,
+                FluxFcn** fluxFcn, RecFcn* recFcn,
+                ElemSet& elems,
+                GeoState& geoState,
+                SVec<double,3>& X, SVec<double,3>& dX,
+                SVec<double,dim>& V, SVec<double,dim>& dV,
+                NodalGrad<dim>& ngrad,
+                EdgeGrad<dim>* egrad,
+                double dMach,
+                SVec<double,dim>& dFluxes)
 {
 
   Vec<Vec3D>& normal = geoState.getEdgeNormal();
@@ -1727,12 +1734,18 @@ void EdgeSet::computeDerivativeOperatorsOfFiniteVolumeTerm(Vec<double> &irey, Ve
  * This is the non-spare implementation                                                 *
  ****************************************************************************************/
 template<int dim>
-void EdgeSet::computeDerivativeOfFiniteVolumeTerm(FluxFcn** fluxFcn, RecFcn* recFcn,
-						  GeoState& geoState, SVec<double,3>& X, LevelSetStructure &LSS,
-						  bool linRecAtInterface, Vec<int> &fluidId,
-						  ExactRiemannSolver<dim>& riemann, int Nriemann,
-						  NodalGrad<dim>& ngrad, EdgeGrad<dim>* egrad,
-						  double dMach, SVec<double,dim>& V, SVec<double,dim>& dFluxes)
+void EdgeSet::computeDerivativeOfFiniteVolumeTerm(
+                FluxFcn** fluxFcn, RecFcn* recFcn,
+                GeoState& geoState,
+                SVec<double,3>& X,
+                LevelSetStructure &LSS,
+                bool linRecAtInterface,
+                Vec<int> &fluidId,
+                ExactRiemannSolver<dim>& riemann, int Nriemann,
+                NodalGrad<dim>& ngrad, EdgeGrad<dim>* egrad,
+                double dMach,
+                SVec<double,dim>& V,
+                SVec<double,dim>& dFluxes)
 {
 
   Vec<Vec3D>     &edgeNorm = geoState.getEdgeNormal();

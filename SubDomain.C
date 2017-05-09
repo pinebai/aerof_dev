@@ -59,6 +59,8 @@ typedef Eigen::SparseMatrix<double> SpMat;
 
 #include "FSI/CrackingSurface.h"
 
+#include "Dev/devtools.h"
+
 extern "C" {
   void F77NAME(mvp5d)(const int &, const int &, int *, int *, int (*)[2],
 		      double (*)[25], double (*)[5], double (*)[5]);
@@ -137,8 +139,11 @@ inline
 void computeLocalWeightsLeastSquares(double dx[3], double *R, double *W)
 {
 
-  if(R[0]*R[3]*R[5] == 0.0) fprintf(stderr, "Going to divide by 0 %e %e %e\n", 
-         R[0], R[3], R[5]);
+  if(R[0]*R[3]*R[5] == 0.0){
+    Dev::Error(MPI_COMM_WORLD,"Going to divide by 0",true);//TODO delete lines
+    fprintf(stderr, "Going to divide by 0 %e %e %e\n",R[0], R[3], R[5]);
+  }
+
   double or11 = 1.0 / R[0];
   double or22 = 1.0 / R[3];
   double or33 = 1.0 / R[5];
@@ -164,6 +169,11 @@ void computeLocalWeightsLeastSquaresForEmbeddedStruct(double dx[3], double *R, d
 {
   if (R[0]*R[4]*R[7]*R[9]==0.0) 
 	fprintf(stderr, "Going to be divided by 0 %e %e %e %e\n",R[0],R[4],R[7],R[9]);
+
+
+  if(R[0]*R[4]*R[7]*R[9]==0.0){
+    Dev::Error(MPI_COMM_WORLD,"2 Going to divide by 0",true);//TODO delete lines
+  }
   double or11 = 1.0/R[0];
   double or22 = 1.0/R[4];
   double or33 = 1.0/R[7];
@@ -259,6 +269,11 @@ void computeDerivativeOfLocalWeightsLeastSquares(double dx[3], double ddx[3], do
 
   if(R[0]*R[3]*R[5] == 0.0) fprintf(stderr, "Going to divide by 0 %e %e %e\n",
          R[0], R[3], R[5]);
+
+  if(R[0]*R[3]*R[5] == 0.0){
+    Dev::Error(MPI_COMM_WORLD,"3 Going to divide by 0",true);//TODO delete lines
+  }
+
   double or11 = 1.0 / R[0];
   double dor11 = -1.0 / ( R[0]*R[0] )*dR[0];
   double or22 = 1.0 / R[3];
@@ -3037,7 +3052,7 @@ void SubDomain::applyBCsToH2Jacobian(BcFcn *bcFcn, BcData<dim> &bcs,
     if (nodeType[i] != BC_INTERNAL) {
       Scalar *Aii = A.getElem_ii(i);
       if (Aii)
-        bcFcn->applyToOffDiagonalTerm(nodeType[i], Aii);
+        bcFcn->applyToOffDiagonalTerm(nodeType[i], Aii);//TODO
     }
   }
 
@@ -8400,7 +8415,7 @@ void SubDomain::populateGhostPoints(Vec<GhostPoint<dim>*> &ghostPoints, SVec<dou
 		{
 			if(!ghostPoints[i]){
 			  ghostPoints[i] = new GhostPoint<dim>(varFcn);
-			  std::cout<<"Created Ghost at "<<i<<std::endl;//TODO delete line
+			  //std::cout<<"Created Ghost at "<<i<<std::endl;//TODO delete line
 			}
 
 			bool dummy = LSS.vWallNode(i, vWall);

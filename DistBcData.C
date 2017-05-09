@@ -9,6 +9,9 @@
 #include <cmath>
 #include <cassert>
 
+
+#include "Dev/devtools.h"
+
 //------------------------------------------------------------------------------
 
 template<int dim>
@@ -1883,9 +1886,10 @@ DistBcDataSA<dim>::DistBcDataSA(IoData &iod, VarFcn *vf, Domain *dom, DistSVec<d
 // Included (MB)
     if (iod.problem.alltype == ProblemData::_SHAPE_OPTIMIZATION_ ||
         iod.problem.alltype == ProblemData::_AEROELASTIC_SHAPE_OPTIMIZATION_ ||
-		iod.problem.alltype == ProblemData::_ROM_SHAPE_OPTIMIZATION_ ||
-		iod.problem.alltype == ProblemData::_SENSITIVITY_ANALYSIS_) {
-      dtmp = new DistSVec<double,2>(dom->getNodeDistInfo());
+        iod.problem.alltype == ProblemData::_ROM_SHAPE_OPTIMIZATION_ ||
+        iod.problem.alltype == ProblemData::_SENSITIVITY_ANALYSIS_) {
+        dtmp = new DistSVec<double,2>(dom->getNodeDistInfo());
+        std::cout<<"!!! ------------ dtmp has been created"<<std::endl;//TODO delete line
     }
     else {
       dtmp = 0;
@@ -2034,7 +2038,8 @@ void DistBcDataSA<dim>::computeDerivativeOfNodeValue(DistSVec<double,3> &X, Dist
 
 //Remark: Error mesage for pointers
   if (dtmp == 0) {
-    fprintf(stderr, "*** Warning: Variable dtmp does not exist!\n");
+    fprintf(stderr, "\033[91m*** Warning: Variable dtmp does not exist!\n\033[00m");
+    Dev::Warning(this->com,"Variable dtmp does not exist",true);
     //exit(1);
   }
 
@@ -2199,6 +2204,7 @@ void DistBcDataKE<dim>::computeDerivativeOfNodeValue(DistSVec<double,3> &X, Dist
 //Remark: Error mesage for pointers
   if (dtmp == 0) {
     fprintf(stderr, "*** Warning: Variable dtmp does not exist!\n");
+    Dev::Warning(this->com,"Variable dtmp does not exist",true);
     //fprintf(stderr, "*** Error: Variable dtmp does not exist!\n");
     //exit(1);
   }

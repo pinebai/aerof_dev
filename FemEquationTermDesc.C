@@ -11,6 +11,8 @@ using std::max;
 using std::min;
 #endif
 
+#include "Dev/devtools.h"//TODO delete line
+
 //------------------------------------------------------------------------------
 //CHANGES_FOR_WATER
 // as the Stokes' law for gas does not apply anymore, we have to distinguish
@@ -955,6 +957,11 @@ bool FemEquationTermSA::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], doubl
                                           int nodeNum[4], int material_id)
 {
 
+//  if(V[0][5]==0.0 && V[1][5]==0.0 && V[2][5]==0.0 && V[3][5]==0.0){
+//    //std::cout<<"\033[91mAll pressures are zero!\033[00m"<<std::endl;//TODO delete line
+//    Dev::Warning(MPI_COMM_WORLD,"All RANS components of that element are zero",true);
+//  }
+
   bool porousmedia = false;
 
   const double sixth = 1.0/6.0;
@@ -999,12 +1006,12 @@ bool FemEquationTermSA::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], doubl
   
   // Applying the laminar-turbulent trip
   if(trip){
-    if((X[nodeNum[0]][0]>=x0 && X[nodeNum[0]][0]<=x1 && X[nodeNum[0]][1]>=y0 && X[nodeNum[0]][1]<=y1 &&
-    	X[nodeNum[0]][2]>=z0 && X[nodeNum[0]][2]<=z1) || (X[nodeNum[1]][0]>=x0 && X[nodeNum[1]][0]<=x1 &&
-    	X[nodeNum[1]][1]>=y0 && X[nodeNum[1]][1]<=y1 && X[nodeNum[1]][2]>=z0 && X[nodeNum[1]][2]<=z1) ||
-    	(X[nodeNum[2]][0]>=x0 && X[nodeNum[2]][0]<=x1 && X[nodeNum[2]][1]>=y0 && X[nodeNum[2]][1]<=y1 &&
-    	X[nodeNum[2]][2]>=z0 && X[nodeNum[2]][2]<=z1) || (X[nodeNum[3]][0]>=x0 && X[nodeNum[3]][0]<=x1 &&
-    	X[nodeNum[3]][1]>=y0 && X[nodeNum[3]][1]<=y1 && X[nodeNum[3]][2]>=z0 && X[nodeNum[3]][2]<=z1)) {
+    if((X[nodeNum[0]][0]>=x0 && X[nodeNum[0]][0]<=x1  &&  X[nodeNum[0]][1]>=y0 && X[nodeNum[0]][1]<=y1 &&
+        X[nodeNum[0]][2]>=z0 && X[nodeNum[0]][2]<=z1) || (X[nodeNum[1]][0]>=x0 && X[nodeNum[1]][0]<=x1 &&
+        X[nodeNum[1]][1]>=y0 && X[nodeNum[1]][1]<=y1  &&  X[nodeNum[1]][2]>=z0 && X[nodeNum[1]][2]<=z1) ||
+       (X[nodeNum[2]][0]>=x0 && X[nodeNum[2]][0]<=x1  &&  X[nodeNum[2]][1]>=y0 && X[nodeNum[2]][1]<=y1 &&
+        X[nodeNum[2]][2]>=z0 && X[nodeNum[2]][2]<=z1) || (X[nodeNum[3]][0]>=x0 && X[nodeNum[3]][0]<=x1 &&
+        X[nodeNum[3]][1]>=y0 && X[nodeNum[3]][1]<=y1  &&  X[nodeNum[3]][2]>=z0 && X[nodeNum[3]][2]<=z1)) {
     	mut = computeTurbulentViscosity(V, mul, mutilde);
     	dmut = computeDerivativeOfTurbulentViscosity(V, dV, mul, dmul, dmutilde);
     }
@@ -1018,7 +1025,9 @@ bool FemEquationTermSA::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], doubl
   else {
     mut = computeTurbulentViscosity(V, mul, mutilde);
     dmut = computeDerivativeOfTurbulentViscosity(V, dV, mul, dmul, dmutilde);
+    //std::cout<<"mul: "<<mul<<"  mutilde: "<<mutilde<<std::endl;//TODO delete line
   }
+  //std::cout<<"mul: "<<mul<<"  mutilde: "<<mutilde<<std::endl;//TODO delete line
 
   lambdat  = computeSecondTurbulentViscosity(lambdal, mul, mut);
   dlambdat = computeDerivativeOfSecondTurbulentViscosity(lambdal, dlambdal, mul, dmul, mut, dmut);
@@ -1041,6 +1050,15 @@ bool FemEquationTermSA::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], doubl
   else {
     fprintf(stderr, "***** Inside the file FemEquationTermDesc.C the varible mutilde is zero *****\n");
     //exit(1);
+    std::cout<<"NodeNum: "<<nodeNum[0]<<" "<<nodeNum[1]<<" "<<nodeNum[2]<<" "<<nodeNum[3]<<" "<<std::endl;//TODO delete line
+    std::cout<<"V[0][5] "<<V[0][5]<<std::endl;//TODO delete line
+    std::cout<<"V[1][5] "<<V[1][5]<<std::endl;//TODO delete line
+    std::cout<<"V[2][5] "<<V[2][5]<<std::endl;//TODO delete line
+    std::cout<<"V[3][5] "<<V[3][5]<<std::endl;//TODO delete line
+    std::cout<<"V[0][0] "<<V[0][0]<<std::endl;//TODO delete line
+    std::cout<<"V[1][0] "<<V[1][0]<<std::endl;//TODO delete line
+    std::cout<<"V[2][0] "<<V[2][0]<<std::endl;//TODO delete line
+    std::cout<<"V[3][0] "<<V[3][0]<<std::endl;//TODO delete line
     dabsmutilde = 0.0;
   }
 
@@ -1084,6 +1102,11 @@ bool FemEquationTermSA::computeDerivativeOfVolumeTerm(double dp1dxj[4][3], doubl
   dR[0][5] = dmu5 * dnutildedx + mu5 * ddnutildedx;
   dR[1][5] = dmu5 * dnutildedy + mu5 * ddnutildedy;
   dR[2][5] = dmu5 * dnutildedz + mu5 * ddnutildedz;
+  if (mutilde == 0.0) {
+    std::cout<<"Added contribution: "<<dmu5 * dnutildedx + mu5 * ddnutildedx<<std::endl;//TODO delete line
+    std::cout<<"Added contribution: "<<dmu5 * dnutildedy + mu5 * ddnutildedy<<std::endl;//TODO delete line
+    std::cout<<"Added contribution: "<<dmu5 * dnutildedz + mu5 * ddnutildedz<<std::endl;//TODO delete line
+  }
 
   dS[0] = 0.0;
   dS[1] = 0.0;

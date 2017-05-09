@@ -13,6 +13,7 @@
 #include <fstream> //file io
 
 #include <execinfo.h>
+#include <boost/algorithm/string.hpp>
 
 //declare a NULL pointer, such that no extra header has to be included just for that putpose
 #ifndef NULL
@@ -160,10 +161,14 @@ void printStack(Communicator *com)
   {
 
 #ifdef NDEBUG
-    com->printf(0,"%s\n", strings[j]);
+    std::string symbol, execname;
+    symbol=strings[j];
+    execname=getenv("_");
+    boost::replace_all(symbol,execname, " ");
+    com->printf(0,"%s\n", symbol.data() );
 #else
     char syscom[256];
-    sprintf(syscom,"addr2line %p -e ",buffer[j]);
+    sprintf(syscom,"addr2line %p -s -e ",buffer[j]);
     sprintf(syscom+ strlen(syscom),getenv("_"));//append current executables name
     com->system(syscom);
 #endif
@@ -200,10 +205,14 @@ void printStack(MPI_Comm comm)
   {
 
 #ifdef NDEBUG
-    if (rank==0) fprintf(stdout,"%s\n", strings[j] );
+    std::string symbol, execname;
+    symbol=strings[j];
+    execname=getenv("_");
+    boost::replace_all(symbol,execname, " ");
+    if (rank==0) fprintf(stdout,"%s\n", symbol.data() );
 #else
     char syscom[256];
-    sprintf(syscom,"addr2line %p -e ",buffer[j]);
+    sprintf(syscom,"addr2line %p -s -e ",buffer[j]);
     sprintf(syscom+ strlen(syscom),getenv("_"));//append current executables name
     if (rank == 0) std::system(syscom);
 #endif
