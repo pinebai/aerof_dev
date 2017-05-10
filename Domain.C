@@ -254,6 +254,55 @@ void Domain::computeDerivativeOfGradientsLeastSquares(DistSVec<double,3> &X, Dis
   timer->addNodalGradTime(t0);
 }
 
+
+// Included (MB)
+// This is the embedded Version which can probably be merged with the non-embedded one
+template<int dim, class Scalar>
+void Domain::computeDerivativeOfGradientsLeastSquaresEmb(
+               DistSVec<double,3> &X,      DistSVec<double,3> &dX,
+               DistSVec<double,6> &R,      DistSVec<double,6> &dR,
+               DistSVec<Scalar,dim> &dddx, DistSVec<Scalar,dim> &dddy, DistSVec<Scalar,dim> &dddz,
+               DistSVec<Scalar,dim> &var,  DistSVec<Scalar,dim> &dvar,
+               bool linFSI,
+               const DistVec<int> &fluidId,
+               DistLevelSetStructure *distLSS,
+               bool includeSweptNodes)
+{
+//  DistSVec<double,3> &, DistSVec<double,3> &,
+//  DistSVec<double,6> &, DistSVec<double,6> &,
+//  DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &,
+//  DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &,
+//  bool linFSI,
+//  const DistVec<int> &fluidId,
+//  DistLevelSetStructure *distLSS,
+//  bool includeSweptNodes);
+
+  double t0 = timer->getTime();
+
+#pragma omp parallel for
+  for (int iSub = 0; iSub < numLocSub; ++iSub) {
+    SVec<Scalar,dim> dummy(dddx(iSub));
+    //TODO write R and dR to file
+    this->writeVectorToFile("./results/ngrad_R",0,0,R);
+    this->writeVectorToFile("./results/ngrad_dR",0,0,dR);
+    subDomain[iSub]->computeDerivativeOfGradientsLeastSquaresEmb(
+                      X(iSub), dX(iSub),
+                      R(iSub), dR(iSub),
+                      var(iSub), dvar(iSub),
+                      dddx(iSub), dddy(iSub), dddz(iSub),
+                      fluidId(iSub),
+                      &((*distLSS)(iSub)),includeSweptNodes);
+  }
+
+
+  CommPattern<Scalar> *vPat = getCommPat(var);
+  assemble(vPat, dddx);
+  assemble(vPat, dddy);
+  assemble(vPat, dddz);
+
+  timer->addNodalGradTime(t0);
+}
+
 //------------------------------------------------------------------------------
 
 // Included (YC)

@@ -1414,11 +1414,17 @@ public:
   void computeDerivativeOperatorsOfNormals(SVec<double,3> &, RectangularSparseMat<double,3,3> &, RectangularSparseMat<double,3,3> &); 
 
   void computeDerivativeOfWeightsLeastSquaresEdgePart(SVec<double,3> &, SVec<double,3> &, SVec<double,6> &, SVec<double,6> &);
+  void computeDerivativeOfWeightsLeastSquaresEdgePartEmb(
+      SVec<double,3> &X, SVec<double,3> &dX,
+      const Vec<int> &fluidId, SVec<int,1> &count,
+      SVec<double,6> &R, SVec<double,6> &dR,
+      LevelSetStructure *LSS, bool includeSweptNodes);
   void computeDerivativeOfWeightsLeastSquaresEdgePart(RectangularSparseMat<double,3,6> &, SVec<double,3> &, SVec<double,6> &);
   void computeTransposeDerivativeOfWeightsLeastSquaresEdgePart(RectangularSparseMat<double,3,6> &, SVec<double,6> &, SVec<double,3> &);
   void computeDerivativeTransposeOfWeightsLeastSquaresEdgePart(SVec<double,3> &, SVec<double,6> &, SVec<double,6> &, SVec<double,3> &);
 
   void computeDerivativeOfWeightsLeastSquaresNodePart(SVec<double,6> &, SVec<double,6> &);
+  void computeDerivativeOfWeightsLeastSquaresNodePartEmb(SVec<double,6> &, SVec<double,6> &,LevelSetStructure*,bool);
   void computeDerivativeOfWeightsLeastSquaresNodePart(RectangularSparseMat<double,6,6> &, SVec<double,6> &);
   void computeTransposeDerivativeOfWeightsLeastSquaresNodePart(RectangularSparseMat<double,6,6> &, SVec<double,6> &);
   void computeDerivativeTransposeOfWeightsLeastSquaresNodePart(SVec<double,6> &, SVec<double,6> &);
@@ -1449,6 +1455,15 @@ public:
             SVec<double,6> &, SVec<double,6> &,
             SVec<Scalar,dim> &, SVec<Scalar,dim> &, SVec<Scalar,dim> &,
             SVec<Scalar,dim> &, SVec<Scalar,dim> &);
+
+  template<int dim, class Scalar>
+  void computeDerivativeOfGradientsLeastSquaresEmb(
+            SVec<double,3> &, SVec<double,3> &,
+            SVec<double,6> &, SVec<double,6> &,
+            SVec<Scalar,dim> &, SVec<Scalar,dim> &, SVec<Scalar,dim> &,
+            SVec<Scalar,dim> &, SVec<Scalar,dim> &,
+            const Vec<int> &fluidId,
+            LevelSetStructure* LSS,bool IncludeSweptNodes);
 
   template<int dim, class Scalar>
   void computeDerivativeOfGradientsLeastSquares( 

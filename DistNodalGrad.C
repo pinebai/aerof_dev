@@ -11,6 +11,8 @@
 #include <alloca.h>
 #include <cassert>
 
+//#include <TsOutput.h>//TODO delete line
+
 //------------------------------------------------------------------------------
 
 template<int dim, class Scalar>
@@ -675,6 +677,51 @@ void DistNodalGrad<dim, Scalar>::computeDerivativeOfWeights(DistSVec<double,3> &
 
 }
 
+
+
+// Embedded Version
+template<int dim, class Scalar>
+void DistNodalGrad<dim, Scalar>::computeDerivativeOfWeightsEmb(
+                                   DistSVec<double,3> &X, DistSVec<double,3> &dX,
+                                   const DistVec<int> &fluidId,
+                                   bool linFSI, DistLevelSetStructure *distLSS,
+                                   bool includeSweptNodes)
+{
+
+  if (typeGradient == SchemeData::LEAST_SQUARES) {
+//Remark: Error mesage for pointers
+    if (dR == 0) {
+      fprintf(stderr, "*** Error: Variable dR does not exist!\n");
+      exit(1);
+    }
+    //domain->computeDerivativeOfWeightsLeastSquares(X, dX, *dR);
+    domain->computeDerivativeOfWeightsLeastSquaresEmb(X, dX, fluidId,*dR,linFSI, distLSS,includeSweptNodes);
+
+
+  }
+  else if (typeGradient == SchemeData::GALERKIN || typeGradient == SchemeData::NON_NODAL) {
+    fprintf(stderr, "*** Error: Galerkin reconstruction not yet supported for Sensitivity Analysis\n");
+    exit(-1);
+//    if (dwii == 0) {
+//      fprintf(stderr, "*** Error: Variable dwii does not exist!\n");
+//      exit(1);
+//    }
+//    if (dwij == 0) {
+//      fprintf(stderr, "*** Error: Variable dwij does not exist!\n");
+//      exit(1);
+//    }
+//    if (dwji == 0) {
+//      fprintf(stderr, "*** Error: Variable dwji does not exist!\n");
+//      exit(1);
+//    }
+//
+//    domain->computeDerivativeOfWeightsGalerkin(X, dX, *dwii, *dwij, *dwji);
+
+  }
+
+}
+
+
 //------------------------------------------------------------------------------
 
 // Included (YC)
@@ -839,6 +886,75 @@ void DistNodalGrad<dim, Scalar>::computeDerivative(int configSA, DistSVec<double
     domain->computeDerivativeOfGradientsGalerkin(ctrlVol, dCtrlVol, *wii, *wij, *wji, *dwii, *dwij, *dwji, V, dV, *dddx, *dddy, *dddz);
   }
 }
+
+
+
+
+
+/************************************************************************************************************
+ * Computer Derivative of the linear reconstruction. This is needed for Sensitivity Analysis with linear    *
+ * linear reconstruction and thus in particular Sensitivity Analysis in second order FIVER.                 *
+ ************************************************************************************************************/
+template<int dim, class Scalar>
+template<class Scalar2>
+void DistNodalGrad<dim, Scalar>::computeDerivativeEmb(
+                                   int configSA,
+                                   DistSVec<double,3> &X,    DistSVec<double,3> &dX,
+                                   DistVec<double> &ctrlVol, DistVec<double> &dCtrlVol,
+                                   DistSVec<Scalar2,dim> &V, DistSVec<Scalar2,dim> &dV,
+                                   const DistVec<int> &fluidId,
+                                   bool linFSI,              DistLevelSetStructure *distLSS,
+                                   bool includeSweptNodes)
+{
+
+//Remark: Error mesage for pointers
+  if (dddx == 0) {
+    fprintf(stderr, "*** Error: Variable dddx does not exist!\n");
+    exit(1);
+  }
+  if (dddy == 0) {
+    fprintf(stderr, "*** Error: Variable dddy does not exist!\n");
+    exit(1);
+  }
+  if (dddz == 0) {
+    fprintf(stderr, "*** Error: Variable dddz does not exist!\n");
+    exit(1);
+  }
+
+  if (configSA != lastConfigSA) {
+    computeDerivativeOfWeightsEmb(X, dX,fluidId,linFSI,distLSS,includeSweptNodes);
+    lastConfigSA = configSA;
+  }
+
+
+  //TODO outout R and dR to disk an postprocess it
+  //TsOutput<dim>::writeAnyVectorToDisk("results/ngrad_R",1,1,*R);//TODO delete lines
+
+
+  if (typeGradient == SchemeData::LEAST_SQUARES) {
+    domain->computeDerivativeOfGradientsLeastSquaresEmb(
+              X, dX,
+             *R, *dR,
+              V,  dV,
+              *dddx, *dddy, *dddz,
+              linFSI,
+              fluidId,
+              distLSS,
+              includeSweptNodes);
+  } else if (typeGradient == SchemeData::GALERKIN || typeGradient == SchemeData::NON_NODAL) {
+    fprintf(stderr," *** ERROR: Non-Nodal Gradients node implemented for Sensitivity Analysis");
+    exit(-1);
+    //domain->computeDerivativeOfGradientsGalerkin(ctrlVol, dCtrlVol, *wii, *wij, *wji, *dwii, *dwij, *dwji, V, dV, *dddx, *dddy, *dddz);
+  }
+}
+
+
+
+
+
+
+
+
 
 //------------------------------------------------------------------------------
 

@@ -1593,6 +1593,113 @@ void SubDomain::computeDerivativeOfWeightsLeastSquaresEdgePart(SVec<double,3> &X
   }
 }
 
+
+//------------------------------------------------------------------------------
+// Included (MB)
+// YC: if you intend to modified this routine,
+// you should also modify SubDomain::computeDerivativeTransposeOfWeightsLeastSquaresEdgePart accordingly
+// and                    SubDomain::compute_dRdX
+// This is the embedded Version; see function below for reference
+void SubDomain::computeDerivativeOfWeightsLeastSquaresEdgePartEmb(
+                  SVec<double,3> &X, SVec<double,3> &dX,
+                  const Vec<int> &fluidId, SVec<int,1> &count,
+                  SVec<double,6> &R, SVec<double,6> &dR,
+                  LevelSetStructure *LSS, bool includeSweptNodes)
+{
+//  fprintf(stderr," *** ERROR: Implementation required, see non-derivative function below for reference");
+//  exit(-1);
+  R = 0.0;
+  dR = 0.0;
+
+  count = 0;
+
+  bool *edgeFlag = edges.getMasterFlag();
+  int (*edgePtr)[2] = edges.getPtr();
+
+  for (int l=0; l<edges.size(); ++l) {//loop over all edges
+
+    if (!edgeFlag[l]) continue;//If this is not a master-edge, let another subdomain do the job
+
+    int i = edgePtr[l][0];//ID of first  node corresponding to edge l
+    int j = edgePtr[l][1];//ID of second node corresponding to edge l
+
+
+    //------------------------------------------------------------------------ new stuff begins here //TODO delete line
+    bool validEdge = true;
+
+    //There are 3 cases where an edge is considered invalid and no gradients are computed:
+    // 1) The nodes of that edge correspond to two different fluid IDs
+    // 2) The edge intersects a structure
+    // 3) One of the nodes is swept, and it is chosen not to include swept nodes
+    if(fluidId[i] != fluidId[j]) validEdge = false;
+
+    if(LSS)
+    {
+      if(LSS->edgeWithSI(l) || LSS->edgeIntersectsStructure(0.0, l)) validEdge = false;
+      if(!LSS->isActive(0.0, i) || !LSS->isActive(0.0, j))           validEdge = false;
+      if(!includeSweptNodes && (LSS->isSwept(0.0, i) || LSS->isSwept(0.0, j))) validEdge = false;
+    }
+
+    if(!validEdge) continue;
+    //------------------------------------------------------------------------ new stuff ends here //TODO delete line
+    count[i][0]++;
+    count[j][0]++;
+
+    double dx[3];
+    dx[0] = X[j][0] - X[i][0];
+    dx[1] = X[j][1] - X[i][1];
+    dx[2] = X[j][2] - X[i][2];
+
+    double ddx[3];
+    ddx[0] = dX[j][0] - dX[i][0];
+    ddx[1] = dX[j][1] - dX[i][1];
+    ddx[2] = dX[j][2] - dX[i][2];
+
+    double dxdx = dx[0] * dx[0];
+    double dydy = dx[1] * dx[1];
+    double dzdz = dx[2] * dx[2];
+    double dxdy = dx[0] * dx[1];
+    double dxdz = dx[0] * dx[2];
+    double dydz = dx[1] * dx[2];
+
+    double ddxdx = ddx[0] * dx[0] + dx[0] * ddx[0];
+    double ddydy = ddx[1] * dx[1] + dx[1] * ddx[1];
+    double ddzdz = ddx[2] * dx[2] + dx[2] * ddx[2];
+    double ddxdy = ddx[0] * dx[1] + dx[0] * ddx[1];
+    double ddxdz = ddx[0] * dx[2] + dx[0] * ddx[2];
+    double ddydz = ddx[1] * dx[2] + dx[1] * ddx[2];
+
+    //node i
+    R[i][0] += dxdx;
+    R[i][1] += dxdy;
+    R[i][2] += dxdz;
+    R[i][3] += dydy;
+    R[i][4] += dydz;
+    R[i][5] += dzdz;
+
+    dR[i][0] += ddxdx;
+    dR[i][1] += ddxdy;
+    dR[i][2] += ddxdz;
+    dR[i][3] += ddydy;
+    dR[i][4] += ddydz;
+    dR[i][5] += ddzdz;
+
+    R[j][0] += dxdx;
+    R[j][1] += dxdy;
+    R[j][2] += dxdz;
+    R[j][3] += dydy;
+    R[j][4] += dydz;
+    R[j][5] += dzdz;
+
+    dR[j][0] += ddxdx;
+    dR[j][1] += ddxdy;
+    dR[j][2] += ddxdz;
+    dR[j][3] += ddydy;
+    dR[j][4] += ddydz;
+    dR[j][5] += ddzdz;
+  }
+}
+
 //------------------------------------------------------------------------------
 // least square gradient involving only nodes of same fluid (multiphase flow)
 //d2d$
@@ -2184,6 +2291,78 @@ void SubDomain::computeDerivativeOfWeightsLeastSquaresNodePart(SVec<double,6> &R
     dR[i][5] = dr33;
   }
 }
+
+
+// Included (MB)
+//Embedded Version of the above function. Not sure if I really need this //TODO seems to be just redundant code
+void SubDomain::computeDerivativeOfWeightsLeastSquaresNodePartEmb(
+                  SVec<double,6> &R, SVec<double,6> &dR,
+                  LevelSetStructure* LSS,bool includeSweptNodes)
+{
+//  fprintf(stderr," *** computeDerivativeOfWeightsLeastSquaresNodePartEmb needs to be implemented");
+//  exit(-1);
+
+  std::cout<<" the size of dR is: "<<dR.size()<<std::endl;//TODO delete line
+
+//  for (int i=0; i<dR.size(); ++i) {
+//    double r11  = sqrt(R[i][0]);
+//    double dr11  = 1.0/(2.0*r11)*dR[i][0];
+//    double or11 = 1.0 / r11;
+//    double dor11 = -1.0 /(r11* r11)*dr11;
+//    double r12  = R[i][1] * or11;
+//    double dr12  = dR[i][1] * or11 + R[i][1] * dor11;
+//    double r13  = R[i][2] * or11;
+//    double dr13  = dR[i][2] * or11 + R[i][2] * dor11;
+//    double r22  = sqrt(R[i][3] - r12*r12);
+//    double dr22  = 1.0/(2.0*r22)*(dR[i][3] - 2.0*r12*dr12);
+//    double r23  = (R[i][4] - r12*r13) / r22;
+//    double dr23  = ( (dR[i][4] - dr12*r13 - r12*dr13)*r22 - (R[i][4] - r12*r13)*dr22 ) / (r22*r22);
+//    double r33  = sqrt(R[i][5] - (r13*r13 + r23*r23));
+//    double dr33  = 1.0/(2.0*r33)*(dR[i][5] - 2.0*(r13*dr13 + r23*dr23));
+//
+//    dR[i][0] = dr11;
+//    dR[i][1] = dr12;
+//    dR[i][2] = dr13;
+//    dR[i][3] = dr22;
+//    dR[i][4] = dr23;
+//    dR[i][5] = dr33;
+//  }
+  ////////////////////////////////////////////////OLD implementation ends here
+  //  fprintf(stderr," *** ERROR: Implementation required, see non-derivative function below for reference");
+  //  exit(-1);
+
+
+    //compute Derivatives only for active nodes
+    for (int i=0; i<nodes.size(); ++i) {//loop over all nodes
+
+      if(!LSS->isActive(0.0, i))
+          continue;
+
+      double r11  = sqrt(R[i][0]);
+      double dr11  = 1.0/(2.0*r11)*dR[i][0];
+      double or11 = 1.0 / r11;
+      double dor11 = -1.0 /(r11* r11)*dr11;
+      double r12  = R[i][1] * or11;
+      double dr12  = dR[i][1] * or11 + R[i][1] * dor11;
+      double r13  = R[i][2] * or11;
+      double dr13  = dR[i][2] * or11 + R[i][2] * dor11;
+      double r22  = sqrt(R[i][3] - r12*r12);
+      double dr22  = 1.0/(2.0*r22)*(dR[i][3] - 2.0*r12*dr12);
+      double r23  = (R[i][4] - r12*r13) / r22;
+      double dr23  = ( (dR[i][4] - dr12*r13 - r12*dr13)*r22 - (R[i][4] - r12*r13)*dr22 ) / (r22*r22);
+      double r33  = sqrt(R[i][5] - (r13*r13 + r23*r23));
+      double dr33  = 1.0/(2.0*r33)*(dR[i][5] - 2.0*(r13*dr13 + r23*dr23));
+
+      dR[i][0] = dr11;
+      dR[i][1] = dr12;
+      dR[i][2] = dr13;
+      dR[i][3] = dr22;
+      dR[i][4] = dr23;
+      dR[i][5] = dr33;
+
+    }
+}
+
 
 //------------------------------------------------------------------------------
 //d2d$

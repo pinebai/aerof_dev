@@ -1333,7 +1333,7 @@ void SpaceOperator<dim>::computeDerivativeOfResidualEmb(
   if (dynamic_cast<RecFcnConstant<dim> *>(recFcn) == 0)  {
     bool linFSI = linRecAtInterface || viscSecOrder;
     ngrad->compute(geoState->getConfig(), X, ctrlVol, fluidId, *V, linFSI, distLSS);
-    ngrad->computeDerivative(geoState->getConfigSA(), X, dX, ctrlVol, dCtrlVol, *V, *dV);//TODO new
+    ngrad->computeDerivativeEmb(geoState->getConfigSA(), X, dX, ctrlVol, dCtrlVol, *V, *dV, fluidId, linFSI, distLSS,false);//TODO new
     ngrad->limit(recFcn, X, ctrlVol, *V);
   }
   if (dV->norm()== 0.0) std::cout<<"XXX dV is still 0.0"<<std::endl;

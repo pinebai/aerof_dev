@@ -1651,6 +1651,54 @@ void Domain::computeDerivativeOfWeightsLeastSquares(DistSVec<double,3> &X, DistS
 
 }
 
+
+
+// Included (MB)
+// This is the embedded Version of the above function
+// Please read the comment in the above one first
+void Domain::computeDerivativeOfWeightsLeastSquaresEmb(
+               DistSVec<double,3> &X, DistSVec<double,3> &dX,
+               const DistVec<int> &fluidId,
+               DistSVec<double,6> &dR,
+               bool linFSI, DistLevelSetStructure *distLSS,
+               bool includeSweptNodes)
+{
+
+  int iSub;
+  DistSVec<int,1> *count = new DistSVec<int,1>(getNodeDistInfo());
+
+  DistSVec<double,6> R(getNodeDistInfo());//compute R
+
+  double t0 = timer->getTime();
+
+#pragma omp parallel for
+  for (iSub=0; iSub<numLocSub; ++iSub) {
+    subDomain[iSub]->computeDerivativeOfWeightsLeastSquaresEdgePartEmb(X(iSub), dX(iSub), fluidId(iSub),(*count)(iSub), R(iSub), dR(iSub),&((*distLSS)(iSub)),includeSweptNodes);
+    subDomain[iSub]->sndData(*weightPat, R.subData(iSub));
+  }
+
+  weightPat->exchange();
+
+#pragma omp parallel for
+  for (iSub = 0; iSub < numLocSub; ++iSub) {
+    subDomain[iSub]->addRcvData(*weightPat, R.subData(iSub));
+    subDomain[iSub]->sndData(*weightDerivativePat, dR.subData(iSub));
+  }
+
+  weightDerivativePat->exchange();
+
+#pragma omp parallel for
+  for (iSub = 0; iSub < numLocSub; ++iSub) {
+    subDomain[iSub]->addRcvData(*weightDerivativePat, dR.subData(iSub));
+    subDomain[iSub]->computeDerivativeOfWeightsLeastSquaresNodePartEmb(R(iSub), dR(iSub),&((*distLSS)(iSub)),includeSweptNodes);
+  }
+
+  timer->addNodalWeightsTime(t0);
+
+}
+
+
+
 //------------------------------------------------------------------------------
 
 // Included (YC)

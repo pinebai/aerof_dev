@@ -59,7 +59,7 @@ typedef Eigen::SparseMatrix<double> SpMat;
 
 #include "FSI/CrackingSurface.h"
 
-#include "Dev/devtools.h"
+//#include "Dev/devtools.h"
 
 extern "C" {
   void F77NAME(mvp5d)(const int &, const int &, int *, int *, int (*)[2],
@@ -140,8 +140,10 @@ void computeLocalWeightsLeastSquares(double dx[3], double *R, double *W)
 {
 
   if(R[0]*R[3]*R[5] == 0.0){
-    Dev::Error(MPI_COMM_WORLD,"Going to divide by 0",true);//TODO delete lines
-    fprintf(stderr, "Going to divide by 0 %e %e %e\n",R[0], R[3], R[5]);
+
+    //Dev::Error(MPI_COMM_WORLD,"1 Going to divide by 0",true);//TODO delete lines
+    fprintf(stderr, "1 Going to divide by 0 %e %e %e\n",R[0], R[3], R[5]);
+    exit(-1);
   }
 
   double or11 = 1.0 / R[0];
@@ -168,11 +170,12 @@ inline
 void computeLocalWeightsLeastSquaresForEmbeddedStruct(double dx[3], double *R, double *W)
 {
   if (R[0]*R[4]*R[7]*R[9]==0.0) 
-	fprintf(stderr, "Going to be divided by 0 %e %e %e %e\n",R[0],R[4],R[7],R[9]);
+	fprintf(stderr, "2 Going to be divided by 0 %e %e %e %e\n",R[0],R[4],R[7],R[9]);
 
 
   if(R[0]*R[4]*R[7]*R[9]==0.0){
-    Dev::Error(MPI_COMM_WORLD,"2 Going to divide by 0",true);//TODO delete lines
+    exit(-1);
+    //Dev::Error(MPI_COMM_WORLD,"2 Going to divide by 0",true);//TODO delete lines
   }
   double or11 = 1.0/R[0];
   double or22 = 1.0/R[4];
@@ -203,7 +206,7 @@ void computeLocalWeightsLeastSquaresForEmbeddedStruct(double dx[3], double *R, d
 inline 
 void compute_dWdXAnddWdR(int pm, double dx[3], double *R, double *W, double dWdX[][6], double dWdR[][6])
 {
-  if(R[0]*R[3]*R[5] == 0.0) fprintf(stderr, "Going to divide by 0 %e %e %e\n", R[0], R[3], R[5]);
+  if(R[0]*R[3]*R[5] == 0.0) fprintf(stderr, "3 Going to divide by 0 %e %e %e\n", R[0], R[3], R[5]);
 
   double or11 = 1.0 / R[0];
   double or22 = 1.0 / R[3];
@@ -267,11 +270,23 @@ inline
 void computeDerivativeOfLocalWeightsLeastSquares(double dx[3], double ddx[3], double *R, double *dR, double *W, double *dW)
 {
 
-  if(R[0]*R[3]*R[5] == 0.0) fprintf(stderr, "Going to divide by 0 %e %e %e\n",
+  if(R[0]*R[3]*R[5] == 0.0) fprintf(stderr, "4 Going to divide by 0 %e %e %e\n",
          R[0], R[3], R[5]);
 
   if(R[0]*R[3]*R[5] == 0.0){
-    Dev::Error(MPI_COMM_WORLD,"3 Going to divide by 0",true);//TODO delete lines
+    std::cout<<"R[0]: "<<R[0]<<std::endl;
+    std::cout<<"R[3]: "<<R[3]<<std::endl;
+    std::cout<<"R[5]: "<<R[5]<<std::endl;
+//    W[0] = 0.0; //TODO HACK this is bad
+//    W[1] = 0.0; //TODO HACK this is bad
+//    W[2] = 0.0; //TODO HACK this is bad
+//
+//    dW[0] = 0.0; //TODO HACK this is bad
+//    dW[1] = 0.0; //TODO HACK this is bad
+//    dW[2] = 0.0; //TODO HACK this is bad
+//    return;
+    exit(-1);
+    //Dev::Error(MPI_COMM_WORLD,"4 Going to divide by 0",true);//TODO delete lines
   }
 
   double or11 = 1.0 / R[0];
@@ -831,6 +846,96 @@ void SubDomain::computeDerivativeOfGradientsLeastSquares(
     ddx[0] = -ddx[0]; ddx[1] = -ddx[1]; ddx[2] = -ddx[2];
 
     computeDerivativeOfLocalWeightsLeastSquares(dx, ddx, R[j], dR[j], Wj, dWj);
+
+    for (int k=0; k<dim; ++k) {
+      deltaVar = var[j][k] - var[i][k];
+      dDeltaVar = dvar[j][k] - dvar[i][k];
+      dddx[i][k] += (dWi[0] * deltaVar + Wi[0] * dDeltaVar);
+      dddy[i][k] += (dWi[1] * deltaVar + Wi[1] * dDeltaVar);
+      dddz[i][k] += (dWi[2] * deltaVar + Wi[2] * dDeltaVar);
+      dddx[j][k] -= (dWj[0] * deltaVar + Wj[0] * dDeltaVar);
+      dddy[j][k] -= (dWj[1] * deltaVar + Wj[1] * dDeltaVar);
+      dddz[j][k] -= (dWj[2] * deltaVar + Wj[2] * dDeltaVar);
+    }
+
+  }
+}
+
+
+// Included (MB)
+// This is the embedded version of the above. The two can probably be merged
+template<int dim, class Scalar>
+void SubDomain::computeDerivativeOfGradientsLeastSquaresEmb(
+               SVec<double,3> &X, SVec<double,3> &dX,
+               SVec<double,6> &R, SVec<double,6> &dR,
+               SVec<Scalar,dim> &var, SVec<Scalar,dim> &dvar, SVec<Scalar,dim> &dddx,
+               SVec<Scalar,dim> &dddy, SVec<Scalar,dim> &dddz,
+               const Vec<int> &fluidId,
+               LevelSetStructure* LSS,bool includeSweptNodes)
+{
+
+//  fprintf(stderr," *** ERROR: computeDerivativeOfGradientsLeastSquaresEmb needs to be implemented");
+//  exit(-1);
+
+  dddx = (Scalar) 0.0;
+  dddy = (Scalar) 0.0;
+  dddz = (Scalar) 0.0;
+
+  SVec<Scalar,dim> xxx(dddx), dddx2(dddx), uux(dddx);
+  SVec<Scalar,dim> yyy(dddy), dddy2(dddy), uuy(dddy);
+  SVec<Scalar,dim> zzz(dddz), dddz2(dddz), uuz(dddz);
+
+  dddx = (Scalar) 0.0;
+  dddy = (Scalar) 0.0;
+  dddz = (Scalar) 0.0;
+
+  bool *edgeFlag = edges.getMasterFlag();
+  int (*edgePtr)[2] = edges.getPtr();
+
+  for (int l=0; l<edges.size(); ++l) {
+
+    if (!edgeFlag[l]) continue;
+
+    int i = edgePtr[l][0];
+    int j = edgePtr[l][1];
+
+
+    ///////////////////////////////////////////// Begin additional part
+    bool validEdge = true;
+
+    if(fluidId[i] != fluidId[j]) validEdge = false;
+
+    if(LSS)
+    {
+      if(LSS->edgeWithSI(l) || LSS->edgeIntersectsStructure(0.0, l)) validEdge = false;
+      if(!LSS->isActive(0.0, i) || !LSS->isActive(0.0, j)) validEdge = false;
+      if(!includeSweptNodes && (LSS->isSwept(0.0, i) || LSS->isSwept(0.0, j))) validEdge = false;
+    }
+
+    if(!validEdge) continue;
+    ///////////////////////////////////////////// End additional part
+
+
+    //TODO DEBUG
+    std::cout<<i<<":"<<LSS->isActive(0.0, i)<<"   "<<j<<":"<<LSS->isActive(0.0, j)<<std::endl;//TODO delete line
+
+    double Wi[3], Wj[3], deltaVar;
+    double dWi[3]={0}, dWj[3]={0}, dDeltaVar;
+    double dWi2[3]={0}, dWj2[3]={0};
+    double dWidX[3][6] = {0}, dWidR[3][6] = {0};
+
+    double dx[3] = {X[j][0] - X[i][0], X[j][1] - X[i][1], X[j][2] - X[i][2]};
+    double ddx[3] = {dX[j][0] - dX[i][0], dX[j][1] - dX[i][1], dX[j][2] - dX[i][2]};
+
+    std::cout<<" computeDerivativeOfLocalWeightsLeastSquares Node i"<<std::endl;//TODO delete line
+    computeDerivativeOfLocalWeightsLeastSquares(dx, ddx, R[i], dR[i], Wi, dWi);
+
+    dx[0] = -dx[0]; dx[1] = -dx[1]; dx[2] = -dx[2];
+    ddx[0] = -ddx[0]; ddx[1] = -ddx[1]; ddx[2] = -ddx[2];
+
+    std::cout<<" computeDerivativeOfLocalWeightsLeastSquares Node j"<<std::endl;//TODO delete line
+    computeDerivativeOfLocalWeightsLeastSquares(dx, ddx, R[j], dR[j], Wj, dWj);
+    std::cout<<" All nodes done"<<std::endl;//TODO delete line
 
     for (int k=0; k<dim; ++k) {
       deltaVar = var[j][k] - var[i][k];

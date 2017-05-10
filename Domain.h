@@ -1095,6 +1095,7 @@ public:
   void computeDerivativeOperatorsOfNormals(DistSVec<double,3> &, RectangularSparseMat<double,3,3> **, RectangularSparseMat<double,3,3> **); 
 
   void computeDerivativeOfWeightsLeastSquares(DistSVec<double,3> &, DistSVec<double,3> &, DistSVec<double,6> &);
+  void computeDerivativeOfWeightsLeastSquaresEmb(DistSVec<double,3> &, DistSVec<double,3> &,const DistVec<int> &fluidId, DistSVec<double,6> &,bool,DistLevelSetStructure*,bool);
   void computeDerivativeOfWeightsLeastSquares(RectangularSparseMat<double,3,6> **, RectangularSparseMat<double,6,6> **, DistSVec<double,3> &, DistSVec<double,6> &);
   void computeTransposeDerivativeOfWeightsLeastSquares(RectangularSparseMat<double,3,6> **, RectangularSparseMat<double,6,6> **, DistSVec<double,6> &, DistSVec<double,3> &);
   void computeDerivativeOperatorsOfWeightsLeastSquares(DistSVec<double,3> &, RectangularSparseMat<double,3,6> **, RectangularSparseMat<double,6,6> **);
@@ -1113,6 +1114,25 @@ public:
             DistSVec<double,6> &, DistSVec<double,6> &,
             DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &,
             DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &);
+
+  template<int dim, class Scalar>
+  void computeDerivativeOfGradientsLeastSquaresEmb(
+      DistSVec<double,3> &X,      DistSVec<double,3> &dX,
+      DistSVec<double,6> &R,      DistSVec<double,6> &dR,
+      DistSVec<Scalar,dim> &dddx, DistSVec<Scalar,dim> &dddy, DistSVec<Scalar,dim> &dddz,
+      DistSVec<Scalar,dim> &var,  DistSVec<Scalar,dim> &dvar,
+      bool linFSI,
+      const DistVec<int> &fluidId,
+      DistLevelSetStructure *distLSS,
+      bool includeSweptNodes);
+//            DistSVec<double,3> &, DistSVec<double,3> &,
+//            DistSVec<double,6> &, DistSVec<double,6> &,
+//            DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &,
+//            DistSVec<Scalar,dim> &, DistSVec<Scalar,dim> &,
+//            bool linFSI,
+//            const DistVec<int> &fluidId,
+//            DistLevelSetStructure *distLSS,
+//            bool includeSweptNodes);
 
   template<int dim, class Scalar>
   void computeDerivativeOfGradientsLeastSquares(dRdXoperators<dim> &,

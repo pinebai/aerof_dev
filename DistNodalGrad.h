@@ -141,11 +141,24 @@ public:
 
 // Included (MB)
   void computeDerivativeOfWeights(DistSVec<double,3> &, DistSVec<double,3> &);
+
+  void computeDerivativeOfWeightsEmb(DistSVec<double,3> &, DistSVec<double,3> &,const DistVec<int> &fluidId,bool ,DistLevelSetStructure*,bool);
   void computeDerivativeOfWeights(dRdXoperators<dim> &, DistSVec<double,3> &, DistSVec<double,6> &);
   void computeTransposeDerivativeOfWeights(dRdXoperators<dim> &, DistSVec<double,6> &, DistSVec<double,3> &);
 
   template<class Scalar2>
   void computeDerivative(int, DistSVec<double,3> &, DistSVec<double,3> &, DistVec<double> &, DistVec<double> &, DistSVec<Scalar2,dim> &, DistSVec<Scalar2,dim> &);
+
+  template<class Scalar2>
+  void computeDerivativeEmb(
+         int,
+         DistSVec<double,3> &,    DistSVec<double,3> &,
+         DistVec<double> &,       DistVec<double> &,
+         DistSVec<Scalar2,dim> &, DistSVec<Scalar2,dim> &,
+         const DistVec<int> &fluidId,
+         bool linFSI,             DistLevelSetStructure *distLSS,
+         bool includeSweptNodes);
+
 
   void computeDerivative(dRdXoperators<dim> *, DistSVec<double,3> &, DistVec<double> &, DistSVec<double,dim> &, 
                          DistSVec<double,6> &, DistSVec<double,dim> &, DistSVec<double,dim> &, DistSVec<double,dim> &);
